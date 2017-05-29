@@ -69,4 +69,11 @@ public class ChannelConversions {
             STREAM_TO_HDFS_TSV,
             COLLECTION_TO_HDFS_TSV
     );
+
+    public static Collection<ChannelConversion> DEBUG = Arrays.asList(
+            COLLECTION_TO_HDFS_OBJECT_FILE,
+            STREAM_TO_HDFS_OBJECT_FILE,
+            HDFS_OBJECT_FILE_TO_STREAM,
+            STREAM_TO_COLLECTION
+    );
 }

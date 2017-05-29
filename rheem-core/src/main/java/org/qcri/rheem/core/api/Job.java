@@ -1,10 +1,11 @@
 package org.qcri.rheem.core.api;
 
-import org.json.JSONObject;
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.debug.ModeRun;
+import org.qcri.rheem.core.debug.rheemplan.RheemPlanDebug;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.monitor.DisabledMonitor;
 import org.qcri.rheem.core.monitor.FileMonitor;
@@ -31,10 +32,7 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -213,6 +211,7 @@ public class Job extends OneTimeExecutable {
 
         // Get initial execution plan.
         ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+
         return  executionPlan;
     }
 
@@ -245,6 +244,10 @@ public class Job extends OneTimeExecutable {
 
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+            //add execution a rheem for after will can compare the stages
+            if(ModeRun.isDebugMode()){
+                ((RheemPlanDebug)this.rheemPlan).addExecutionPlan(executionPlan);
+            }
             this.optimizationRound.stop();
 
             // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
@@ -451,6 +454,11 @@ public class Job extends OneTimeExecutable {
         if (this.crossPlatformExecutor == null) {
             final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
             this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
+            //take a plan anterior and processing only stage not finally.
+            if(ModeRun.isDebugMode()){
+                ((RheemPlanDebug)this.rheemPlan).addCrossPlatformExecutor(this.crossPlatformExecutor);
+                ((RheemPlanDebug)this.rheemPlan).reduccionStages();
+            }
         }
 
         if (this.configuration.getOptionalBooleanProperty("rheem.core.debug.skipexecution").orElse(false)) {
@@ -469,6 +477,9 @@ public class Job extends OneTimeExecutable {
                 executionPlan, this.optimizationContext
         );
         executionRound.stop();
+        if(ModeRun.isDebugMode()){
+            ((RheemPlanDebug)this.rheemPlan).addPlansExecuted();
+        }
 
         // Return.
         return isExecutionComplete;

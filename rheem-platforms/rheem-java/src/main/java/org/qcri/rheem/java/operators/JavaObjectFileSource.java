@@ -9,6 +9,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -20,6 +21,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.StreamChannel;
+import org.qcri.rheem.java.debug.stream.StreamDebug;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.slf4j.LoggerFactory;
@@ -69,9 +71,14 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         }
         try {
             final String actualInputPath = FileSystems.findActualSingleInputPath(path);
-            sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
-            Stream<?> sequenceFileStream =
-                    StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
+            Stream<?> sequenceFileStream;
+            if(ModeRun.isDebugMode()){
+                sequenceFileStream = StreamDebug.getStream(actualInputPath);
+            }else {
+                sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
+                sequenceFileStream =
+                        StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
+            }
             ((StreamChannel.Instance) outputs[0]).accept(sequenceFileStream);
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed to read from %s.", this, path), e);

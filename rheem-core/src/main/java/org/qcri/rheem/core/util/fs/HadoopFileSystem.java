@@ -8,10 +8,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -78,6 +75,11 @@ public class HadoopFileSystem implements FileSystem {
     @Override
     public InputStream open(String url) throws IOException {
         return this.getHdfs(url).open(new Path(url));
+    }
+
+    @Override
+    public RandomAccessFile openDebug(String url) throws IOException {
+        return null;
     }
 
     @Override

@@ -121,9 +121,17 @@ public class ExecutionPlan {
     public Set<ExecutionStage> getStages() {
         Set<ExecutionStage> seenStages = new HashSet<>();
         Queue<ExecutionStage> openStages = new LinkedList<>(this.getStartingStages());
+        boolean added;
         while (!openStages.isEmpty()) {
             final ExecutionStage stage = openStages.poll();
-            if (seenStages.add(stage)) {
+            added = false;
+          /*  if(ModeRun.isDebugMode() && RheemPlanDebug.stageIsReady(stage)){
+                added = true;
+            }*/
+            if( !added ){
+                added = seenStages.add(stage);
+            }
+            if ( added ) {
                 openStages.addAll(stage.getSuccessors());
             }
         }

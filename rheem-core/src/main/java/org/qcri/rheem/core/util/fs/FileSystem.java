@@ -1,9 +1,6 @@
 package org.qcri.rheem.core.util.fs;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Collection;
 
 /**
@@ -63,4 +60,13 @@ public interface FileSystem {
      * @return whether after the deletion, there is no more file associated with the given {@code url}
      */
     boolean delete(String url, boolean isRecursiveDelete) throws IOException;
+
+    /**
+     * Opens the file specified in the given {@code url}, but the open is for DebugMode.
+     *
+     * @param url points to the file to be opened
+     * @return an {@link java.io.RandomAccessFile} with the file's contents
+     * @throws IOException if the file cannot be accessed properly for whatever reason
+     */
+    RandomAccessFile openDebug(String url) throws IOException;
 }

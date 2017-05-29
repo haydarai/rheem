@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.plugin;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.platform.Platform;
@@ -23,6 +24,9 @@ public class JavaChannelConversionPlugin implements Plugin {
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
+        if(ModeRun.isDebugMode()){
+            return ChannelConversions.DEBUG;
+        }
         return ChannelConversions.ALL;
     }
 

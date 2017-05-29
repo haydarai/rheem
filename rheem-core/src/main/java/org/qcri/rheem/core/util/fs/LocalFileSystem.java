@@ -122,6 +122,17 @@ public class LocalFileSystem implements FileSystem {
     }
 
     @Override
+    public RandomAccessFile openDebug(String url) throws  IOException {
+        try {
+            File file = toFile(url);
+            return new RandomAccessFile(file.getAbsolutePath(), "r");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
     public OutputStream create(String url) throws IOException {
         return this.create(url, false);
     }

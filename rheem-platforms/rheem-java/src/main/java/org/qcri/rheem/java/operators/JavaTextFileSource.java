@@ -2,8 +2,10 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.java.debug.stream.StreamDebug;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
@@ -57,7 +59,12 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
         try {
             final InputStream inputStream = fs.open(url);
-            Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+            Stream<String> lines;
+            if(!ModeRun.isDebugMode()){
+                lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+            }else{
+                lines = StreamDebug.getStream(this);
+            }
             ((StreamChannel.Instance) outputs[0]).accept(lines);
         } catch (IOException e) {
             throw new RheemException(String.format("Reading %s failed.", url), e);

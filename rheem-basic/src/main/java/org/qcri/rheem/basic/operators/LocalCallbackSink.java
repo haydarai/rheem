@@ -6,6 +6,9 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -32,6 +35,23 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     public static <T> LocalCallbackSink<T> createStdoutSink(Class<T> typeClass) {
         return new LocalCallbackSink<>(System.out::println, typeClass);
     }
+
+    public static <T> LocalCallbackSink<T> createWindows(Class<T> typeClass){
+        try {
+            Socket s = new Socket("localhost", 9090);
+            PrintWriter out = new PrintWriter(s.getOutputStream());
+            return new LocalCallbackSink<T>(
+                    element -> {
+                        out.println(element);
+                    },
+                    typeClass
+            );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     /**
      * Creates a new instance.

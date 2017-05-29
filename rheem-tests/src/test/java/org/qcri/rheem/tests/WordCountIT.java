@@ -25,6 +25,7 @@ import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -43,7 +44,8 @@ public class WordCountIT {
 
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        URI uri2 = new URI("file:///Users/bertty/Qatar/example/wordcount10M.txt");
+        TextFileSource textFileSource = new TextFileSource(uri2.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
@@ -97,20 +99,22 @@ public class WordCountIT {
         // write results to a sink
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
+        LocalCallbackSink<String> sink2 = LocalCallbackSink.createWindows(String.class);
 
         // Build Rheem plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, mapOperator, 0);
+        flatMapOperator.connectTo(0, sink2, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
 
         // Have Rheem execute the plan.
-        rheemContext.execute(new RheemPlan(sink));
+        rheemContext.execute(new RheemPlan(sink, sink2));
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(uri2)).collect(Collectors.toList());
         lines.stream()
                 .flatMap(line -> Arrays.stream(line.split("\\s+")))
                 .map(String::toLowerCase)

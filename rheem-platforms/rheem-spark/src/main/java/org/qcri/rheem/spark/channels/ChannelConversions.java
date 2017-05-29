@@ -96,4 +96,10 @@ public class ChannelConversions {
             CACHED_RDD_TO_HDFS_TSV,
             UNCACHED_RDD_TO_HDFS_TSV
     );
+
+    public static Collection<ChannelConversion> DEBUG = Arrays.asList(
+            CACHED_RDD_TO_HDFS_OBJECT_FILE,
+            UNCACHED_RDD_TO_HDFS_OBJECT_FILE,
+            HDFS_OBJECT_FILE_TO_UNCACHED_RDD
+    );
 }

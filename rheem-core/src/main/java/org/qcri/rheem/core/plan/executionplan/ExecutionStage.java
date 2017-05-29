@@ -372,4 +372,10 @@ public class ExecutionStage {
         }
     }
 
+
+    public boolean isSimilar(ExecutionStage other){
+        System.out.println("wenas");
+        return false;
+    }
+
 }
