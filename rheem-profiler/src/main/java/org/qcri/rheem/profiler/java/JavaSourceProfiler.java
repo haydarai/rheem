@@ -3,7 +3,6 @@ package org.qcri.rheem.profiler.java;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.operators.JavaCollectionSource;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.slf4j.LoggerFactory;
@@ -14,13 +13,13 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * {@link OperatorProfiler} implementation for sinks.
+ * Created by migiwara on 11/06/17.
  */
-public abstract class SourceProfiler extends OperatorProfiler {
+public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
 
     private JavaChannelInstance outputChannelInstance;
 
-    public SourceProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
+    public JavaSourceProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
     }
 
@@ -62,5 +61,4 @@ public abstract class SourceProfiler extends OperatorProfiler {
         );
         return this.outputChannelInstance.provideStream().count();
     }
-
 }

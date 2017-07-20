@@ -11,13 +11,13 @@ import java.util.function.Supplier;
 /**
  * {@link SparkOperatorProfiler} implementation for {@link SparkExecutionOperator}s with one input and no outputs.
  */
-public class SinkProfiler extends SparkOperatorProfiler {
+public class SparkSinkProfiler extends SparkOperatorProfiler {
 
     private JavaRDD<?> inputRdd;
 
-    public SinkProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
-                        Configuration configuration,
-                        Supplier<?> dataQuantumGenerator) {
+    public SparkSinkProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
+                             Configuration configuration,
+                             Supplier<?> dataQuantumGenerator) {
         super(operatorGenerator, configuration, dataQuantumGenerator);
     }
 

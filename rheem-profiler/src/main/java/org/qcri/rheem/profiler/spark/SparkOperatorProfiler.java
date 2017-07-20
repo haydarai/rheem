@@ -9,6 +9,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -26,7 +27,7 @@ import java.util.function.Supplier;
 /**
  * Allows to instrument an {@link SparkExecutionOperator}.
  */
-public abstract class SparkOperatorProfiler {
+public abstract class SparkOperatorProfiler extends OperatorProfiler {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -46,6 +47,15 @@ public abstract class SparkOperatorProfiler {
 
     protected final long executionPaddingTime;
 
+    @Override
+    public SparkExecutionOperator getOperator() {
+        return operator;
+    }
+
+    public void setOperator(SparkExecutionOperator operator) {
+        this.operator = operator;
+    }
+
     protected SparkExecutionOperator operator;
 
     protected SparkExecutor sparkExecutor;
@@ -57,8 +67,13 @@ public abstract class SparkOperatorProfiler {
     public SparkOperatorProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
                                  Configuration configuration,
                                  Supplier<?>... dataQuantumGenerators) {
+        super(operatorGenerator, dataQuantumGenerators);
+
+        //super();
 
         this.operatorGenerator = operatorGenerator;
+        this.operator = this.operatorGenerator.get();
+
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
 
         this.cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz", 2700);
@@ -79,7 +94,7 @@ public abstract class SparkOperatorProfiler {
      *
      * @param inputCardinalities number of input elements for each input of the profiled operator
      */
-    public void prepare(long... inputCardinalities) {
+    public void prepare(long dataQuantaSize,long... inputCardinalities) {
         this.operator = this.operatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
         this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
@@ -178,8 +193,8 @@ public abstract class SparkOperatorProfiler {
     /**
      * Executes and profiles the profiling task. Requires that this instance is prepared.
      */
-    public Result run() {
-        final Result result = this.executeOperator();
+    public OperatorProfiler.Result run() {
+        final OperatorProfiler.Result result = this.executeOperator();
         this.sparkExecutor.dispose();
         this.sparkExecutor = null;
         return result;
@@ -210,8 +225,8 @@ public abstract class SparkOperatorProfiler {
      */
     protected long provideNetworkBytes(long startTime, long endTime) {
         // Find out the average received/transmitted bytes per second.
-        final double transmittedBytesPerSec = this.waitAndQueryMetricAverage("tx_bytes_eth0", "sum", startTime, endTime);
-        final double receivedBytesPerSec = this.waitAndQueryMetricAverage("rx_bytes_eth0", "sum", startTime, endTime);
+        final double transmittedBytesPerSec = this.waitAndQueryMetricAverage("bytes_out", "sum", startTime, endTime);
+        final double receivedBytesPerSec = this.waitAndQueryMetricAverage("bytes_in", "sum", startTime, endTime);
         final double bytesPerSec = (transmittedBytesPerSec + receivedBytesPerSec) / 2;
 
         // Estimate the number of actually communicated bytes.
@@ -225,8 +240,8 @@ public abstract class SparkOperatorProfiler {
      */
     protected long provideDiskBytes(long startTime, long endTime) {
         // Find out the average received/transmitted bytes per second.
-        final double readBytesPerSec = this.waitAndQueryMetricAverage("diskstat_sda_read_bytes_per_sec", "sum", startTime, endTime);
-        final double writeBytesPerSec = this.waitAndQueryMetricAverage("diskstat_sda_read_bytes_per_sec", "sum", startTime, endTime);
+        final double readBytesPerSec = this.waitAndQueryMetricAverage("diskstat_sdb1_read_bytes_per_sec", "sum", startTime, endTime);
+        final double writeBytesPerSec = this.waitAndQueryMetricAverage("diskstat_sdb1_write_bytes_per_sec", "sum", startTime, endTime);
         final double bytesPerSec = readBytesPerSec + writeBytesPerSec;
 
         // Estimate the number of actually communicated bytes.
@@ -238,11 +253,14 @@ public abstract class SparkOperatorProfiler {
      * until the requested data points are available.
      */
     private double waitAndQueryMetricAverage(String metric, String dataSeries, long startTime, long endTime) {
-        final String rrdFile = this.gangliaRrdsDir + File.separator +
+        /*final String rrdFile = this.gangliaRrdsDir + File.separator +
                 this.gangliaClusterName + File.separator +
                 "__SummaryInfo__" + File.separator +
+                metric + ".rrd";*/
+        final String rrdFile = this.gangliaRrdsDir + File.separator +
+                "__SummaryInfo__" + File.separator +
                 metric + ".rrd";
-
+        //final String rrdFile = "/tmp";
         double metricValue = Double.NaN;
         int numAttempts = 0;
         do {
@@ -269,7 +287,7 @@ public abstract class SparkOperatorProfiler {
     /**
      * Executes the profiling task. Requires that this instance is prepared.
      */
-    protected abstract Result executeOperator();
+    protected abstract OperatorProfiler.Result executeOperator();
 
     /**
      * Utility method to invoke
@@ -306,93 +324,6 @@ public abstract class SparkOperatorProfiler {
      * Override this method to implement any clean-up logic.
      */
     public void cleanUp() {
-    }
-
-    /**
-     * The result of a single profiling run.
-     */
-    public static class Result {
-
-        private final List<Long> inputCardinalities;
-
-        private final int numMachines, numCoresPerMachine;
-
-        private final long outputCardinality;
-
-        private final long diskBytes, networkBytes;
-
-        private final long cpuCycles;
-
-        private final long wallclockMillis;
-
-        public Result(List<Long> inputCardinalities, long outputCardinality,
-                      long wallclockMillis, long diskBytes, long networkBytes, long cpuCycles,
-                      int numMachines, int numCoresPerMachine) {
-            this.inputCardinalities = inputCardinalities;
-            this.outputCardinality = outputCardinality;
-            this.wallclockMillis = wallclockMillis;
-            this.diskBytes = diskBytes;
-            this.networkBytes = networkBytes;
-            this.cpuCycles = cpuCycles;
-            this.numMachines = numMachines;
-            this.numCoresPerMachine = numCoresPerMachine;
-        }
-
-        public List<Long> getInputCardinalities() {
-            return this.inputCardinalities;
-        }
-
-        public long getOutputCardinality() {
-            return this.outputCardinality;
-        }
-
-        public long getDiskBytes() {
-            return this.diskBytes;
-        }
-
-        public long getNetworkBytes() {
-            return this.networkBytes;
-        }
-
-        public long getCpuCycles() {
-            return this.cpuCycles;
-        }
-
-        @Override
-        public String toString() {
-            return "Result{" +
-                    "inputCardinalities=" + inputCardinalities +
-                    ", outputCardinality=" + outputCardinality +
-                    ", numMachines=" + numMachines +
-                    ", numCoresPerMachine=" + numCoresPerMachine +
-                    ", wallclockMillis=" + wallclockMillis +
-                    ", cpuCycles=" + cpuCycles +
-                    ", diskBytes=" + diskBytes +
-                    ", networkBytes=" + networkBytes +
-                    '}';
-        }
-
-        public String getCsvHeader() {
-            return String.join(",", RheemCollections.map(this.inputCardinalities, (index, card) -> "input_card_" + index)) + "," +
-                    "output_card," +
-                    "wallclock," +
-                    "disk," +
-                    "network," +
-                    "cpu," +
-                    "machines," +
-                    "cores_per_machine";
-        }
-
-        public String toCsvString() {
-            return String.join(",", RheemCollections.map(this.inputCardinalities, Object::toString)) + ","
-                    + this.outputCardinality + ","
-                    + this.wallclockMillis + ","
-                    + this.diskBytes + ","
-                    + this.networkBytes + ","
-                    + this.cpuCycles + ","
-                    + this.numMachines + ","
-                    + this.numCoresPerMachine;
-        }
     }
 
 }

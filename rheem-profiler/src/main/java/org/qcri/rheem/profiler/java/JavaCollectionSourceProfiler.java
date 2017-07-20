@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaCollectionSource;
+import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +11,7 @@ import java.util.function.Supplier;
 /**
  * {@link OperatorProfiler} for {@link JavaCollectionSource}s.
  */
-public class JavaCollectionSourceProfiler extends SourceProfiler {
+public class JavaCollectionSourceProfiler extends JavaSourceProfiler {
 
     private Collection<Object> sourceCollection;
 

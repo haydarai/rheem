@@ -26,7 +26,8 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
     private SparkTextFileSourceProfiler(String fileUrl,
                                         Configuration configuration,
                                         Supplier<?> dataQuantumGenerator) {
-        super(() -> new SparkTextFileSource(fileUrl), configuration, dataQuantumGenerator);
+        super(() -> {SparkTextFileSource op= new SparkTextFileSource(fileUrl); op.setName("SparkTextFileSource"); return op;},
+                configuration, dataQuantumGenerator);
         this.fileUrl = fileUrl;
     }
 

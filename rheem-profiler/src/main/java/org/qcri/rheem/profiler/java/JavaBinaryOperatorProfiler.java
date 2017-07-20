@@ -3,6 +3,7 @@ package org.qcri.rheem.profiler.java;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -11,13 +12,13 @@ import java.util.function.Supplier;
 /**
  * {@link OperatorProfiler} specifically for {@link JavaExecutionOperator}s with double {@link InputSlot}.
  */
-public class BinaryOperatorProfiler extends OperatorProfiler {
+public class JavaBinaryOperatorProfiler extends JavaOperatorProfiler {
 
     private JavaChannelInstance inputChannelInstance0, inputChannelInstance1, outputChannelInstance;
 
-    public BinaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
-                                  Supplier<?> dataQuantumGenerator0,
-                                  Supplier<?> dataQuantumGenerator1) {
+    public JavaBinaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
+                                      Supplier<?> dataQuantumGenerator0,
+                                      Supplier<?> dataQuantumGenerator1) {
         super(operatorGenerator, dataQuantumGenerator0, dataQuantumGenerator1);
     }
 

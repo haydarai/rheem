@@ -1,7 +1,6 @@
 package org.qcri.rheem.profiler.java;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.operators.*;
@@ -13,13 +12,13 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * {@link OperatorProfiler} specifically for {@link JavaExecutionOperator}s with a single {@link InputSlot}.
+ * Created by migiwara on 11/06/17.
  */
-public class UnaryOperatorProfiler extends OperatorProfiler {
+public class JavaUnaryOperatorProfiler extends JavaOperatorProfiler {
 
     private JavaChannelInstance inputChannelInstance, outputChannelInstance;
 
-    public UnaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?> dataQuantumGenerator) {
+    public JavaUnaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?> dataQuantumGenerator) {
         super(operatorGenerator, dataQuantumGenerator);
     }
 
@@ -38,7 +37,7 @@ public class UnaryOperatorProfiler extends OperatorProfiler {
 
 
         // Channel creation separation between operators that requires Collection channels vs Stream channels for the evaluation.
-        List operatorsWithCollectionInput = new ArrayList<Class< Operator>>();
+        List operatorsWithCollectionInput = new ArrayList<Class<Operator>>();
 
         // List of operators requiring collection channels.
         operatorsWithCollectionInput.addAll(Arrays.asList(JavaReduceByOperator.class, JavaGlobalReduceOperator.class, JavaCountOperator.class, JavaMaterializedGroupByOperator.class));
@@ -109,4 +108,5 @@ public class UnaryOperatorProfiler extends OperatorProfiler {
     public JavaExecutionOperator getOperator() {
         return this.operator;
     }
+
 }

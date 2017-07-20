@@ -9,13 +9,12 @@ import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
- * {@link OperatorProfiler} implementation for sinks.
+ * Created by migiwara on 11/06/17.
  */
-public class SinkProfiler extends OperatorProfiler {
-
+public class JavaSinkProfiler extends JavaOperatorProfiler {
     private JavaChannelInstance inputChannelInstance;
 
-    public SinkProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
+    public JavaSinkProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
     }
 
@@ -43,5 +42,4 @@ public class SinkProfiler extends OperatorProfiler {
         );
         return 0L;
     }
-
 }

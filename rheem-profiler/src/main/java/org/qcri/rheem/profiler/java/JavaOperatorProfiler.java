@@ -12,6 +12,7 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,9 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Allows to instrument an {@link JavaExecutionOperator}.
+ * Created by migiwara on 11/06/17.
  */
-public abstract class OperatorProfiler {
-
+public abstract class JavaOperatorProfiler extends OperatorProfiler {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public int cpuMhz;
@@ -44,26 +44,34 @@ public abstract class OperatorProfiler {
 
     private long dataQuantaSize;
 
-    public OperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
+    private int udfComplexity;
+    public JavaOperatorProfiler(){
+        super();
+    }
+
+    public JavaOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
                             Supplier<?>... dataQuantumGenerators) {
+        super(operatorGenerator, dataQuantumGenerators);
         this.operatorGenerator = operatorGenerator;
+        this.operator = operatorGenerator.get();
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
         this.executor = ProfilingUtils.fakeJavaExecutor();
         this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
     }
 
 
-    public void prepare(long dataQuantaSize,long... inputCardinalities) {
+    public void prepare( long dataQuantaSize,long... inputCardinalities) {
         this.operator = this.operatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
         this.dataQuantaSize = dataQuantaSize;
+        //this.dataQuantaSize = udfComplexity;
     }
 
 
     /**
      * Executes and profiles the profiling task. Requires that this instance is prepared.
      */
-    public Result run() {
+    public OperatorProfiler.Result run() {
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         threadMXBean.setThreadCpuTimeEnabled(true);
         ProfilingUtils.sleep(1000);
@@ -72,14 +80,13 @@ public abstract class OperatorProfiler {
         long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
 
         long cpuCycles = this.calculateCpuCycles(startCpuTime, endCpuTime);
-        return new Result(
+        return new OperatorProfiler.Result(
                 this.inputCardinalities,
                 outputCardinality,
                 this.provideDiskBytes(),
                 this.provideNetworkBytes(),
                 cpuCycles,
-                this.dataQuantaSize
-        );
+                this.dataQuantaSize,1,4);
     }
 
     private long calculateCpuCycles(long startNanos, long endNanos) {
@@ -159,13 +166,17 @@ public abstract class OperatorProfiler {
 
         private final long dataQuantaSize;
 
-        public Result(List<Long> inputCardinalities, long outputCardinality, long diskBytes, long networkBytes, long cpuCycles, long dataQuantaSize) {
+        private int udfComplexity;
+
+        public Result(List<Long> inputCardinalities, long outputCardinality, long diskBytes, long networkBytes,
+                      long cpuCycles, long dataQuantaSize) {
             this.inputCardinalities = inputCardinalities;
             this.outputCardinality = outputCardinality;
             this.diskBytes = diskBytes;
             this.networkBytes = networkBytes;
             this.cpuCycles = cpuCycles;
             this.dataQuantaSize = dataQuantaSize;
+            //this.udfComplexity = udfComplexity;
         }
 
         public List<Long> getInputCardinalities() {
@@ -188,6 +199,10 @@ public abstract class OperatorProfiler {
             return this.cpuCycles;
         }
 
+        public void setUdfComplexity(int udfComplexity) {
+            this.udfComplexity = udfComplexity;
+        }
+
         @Override
         public String toString() {
             return "Result{" +
@@ -205,7 +220,8 @@ public abstract class OperatorProfiler {
                     "disk," +
                     "network," +
                     "cpu," +
-                    "dataQuanta_size";
+                    "dataQuanta_size," +
+                    "UDF_complexity";
         }
 
         public String toCsvString() {
@@ -214,7 +230,8 @@ public abstract class OperatorProfiler {
                     + this.diskBytes + ","
                     + this.networkBytes + ","
                     + this.cpuCycles + ","
-                    + this.dataQuantaSize;
+                    + this.dataQuantaSize + ","
+                    + this.udfComplexity;
         }
     }
 

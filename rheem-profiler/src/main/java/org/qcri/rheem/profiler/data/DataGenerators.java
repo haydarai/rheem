@@ -3,6 +3,8 @@ package org.qcri.rheem.profiler.data;
 import org.apache.commons.lang3.Validate;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
@@ -28,8 +30,6 @@ public class DataGenerators {
                                                                       Random random,
                                                                       int minLen,
                                                                       int maxLen) {
-        //this.rand = random;
-        //this.rand = random;
         return () -> {
             if (random.nextDouble() > reuseProbability || stringReservoir.isEmpty()) {
                 final String randomString = createRandomString(minLen, maxLen, random);
@@ -97,6 +97,22 @@ public class DataGenerators {
         public default void setRandom(Random random){
             //rand = random;
         }
+    }
+
+    public static Generator<List<Integer>> createReservoirBasedIntegerListSupplier(ArrayList<List<Integer>> reservoir,
+                                                                                   double reuseProbability,
+                                                                                   Random random, int dataQuantaSize) {
+        return () -> {
+            if (random.nextDouble() > reuseProbability || reservoir.isEmpty()) {
+                final List<Integer> randomIntegerList = new ArrayList<>();
+                for(int i=0;i<dataQuantaSize;i++)
+                    randomIntegerList.add(random.nextInt());
+                reservoir.add(randomIntegerList);
+                return randomIntegerList;
+            } else {
+                return reservoir.get(random.nextInt(reservoir.size()));
+            }
+        };
     }
 
 }

@@ -3,25 +3,29 @@ package org.qcri.rheem.profiler.spark;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.spark.operators.*;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Utilities to create {@link SparkOperatorProfiler} instances.
  */
-public class OperatorProfilers {
+public class SparkOperatorProfilers {
 
     /**
      * Create a default {@link SparkTextFileSource} profiler.
      */
-    public static SparkTextFileSourceProfiler createSparkTextFileSourceProfiler() {
+    public static SparkTextFileSourceProfiler createSparkTextFileSourceProfiler(int dataQuataSize) {
         return createSparkTextFileSourceProfiler(
-                DataGenerators.createRandomStringSupplier(20, 40, new Random(42)),
+                DataGenerators.createRandomStringSupplier(20 + dataQuataSize, 40 + dataQuataSize, new Random()),
                 new Configuration()
         );
     }
@@ -37,11 +41,36 @@ public class OperatorProfilers {
     /**
      * Create a default {@link SparkCollectionSource} profiler.
      */
-    public static SparkTextFileSourceProfiler createSparkCollectionSourceProfiler() {
+    public static SparkCollectionSourceProfiler createSparkCollectionSourceProfiler(int dataQuataSize, Type type) {
+        if(type==String.class)
+            return createSparkCollectionSourceProfiler(
+                    DataGenerators.createRandomStringSupplier(20 + dataQuataSize, 40 + dataQuataSize, new Random(42)),
+                    new Configuration(),String.class
+            );
+        else
+            return createSparkCollectionSourceProfiler(
+                    DataGenerators.createRandomIntegerSupplier(20 + dataQuataSize, 40 + dataQuataSize, new Random(42)),
+                    new Configuration(),Integer.class
+            );
+    }
+
+    /**
+     * Create a default {@link SparkCollectionSource} profiler.
+     */
+    public static SparkTextFileSourceProfiler createSparkCollectionSourceProfiler(int dataQuataSize) {
         return createSparkCollectionSourceProfiler(
-                DataGenerators.createRandomStringSupplier(20, 40, new Random(42)),
+                DataGenerators.createRandomStringSupplier(20 + dataQuataSize, 40 + dataQuataSize, new Random(42)),
                 new Configuration()
         );
+    }
+
+    /**
+     * Create a custom {@link SparkTextFileSource} profiler.
+     */
+    public static <Out> SparkCollectionSourceProfiler createSparkCollectionSourceProfiler(Supplier<Out> dataGenerator,
+                                                                                     Configuration configuration,
+                                                                                     Class<Out> outClass) {
+        return new SparkCollectionSourceProfiler(configuration, dataGenerator,DataSetType.createDefault(outClass));
     }
 
     /**
@@ -55,13 +84,29 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkFlatMapOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkFlatMapProfiler() {
-        return createSparkFlatMapProfiler(
-                DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                RheemArrays::asList,
-                Integer.class, Integer.class,
-                new Configuration()
-        );
+    public static SparkUnaryOperatorProfiler createSparkFlatMapProfiler(int dataQuataSize, int UdfComplexity) {
+        if (dataQuataSize==1){
+            return createSparkFlatMapProfiler(
+                    DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                    integer -> new ArrayList<>(Arrays.asList(UdfGenerators.mapIntUDF(1,dataQuataSize).apply(integer))),
+                    Integer.class, Integer.class,
+                    new Configuration()
+            );
+        } else {
+            return new SparkUnaryOperatorProfiler(
+                    () -> new SparkFlatMapOperator<>(
+                            DataSetType.createDefault(List.class),
+                            DataSetType.createGrouped(List.class),
+                            new FlatMapDescriptor<List,Integer>(
+                                    integerList -> (ArrayList<Integer>) integerList.stream().map(el->(Integer)UdfGenerators.mapIntUDF(UdfComplexity,dataQuataSize).apply((Integer) el))
+                                            .collect(Collectors.toList()),
+                                    List.class,
+                                    Integer.class
+                            )),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuataSize)
+            );
+        }
     }
 
 
@@ -87,13 +132,26 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkMapOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkMapProfiler() {
-        return createSparkMapProfiler(
-                DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                i -> i,
-                Integer.class, Integer.class,
-                new Configuration()
-        );
+    public static SparkUnaryOperatorProfiler createSparkMapProfiler(int dataQuataSize, int UdfComplexity) {
+        if (dataQuataSize==1){
+            return createSparkMapProfiler(
+                    DataGenerators.createRandomIntegerSupplier(new Random()),
+                    i -> i,
+                    Integer.class, Integer.class,
+                    new Configuration()
+            );
+        } else {
+            return new SparkUnaryOperatorProfiler(
+                    () -> new SparkMapOperator<>(
+                            DataSetType.createDefault(List.class),
+                            DataSetType.createDefault(List.class),
+                            new TransformationDescriptor<List,List>(i -> UdfGenerators.mapIntListUDF(UdfComplexity,i.size()).apply(i),List.class, List.class)
+                    ),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuataSize)
+            );
+        }
+
     }
 
 
@@ -119,13 +177,24 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkFilterOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkFilterProfiler() {
-        return createSparkFilterProfiler(
-                DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                i -> true,
-                Integer.class,
-                new Configuration()
-        );
+    public static SparkUnaryOperatorProfiler createSparkFilterProfiler(int dataQuataSize, int UdfComplexity) {
+        if(dataQuataSize==1){
+            return createSparkFilterProfiler(
+                    DataGenerators.createRandomIntegerSupplier(new Random()),
+                    UdfGenerators.filterIntUDF(UdfComplexity,dataQuataSize),
+                    Integer.class,
+                    new Configuration()
+            );
+        } else {
+            return new SparkUnaryOperatorProfiler(
+                    () -> new SparkFilterOperator<>(
+                            DataSetType.createDefault(List.class),
+                            new PredicateDescriptor<>(UdfGenerators.filterIntListUDF(UdfComplexity,(int)dataQuataSize), List.class)
+                    ),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.00, new Random(), (int) dataQuataSize)
+            );
+        }
     }
 
 
@@ -150,11 +219,11 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkReduceByOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkReduceByProfiler() {
+    public static SparkUnaryOperatorProfiler createSparkReduceByProfiler(int dataQuataSize, int UdfComplexity) {
         return createSparkReduceByProfiler(
-                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4 + dataQuataSize, 20 + dataQuataSize),
                 String::new,
-                (s1, s2) -> s1,
+                (s1, s2) -> { return UdfGenerators.mapStringUDF(UdfComplexity,dataQuataSize).apply(s1);},
                 String.class,
                 String.class,
                 new Configuration()
@@ -184,10 +253,10 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkGlobalReduceOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkGlobalReduceProfiler() {
+    public static SparkUnaryOperatorProfiler createSparkGlobalReduceProfiler(int dataQuataSize, int UdfComplexity) {
         return createSparkGlobalReduceProfiler(
-                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
-                (s1, s2) -> s1,
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4, 20),
+                (s1, s2) -> {return UdfGenerators.mapStringUDF(UdfComplexity,dataQuataSize).apply(s1);},
                 String.class,
                 new Configuration()
         );
@@ -213,9 +282,9 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkDistinctOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkDistinctProfiler() {
+    public static SparkUnaryOperatorProfiler createSparkDistinctProfiler(int dataQuataSize) {
         return createSparkDistinctProfiler(
-                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4 + dataQuataSize, 20 + dataQuataSize),
                 String.class,
                 new Configuration()
         );
@@ -237,9 +306,9 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkSortOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkSortProfiler() {
+    public static SparkUnaryOperatorProfiler createSparkSortProfiler(int dataQuataSize) {
         return createSparkSortProfiler(
-                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4 + dataQuataSize, 20 + dataQuataSize),
                 String.class,
                 new Configuration()
         );
@@ -262,9 +331,9 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkCountOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkCountProfiler() {
+    public static SparkUnaryOperatorProfiler createSparkCountProfiler(int dataQuataSize) {
         return createSparkCountProfiler(
-                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4 + dataQuataSize, 20 + dataQuataSize),
                 String.class,
                 new Configuration()
         );
@@ -286,10 +355,12 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkMaterializedGroupByOperator} profiler.
      */
-    public static SparkUnaryOperatorProfiler createSparkMaterializedGroupByProfiler() {
+    public static SparkUnaryOperatorProfiler createSparkMaterializedGroupByProfiler(int dataQuataSize, int UdfComplexity) {
         return createSparkMaterializedGroupByProfiler(
-                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
-                String::new,
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4 + dataQuataSize, 20 + dataQuataSize),
+                s->{
+                    return UdfGenerators.mapStringUDF(UdfComplexity,dataQuataSize).apply(s);
+                },
                 String.class,
                 String.class,
                 new Configuration()
@@ -318,11 +389,11 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkJoinOperator} profiler.
      */
-    public static BinaryOperatorProfiler createSparkJoinProfiler() {
+    public static BinaryOperatorProfiler createSparkJoinProfiler(int dataQuataSize, int UdfComplexity) {
         // NB: If we generate the Strings from within Spark, we will have two different reservoirs for each input.
-        final DataGenerators.Generator<String> stringGenerator = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20);
+        final DataGenerators.Generator<String> stringGenerator = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(), 4 + dataQuataSize, 20 + dataQuataSize);
         return createSparkJoinProfiler(
-                stringGenerator, String.class, String::new,
+                stringGenerator, String.class, s -> {return UdfGenerators.mapStringUDF(UdfComplexity,dataQuataSize).apply(s);},
                 stringGenerator, String.class, String::new,
                 String.class, new Configuration()
         );
@@ -356,12 +427,22 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkUnionAllOperator} profiler.
      */
-    public static BinaryOperatorProfiler createSparkUnionProfiler() {
-        return createSparkUnionProfiler(
-                DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                DataGenerators.createRandomIntegerSupplier(new Random(23)),
-                Integer.class, new Configuration()
-        );
+    public static BinaryOperatorProfiler createSparkUnionProfiler(int dataQuataSize) {
+        if (dataQuataSize==1) {
+            return createSparkUnionProfiler(
+                    DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                    DataGenerators.createRandomIntegerSupplier(new Random(23)),
+                    Integer.class, new Configuration()
+            );
+        } else {
+            return new BinaryOperatorProfiler(
+                    () -> new SparkUnionAllOperator<>(DataSetType.createDefault(List.class)),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.70, new Random(), (int) dataQuataSize),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.70, new Random(), (int) dataQuataSize)
+            );
+        }
+
     }
 
     /**
@@ -383,12 +464,22 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkCartesianOperator} profiler.
      */
-    public static BinaryOperatorProfiler createSparkCartesianProfiler() {
-        return createSparkCartesianProfiler(
-                DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                DataGenerators.createRandomIntegerSupplier(new Random(23)),
-                Integer.class, Integer.class, new Configuration()
-        );
+    public static BinaryOperatorProfiler createSparkCartesianProfiler(int dataQuataSize) {
+        if (dataQuataSize==1) {
+            return createSparkCartesianProfiler(
+                    DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                    DataGenerators.createRandomIntegerSupplier(new Random(23)),
+                    Integer.class, Integer.class, new Configuration()
+            );
+        } else {
+            return new BinaryOperatorProfiler(
+                    () -> new SparkCartesianOperator<>(DataSetType.createDefault(List.class), DataSetType.createDefault(List.class)),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.10, new Random(), (int) dataQuataSize),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.10, new Random(), (int) dataQuataSize)
+            );
+        }
+
     }
 
     /**
@@ -411,22 +502,31 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkLocalCallbackSink} profiler.
      */
-    public static SinkProfiler createSparkLocalCallbackSinkProfiler() {
-        return createSparkLocalCallbackSinkProfiler(
-                DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                Integer.class,
-                new Configuration()
-        );
+    public static SparkSinkProfiler createSparkLocalCallbackSinkProfiler(int dataQuataSize) {
+        if (dataQuataSize==1){
+            return createSparkLocalCallbackSinkProfiler(
+                    DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                    Integer.class,
+                    new Configuration()
+            );
+        } else {
+            return new SparkSinkProfiler(
+                    () -> new SparkLocalCallbackSink<>(dataQuantum -> { }, DataSetType.createDefault(List.class)),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.10, new Random(), (int) dataQuataSize)
+            );
+        }
+
     }
 
     /**
      * Creates a custom {@link SparkLocalCallbackSink} profiler.
      */
-    public static <Type> SinkProfiler createSparkLocalCallbackSinkProfiler(
+    public static <Type> SparkSinkProfiler createSparkLocalCallbackSinkProfiler(
             Supplier<Type> dataGenerator,
             Class<Type> typeClass,
             Configuration configuration) {
-        return new SinkProfiler(
+        return new SparkSinkProfiler(
                 () -> new SparkLocalCallbackSink<>(dataQuantum -> { }, DataSetType.createDefault(typeClass)),
                 configuration,
                 dataGenerator
