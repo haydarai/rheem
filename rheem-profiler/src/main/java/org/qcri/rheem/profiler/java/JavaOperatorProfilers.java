@@ -25,10 +25,12 @@ public class JavaOperatorProfilers {
     }
 
     public static JavaCollectionSourceProfiler createJavaCollectionSourceProfiler(int dataQuantaScale) {
-        if (dataQuantaScale!=0) {
-            return new JavaCollectionSourceProfiler(DataGenerators.createRandomStringSupplier(dataQuantaScale,dataQuantaScale,new Random()));
+        if (dataQuantaScale==1) {
+            return new JavaCollectionSourceProfiler(DataGenerators.createRandomStringSupplier(dataQuantaScale,dataQuantaScale,new Random()),
+                    new ArrayList(),String.class);
         } else {
-            return new JavaCollectionSourceProfiler(DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuantaScale));
+            return new JavaCollectionSourceProfiler(DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuantaScale),
+                    new ArrayList(),List.class);
         }
     }
 
