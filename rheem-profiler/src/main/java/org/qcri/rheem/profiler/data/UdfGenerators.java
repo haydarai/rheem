@@ -23,6 +23,13 @@ public class UdfGenerators <Input, Output> {
         this.outputType = outputType;
     }
 
+    /**
+     * Map UDFs for Integer Basic dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param complexityCoef other coefficients to use when provided
+     * @return
+     */
     public static FunctionDescriptor.SerializableFunction<Integer, Integer> mapIntUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
             switch (complexity) {
                 case 1:
@@ -56,6 +63,13 @@ public class UdfGenerators <Input, Output> {
             }
     }
 
+    /**
+     * Map UDFs for Integer Lists dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param coef other coefficients to use when provided
+     * @return
+     */
     public static FunctionDescriptor.SerializableFunction<List,List> mapIntListUDF(int complexity,  int dataQuataSize, long... coef){
         return  i -> (List<Integer>)i.stream()
                 .map(el -> (Integer) UdfGenerators.mapIntUDF(complexity,dataQuataSize).apply((Integer) el))
@@ -131,6 +145,14 @@ public class UdfGenerators <Input, Output> {
             default:
                 return null;
         }
+    }
+
+    public static FunctionDescriptor.SerializableFunction<Integer, String> InttoString( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return i -> Integer.toString(i);
+    }
+
+    public static FunctionDescriptor.SerializableFunction<Integer, String> StringtoInt( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return i -> Integer.toString(i);
     }
 
     private static Integer highCompexity(int dataQuataSize, int input){

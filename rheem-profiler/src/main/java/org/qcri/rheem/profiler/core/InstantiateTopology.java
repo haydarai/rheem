@@ -49,7 +49,7 @@ public class InstantiateTopology {
         totalNodeNumber = nodeNumber;
         for(Topology sinkTopology:sinkTopologies){
             // first fill with equal number nodes ie each pipeline topology
-            int PipelineNumber = sinkTopology.getNodeNumber();
+            int PipelineNumber = sinkTopology.getTopologyNumber();
 
             equalFillNumber = totalNodeNumber/PipelineNumber;
             restFillNumber =totalNodeNumber%PipelineNumber;
@@ -61,6 +61,7 @@ public class InstantiateTopology {
 
     /**
      * Instantiate the topology with the number of nodes it contains BUT the filling happens in the Profiling Plan Builder
+     * PS: After this step the number of nodes of each Topology should be correct
      * @param topology
      * @return
      */
@@ -72,51 +73,29 @@ public class InstantiateTopology {
         //do {
             // Handle the case if the sink is pipeline Topology
         Stack<Tuple2<String, OperatorProfiler>> nodes = new Stack<>();
+        int nodeNumber=0;
 
         if (topology.isPipeline()){
                 // here we try to fill the topologies as we go up until sources with actual nodes
                 // update node number of current topology
-
-
-
-                //Set nodes for the sink topology
-
-                // TODO: add the exhaustively filling using the restFillingNodes all possible combinations of the topologies
-                for(int i=1;i<=equalFillNumber;i++)
-                    nodes.push(new Tuple2<>("unaryNode", new OperatorProfiler() {}));
+                nodeNumber = equalFillNumber;
                 // Add one node from the restFillingNodes
                 if (restFillNumber!=0) {
-                    nodes.push(new Tuple2<String, OperatorProfiler>("unaryNode", new OperatorProfiler(){}));
+                    nodeNumber += 1;
                     restFillNumber -= 1;
                 }
-                 /*   // set node number of the current topology
-                    if (topology.getNodeNumber()==-1){
-                        topology.setNodeNumber(equalFillNumber+1);
-                    }
-                } else {
-                    // set node number of the current topology
-                    if (topology.getNodeNumber()==-1){
-                        topology.setNodeNumber(equalFillNumber);
-                    }
-                }*/
 
                 // correct node number
-                topology.setNodeNumber(nodes.size());
-                topology.setNodes(nodes);
-
+                topology.setNodeNumber(nodeNumber);
             } else {
                 // Handle the case of Juncture topology
 
                 //Set nodes for the sink topology
-                //LinkedHashMap nodes = new LinkedHashMap();
                 // Always set only one node number that will be replaced in the ProfilingPlanBuilder with a binary Profiling Operator
-                nodes.push(new Tuple2<>("binaryNode", new OperatorProfiler() {}));
-
-                topology.setNodes(nodes);
-
+                // correct node number
+                topology.setNodeNumber(1);
             }
             // Handle the case if the sink is juncture Topology
-
 
         // recurse the predecessor tpgs
         //get the predecessors of tmp topology

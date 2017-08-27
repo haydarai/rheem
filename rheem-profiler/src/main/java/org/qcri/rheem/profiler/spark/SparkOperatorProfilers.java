@@ -430,6 +430,27 @@ public class SparkOperatorProfilers {
     public static BinaryOperatorProfiler createSparkUnionProfiler(int dataQuataSize) {
         if (dataQuataSize==1) {
             return createSparkUnionProfiler(
+                    DataGenerators.createRandomStringSupplier(10 + dataQuataSize,20 + dataQuataSize,new Random(42)),
+                    DataGenerators.createRandomStringSupplier(dataQuataSize+ 10,dataQuataSize+ 20,new Random(23)),
+                    String.class, new Configuration()
+            );
+        } else {
+            return new BinaryOperatorProfiler(
+                    () -> new SparkUnionAllOperator<>(DataSetType.createDefault(List.class)),
+                    new Configuration(),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.70, new Random(), (int) dataQuataSize),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.70, new Random(), (int) dataQuataSize)
+            );
+        }
+
+    }
+
+    /**
+     * Creates a default {@link SparkUnionAllOperator} profiler.
+     */
+    public static BinaryOperatorProfiler createSparkIntegerUnionProfiler(int dataQuataSize) {
+        if (dataQuataSize==1) {
+            return createSparkUnionProfiler(
                     DataGenerators.createRandomIntegerSupplier(new Random(42)),
                     DataGenerators.createRandomIntegerSupplier(new Random(23)),
                     Integer.class, new Configuration()

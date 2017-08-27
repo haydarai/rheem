@@ -11,12 +11,19 @@ import java.util.stream.Collectors;
  */
 public class ProfilingConfigurer {
 
-    private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
+    //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
+    private static final String DEFAULT_INPUT_CARDINALITIES = "1";
 
-    private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
+    //private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
 
+    private static final String DEFAULT_DATA_QUATA_SIZES = "1";
+
+    // TODO: replace with actual read functions from a user input file
     private static final String DEFAULT_UDF_COMPLEXITIES = "1,2,3";
 
+    private static final String DEFAULT_SELECTIVITY_COMPLEXITIES = "1,2,3";
+
+    // The below can be applied only for unary operator profiling
     private static final String DEFAULT_BINARY_INPUT_RATIOS = "1,10,100";
 
     private static final String DEFAULT_PLATEFORM = "java";
@@ -43,7 +50,7 @@ public class ProfilingConfigurer {
         List<Integer> inputRatio = Arrays.stream(DEFAULT_BINARY_INPUT_RATIOS.split(",")).map(Integer::valueOf).collect(Collectors.toList());
 
         // Set profiling configuration
-        pc.setProfilingPlateform(DEFAULT_PLATEFORM);
+        pc.setProfilingPlateform("java");
         pc.setBushyGeneration(DEFAULT_BUSHY_GENERATION);
         pc.setProfilingPlanGenerationEnumeration("exhaustive");
         pc.setProfilingConfigurationEnumeration("exhaustive");

@@ -11,10 +11,7 @@ import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import sun.security.provider.SHA;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -28,11 +25,16 @@ public class ProfilingPlanBuilder {
 
     private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("textsource", "collectionsource"));
 
+    private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("reduce"));
+
     private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct", "distinct-string",
-            "distinct-integer", "sort", "sort-string", "sort-integer", "count", "callbacksink", "collect",
+            "distinct-integer", "sort", "sort-string", "sort-integer", "count",
             "word-count-split", "word-count-canonicalize", "word-count-count"));
 
     private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("groupby", "join", "union", "cartesian"));
+
+    private static List<String> Test_BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("union"));
+
 
     private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
 
@@ -60,10 +62,10 @@ public class ProfilingPlanBuilder {
 
         for(Shape s:shapes){
             if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("exhaustive")){
-                topologyPlanProfilers.add(singleExhaustiveProfilingPlanBuilder(s));
+                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1));
             } else {
                 // TODO: add more profiling plan generation enumeration: random, worstPlanGen (more execution time),betterPlanGen (less execution time)
-                topologyPlanProfilers.add(singleExhaustiveProfilingPlanBuilder(s));
+                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1));
             }
         }
         return topologyPlanProfilers;
@@ -71,40 +73,167 @@ public class ProfilingPlanBuilder {
 
 
     /**
-     * Generates a list of exhaustive {@link PlanProfiler}s for the given {@link Topology}
+     * Generates a list that contains a {@param numberPlans} of random {@link PlanProfiler}s for the given {@param shape}
      * @param shape
      * @return
      */
-    public static List<PlanProfiler> singleExhaustiveProfilingPlanBuilder(Shape shape){
+    public static List<PlanProfiler> randomProfilingPlanBuilder(Shape shape, int numberPlans){
         List<PlanProfiler> planProfilers = new ArrayList<>();
         PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
 
-        // Fill with unary operator profilers
-        for(Topology t:shape.getPipelineTopologies()){
-            for(int i=1;i<=t.getNodes().size();i++)
-                t.getNodes().put(i, new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
+        for (int p=1;p<=numberPlans;p++){
+
+            // Fill the sources
+            for(Topology t:shape.getSourceTopologies()){
+                prepareSource(t);
+            }
+
+            // Fill with unary operator profilers
+            for(Topology t:shape.getPipelineTopologies()){
+                // check if the nodes are not already filled in the source or sink
+                if ((t.getNodes().isEmpty()||(!t.isSource())))
+                    for(int i=1;i<=t.getNodeNumber();i++)
+                    t.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
+            }
+
+            // Fill with binary operator profilers
+            for(Topology t:shape.getJunctureTopologies()){
+                // check if the nodes are not already filled in the source or sink
+                if (t.getNodes().isEmpty())
+                    t.getNodes().push(new Tuple2<String, OperatorProfiler>("binaryNode", binaryNodeFill()));
+            }
+
+
+            // Fill the sinks
+            //for(Topology t:shape.getSinkTopology()){
+                prepareSink(shape.getSinkTopology());
+            //}
+
+            // Build the planProfiler
+            buildPlanProfiler(shape);
+
+            //planProfiler
+            planProfilers.add(planProfiler);
+
         }
-
-        // Fill with binary operator profilers
-        for(Topology t:shape.getJunctureTopologies()){
-            //for(int i=1;i<=t.getNodes().size();i++)
-            t.getNodes().put(1, new Tuple2<String, OperatorProfiler>("binaryNode", binaryNodeFill()));
-        }
-
-        // Build the planProfiler
-        buildPlanProfiler(planProfiler);
-
-        //planProfiler
-        planProfilers.add(planProfiler);
-
-
         return planProfilers;
     }
 
     /**
-     * Build the plan profiler; connect the nodes and build rheem plan;
+     * Generates a list of exhaustive {@link PlanProfiler}s for the given {@link Shape}
+     * @param shape
+     * @return
      */
-    private static void buildPlanProfiler(PlanProfiler planProfiler){
+    public static List<PlanProfiler> exhaustiveProfilingPlanBuilder(Shape shape){
+        List<PlanProfiler> planProfilers = new ArrayList<>();
+        PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
+
+        // Start with the sink operator
+        //shape.getSinkTopology().getNode
+        return planProfilers;
+    }
+        /**
+         * Build the plan profiler; connect the nodes and build rheem plan;
+         */
+    private static void buildPlanProfiler(Shape shape){
+
+        // Start with the sink operator
+        Topology sinkTopology = shape.getSinkTopology();
+
+        // recursively connect predecessor nodes
+
+        Stack<Tuple2<String, OperatorProfiler>> sinkNodes = (Stack<Tuple2<String, OperatorProfiler>>) sinkTopology.getNodes().clone();
+
+        //Tuple2<String, OperatorProfiler> sinkNode = (Tuple2<String, OperatorProfiler>) sinkTopology.getNodes().iterator().next();
+        Tuple2<String, OperatorProfiler> lastConnectedNode = connectNodes(sinkTopology, sinkTopology.getNodes().pop(),0);
+
+
+        sinkTopology.setNodes(sinkNodes);
+        // connect the lastConnectedNode with the head node of successive topology
+        //for
+
+        //preparePlanProfiler(planProfiler);
+
+    }
+
+    /**
+     * The below method will connect nodes inside of a topology and returns the head node so to connect it with the previous topology
+     * @param topology
+     * @return
+     */
+    private static Tuple2<String,OperatorProfiler> connectNodes(Topology topology, Tuple2<String, OperatorProfiler> currentnode, int inputSlot) {
+
+        Stack nodes = topology.getNodes();
+        Tuple2<String, OperatorProfiler> previousNode = null;
+        Tuple2<String, OperatorProfiler> currentNode = currentnode;
+
+        // Loop through all the nodes
+        while(!nodes.isEmpty()){
+            previousNode=currentNode;
+            currentNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
+
+            //check if the first input slot of the previous node is filled
+            //if(previousNode.getField1().getOperator().isUnconnected()){
+                // TODO: check the dataType and correct it
+                //currentNode.getField1().getOperator()
+                // connect previous with current node
+                currentNode.getField1().getOperator().connectTo(0,previousNode.getField1().getOperator(),inputSlot);
+
+                // Reset inputSlot to 0 after connecting the last pipeline node with the jucture topology's node
+                // so to avoid error when connecting the nodes of a pipeline topology
+                if (inputSlot!=0)
+                    inputSlot = 0;
+           // }
+        }
+
+        // at the end of this method should connect the lastConnectedNode with the head node of predecessor topology
+        // recurse the predecessor tpgs
+        //get the predecessors of tmp topology
+        if  (!(topology.getInput(0).getOccupant()==null)){
+            List<Topology> predecessors = topology.getPredecessors();
+            int inputslot = 0;
+            for(Topology t:predecessors){
+                connectNodes(t, currentNode, inputslot);
+                inputslot++;
+            }
+
+        }
+
+        return currentNode;
+    }
+
+    private static void preparePlanProfiler(Topology topology) {
+        //for(Topology t:planProfiler.ge)
+    }
+
+    /**
+     * Add nodes to source Topology (i.e. pipeline topology)
+     * PS: Source node i counted in the node number
+     * @param topology
+     */
+    private static void prepareSource(Topology topology) {
+        // add the first source node
+        topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sourceNode", sourceNodeFill()));
+        // add the remaining nodes with unary nodes
+        for(int i=1;i<=topology.getNodeNumber()-1;i++)
+                topology.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
+    }
+
+    /**
+     * Add the sink to the sink topology; NOTE: that the sink is node included as a node
+     * @param topology
+     */
+    private static void prepareSink(Topology topology) {
+        // check if the sink is already filled as pipeline/source Topology.
+        if (topology.getNodes().empty()){
+            //Add the first unary nodes
+            for(int i=1;i<=topology.getNodeNumber();i++)
+                topology.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
+            // Add the last sink node
+            topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sinkNode", sinkNodeFill()));
+        } else{
+            topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sinkNode", sinkNodeFill()));
+        }
 
     }
 
@@ -112,9 +241,27 @@ public class ProfilingPlanBuilder {
      * Fills the toplogy instance with unary profiling operators
      * @return
      */
+    private static OperatorProfiler sinkNodeFill(){
+        // we currently support use the collection source
+        return getProfilingOperator(SINK_EXECUTION_OPLERATORS.get(0));
+    }
+
+    /**
+     * Fills the toplogy instance with unary profiling operators
+     * @return
+     */
+    private static OperatorProfiler sourceNodeFill(){
+        // we currently support collection source
+        return getProfilingOperator(SOURCE_EXECUTION_OPLERATORS.get(1));
+    }
+
+    /**
+     * Fills the toplogy instance with unary profiling operators
+     * @return
+     */
     private static OperatorProfiler unaryNodeFill(){
-        int rnd = (int)(Math.random() * UNARY_EXECUTION_OPLERATORS.size());
-        return getProfilingOperator(UNARY_EXECUTION_OPLERATORS.get(rnd));
+        int rnd = (int)(Math.random() * Test_UNARY_EXECUTION_OPLERATORS.size());
+        return getProfilingOperator(Test_UNARY_EXECUTION_OPLERATORS.get(rnd));
     }
 
     /**
@@ -122,8 +269,8 @@ public class ProfilingPlanBuilder {
      * @return
      */
     private static OperatorProfiler binaryNodeFill(){
-        int rnd = (int)(Math.random() * BINARY_EXECUTION_OPLERATORS.size());
-        return getProfilingOperator(BINARY_EXECUTION_OPLERATORS.get(rnd));
+        int rnd = (int)(Math.random() * Test_BINARY_EXECUTION_OPLERATORS.size());
+        return getProfilingOperator(Test_BINARY_EXECUTION_OPLERATORS.get(rnd));
     }
 
     /**

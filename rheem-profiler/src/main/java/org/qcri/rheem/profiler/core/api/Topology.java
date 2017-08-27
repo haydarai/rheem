@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Handles the topology of generated profiling plans.
@@ -30,13 +31,17 @@ public interface Topology {
         return this.getAllOutputs().length;
     }
 
-    Topology createCopy();
+    Topology createCopy(int topologyNumber);
 
     int getNodeNumber();
 
-    LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> getNodes();
+    int getTopologyNumber();
 
-    void setNodes(LinkedHashMap nodes);
+    void setNodeNumber(int nodeNumber);
+
+    Stack<Tuple2<String,OperatorProfiler>> getNodes();
+
+    void setNodes(Stack nodes);
 
     List<Topology> getPredecessors();
 
@@ -129,7 +134,7 @@ public interface Topology {
      * @return whether this topology is a sink
      */
     default boolean isSink() {
-        return this.getNumOutputs() == 0;
+        return (this.getOutput(0).getOwner()==null);
     }
 
     /**
@@ -137,8 +142,11 @@ public interface Topology {
      *
      * @return whether this topology is a source
      */
+    //boolean isSource();
+
+    //void setSource(boolean b);
     default boolean isSource() {
-        return this.getNumInputs() == 0;
+        return (this.getInput(0).getOccupant()==null);
     }
 
     /**

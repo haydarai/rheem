@@ -346,6 +346,23 @@ public class JavaOperatorProfilers {
         if (dataQuantaSize == 1){
             return new JavaSinkProfiler(
                     () -> new JavaLocalCallbackSink<>(obj -> {
+                    }, DataSetType.createDefault(String.class)),
+                    DataGenerators.createRandomStringSupplier(10,20,new Random())
+            );
+        } else {
+            return new JavaSinkProfiler(
+                    () -> new JavaLocalCallbackSink<>(obj -> {
+                    }, DataSetType.createDefault(List.class)),
+                    DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.00, new Random(), (int) dataQuantaSize)
+            );
+        }
+
+    }
+
+    /*public static JavaSinkProfiler createJavaLocalCallbackSinkProfiler(int dataQuantaSize) {
+        if (dataQuantaSize == 1){
+            return new JavaSinkProfiler(
+                    () -> new JavaLocalCallbackSink<>(obj -> {
                     }, DataSetType.createDefault(Integer.class)),
                     DataGenerators.createRandomIntegerSupplier(new Random())
             );
@@ -357,7 +374,7 @@ public class JavaOperatorProfilers {
             );
         }
 
-    }
+    }*/
 
     public static <T> JavaSinkProfiler createCollectingJavaLocalCallbackSinkProfiler( int dataQuantaSize) {
         Collection<T> collector = new LinkedList<>();

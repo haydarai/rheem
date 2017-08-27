@@ -13,6 +13,12 @@
     <dependencies>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-profiler</artifactId>
+            <version>0.2.2-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-core</artifactId>
             <version>0.2.2-SNAPSHOT</version>
             <scope>test</scope>

@@ -76,12 +76,12 @@ public class TopologyGenerator {
         newGeneratedTopologies =0;
 
         for(int i=1;i<=previousGeneratedTopologies;i++){
-            Topology tmpPreviousTopology = topologyList.get(topologyList.size()-i).createCopy();
+            Topology tmpPreviousTopology = topologyList.get(topologyList.size()-i).createCopy(nodesNumber-1);
 
-            Topology[] tmp = new Topology[1];
+            //Topology[] tmp = new Topology[1];
 
-            Topology[] tmp2 = new Topology[1];
-            tmp2[0] = topologyList.get(topologyList.size()-i);
+            //Topology[] tmp2 = new Topology[1];
+            //tmp2[0] = topologyList.get(topologyList.size()-i);
             //System.arraycopy(tmp2, 0, tmp, 0,0);
             if (tmpPreviousTopology.isPipeline()){
                 // if the tmpPreviousTopology is pipeline the only one topology possiblity to generate (i.e 1 new juncture + 1 new pipeline)
@@ -99,10 +99,12 @@ public class TopologyGenerator {
                 newGeneratedTopologies+=1;
 
             } else {
-                // case of juncture topology; two possible topologies to generate (i.e: first is 1 new pipeline; second: 1 new juncture + 1 new pipeline)
+                // create another copy because we will be adding two topoloogies here
+                Topology tmpPreviousTopology2 = tmpPreviousTopology.createCopy(nodesNumber-1);
 
+
+                // case of juncture topology; two possible topologies to generate (i.e: first is 1 new pipeline; second: 1 new juncture + 1 new pipeline)
                 PipelineTopology tmpPipeline = new PipelineTopology(nodesNumber);
-                JunctureTopology tmpJuncture = new JunctureTopology(nodesNumber);
 
                 // Connect the last generated Topology with tmpJuncture
                 tmpPreviousTopology.connectTo(0,tmpPipeline,0);
@@ -110,6 +112,7 @@ public class TopologyGenerator {
                 // Add the first generated topology
                 topologyList.add(tmpPipeline);
 
+                JunctureTopology tmpJuncture = new JunctureTopology(nodesNumber);
                 PipelineTopology tmpPipeline2 = new PipelineTopology(nodesNumber);
                 // Connect the last generated Topology with tmpJuncture
                 tmpPreviousTopology.connectTo(0,tmpJuncture,0);
@@ -130,13 +133,13 @@ public class TopologyGenerator {
                 // get list with number of nodes N
                 int nodeNumberN = N;
                 List<Topology> SubListN = new ArrayList();
-                SubListN = topologyList.stream().filter(t -> (t.getNodeNumber()==nodeNumberN))
+                SubListN = topologyList.stream().filter(t -> (t.getTopologyNumber()==nodeNumberN))
                         .collect(Collectors.toList());
 
                 // get list with number of nodes M equals to number of current nodes minus N
                 final int nodeNumberM = nodesNumber-N;
                 List<Topology> SubListM = new ArrayList();
-                SubListM = topologyList.stream().filter(t -> (t.getNodeNumber()==nodeNumberM))
+                SubListM = topologyList.stream().filter(t -> (t.getTopologyNumber()==nodeNumberM))
                         .collect(Collectors.toList());
 
                 // Do exhaustive merge of both lists
@@ -172,8 +175,8 @@ public class TopologyGenerator {
     }
 
     private static Topology mergeTopologies(Topology t1, Topology t2, int nodeNumber) {
-        Topology t1Copy = t1.createCopy();
-        Topology t2Copy = t2.createCopy();
+        Topology t1Copy = t1.createCopy(nodeNumber-1);
+        Topology t2Copy = t2.createCopy(nodeNumber-1);
 
         JunctureTopology tmpJuncture = new JunctureTopology(nodeNumber);
 

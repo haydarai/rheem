@@ -33,13 +33,13 @@ public class PipelineTopology extends TopologyBase implements Topology {
         this.outputTopologySlots[0] = new OutputTopologySlot("out", this);
     }
 
-    public PipelineTopology(int nodeNumber){
+    public PipelineTopology(int topologyNumber){
 
         this.inputTopologySlots = new InputTopologySlot[1];
         this.outputTopologySlots = new OutputTopologySlot[1];
         this.inputTopologySlots[0] = new InputTopologySlot("in", this);
         this.outputTopologySlots[0] = new OutputTopologySlot("out", this);
-        this.nodeNumber=nodeNumber;
+        this.topologyNumber=topologyNumber;
     }
 
     public PipelineTopology(InputTopologySlot inputTopology, OutputTopologySlot outputTopology, int nodeNumber) {
@@ -69,8 +69,8 @@ public class PipelineTopology extends TopologyBase implements Topology {
      * create a copy of current topology
      * @return
      */
-    public Topology createCopy(){
-        PipelineTopology newTopology = new PipelineTopology();
+    public Topology createCopy(int topologyNumber){
+        PipelineTopology newTopology = new PipelineTopology(topologyNumber);
 
         InputTopologySlot[] tmpInputTopologySlots = new InputTopologySlot[1];
         OutputTopologySlot[] tmpOutTopologySlots = new OutputTopologySlot[1];
@@ -78,21 +78,21 @@ public class PipelineTopology extends TopologyBase implements Topology {
 
         for(InputTopologySlot in:this.inputTopologySlots){
             tmpInputTopologySlots[0]=in.clone();
+
+            if (this.inputTopologySlots[0].getOccupant() != null){
+                // input1 topology copy
+                Topology tmpNewTopology = this.inputTopologySlots[0].getOccupant().getOwner().createCopy(topologyNumber-1);
+                // connect the input1Copy topology with the new junctureCopy input1
+                tmpInputTopologySlots[0].setOccupant(tmpNewTopology.getOutput(0));
+            }
         }
 
         for(OutputTopologySlot out:this.outputTopologySlots){
             tmpOutTopologySlots[0]=out.clone();
         }
 
-        //InputTopologySlot[] inputTopologySlots = (InputTopologySlot[]) Arrays.stream(this.inputTopologySlots).map(el->el.clone())
-        //        .collect(Collectors.toList()).toArray();
-
-        //OutputTopologySlot[] outputTopologySlots = (OutputTopologySlot[]) Arrays.stream(this.outputTopologySlots).map(el->el.clone())
-        //        .collect(Collectors.toList()).toArray();
-
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
 
-        //newTopology.setOutputTopologySlots(tmpOutTopologySlots);
 
         return newTopology;
     }

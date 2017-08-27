@@ -29,8 +29,8 @@ public class Shape {
         return junctureTopologies;
     }
 
-    public int getTopologyNumer() {
-        return topologyNumer;
+    public int getTopologyNumber() {
+        return topologyNumber;
     }
 
     public Topology getSinkTopology() {
@@ -44,13 +44,21 @@ public class Shape {
 
     private List<JunctureTopology> junctureTopologies = new ArrayList<>();
 
-    private int topologyNumer;
+    private int topologyNumber;
 
     //private int nodeNumber = sinkTopologies.getNodeNumber()
 
     public Shape(Topology topology){
         this.sinkTopology = topology;
+
+        // set the shape nodenumber
+        topologyNumber = topology.getTopologyNumber();
     }
+
+    /**
+     * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )
+     * @param topology
+     */
 
     public void populateShape(Topology topology){
 
@@ -75,7 +83,7 @@ public class Shape {
 
             //get the predecessors of tmp topology
             if  (!(topology.getInput(0).getOccupant()==null)){
-                this.junctureTopologies.add((JunctureTopology) topology);
+                //this.junctureTopologies.add((JunctureTopology) topology);
                 List<Topology> predecessors = topology.getPredecessors();
                 for(Topology t:predecessors)
                     // recurse for predecessor topologies

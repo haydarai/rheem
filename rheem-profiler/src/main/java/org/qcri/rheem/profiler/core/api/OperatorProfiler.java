@@ -64,6 +64,7 @@ public abstract class OperatorProfiler {
         this.platform = operatorGenerator.get().getPlatform();
         this.operatorGenerator = operatorGenerator;
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
+        // Assign the operator
         this.operator=this.operatorGenerator.get();
         //this.executor = ProfilingUtils.fakeJavaExecutor();
         this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));

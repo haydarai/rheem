@@ -15,8 +15,8 @@ public class JavaCollectionSourceProfiler extends JavaSourceProfiler {
 
     private Collection<Object> sourceCollection;
 
-    public JavaCollectionSourceProfiler(Supplier<?> dataQuantumGenerator) {
-        super(null, dataQuantumGenerator);
+    public <T extends Object>JavaCollectionSourceProfiler(Supplier<?> dataQuantumGenerator, ArrayList<T> collection, Class<T> out) {
+        super(()->new JavaCollectionSource<>(collection, DataSetType.createDefault(out)), dataQuantumGenerator);
         this.operatorGenerator = this::createOperator; // We can only pass the method reference here.
     }
 

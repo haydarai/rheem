@@ -1,11 +1,11 @@
 package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Created by migiwara on 08/07/17.
@@ -33,6 +33,16 @@ public class TopologyBase implements Topology {
      */
     protected OutputTopologySlot[] outputTopologySlots;
 
+
+
+
+    /**
+     * This important variable saves the the layer of the topology (i.e. for how many number of nodes it was created)
+     * PS: first nodeNumber implementation was having this purpose too as well as the number of number of nodes that is
+     * updated after instantiation
+     */
+    protected int topologyNumber;
+
     /**
      * Number of nodes in the topology
      */
@@ -41,13 +51,25 @@ public class TopologyBase implements Topology {
     /**
      * Nodes inside a Topology
      */
-    private LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> nodes;
+    //private LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> nodes;
+    private Stack<Tuple2<String,OperatorProfiler>> nodes = new Stack<>();
 
     /**
      * Optional name. Helpful for debugging.
      */
     private String name;
 
+
+
+    /**
+     * true if the topology is a source topology
+     *//*
+    private boolean isSource = false;
+
+    *//**
+     * true if the topology is a sink topology
+     *//*
+    private boolean isSink = false;*/
     /*
     public Topology(){
         Nodes = new LinkedHashMap();
@@ -59,6 +81,10 @@ public class TopologyBase implements Topology {
         Nodes = nodes;
     }*/
 
+    public int getTopologyNumber() {
+        return topologyNumber;
+    }
+
     public int getNodeNumber() {
         return nodeNumber;
     }
@@ -67,11 +93,11 @@ public class TopologyBase implements Topology {
         this.nodeNumber = nodeNumber;
     }
 
-    public LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> getNodes() {
+    public Stack<Tuple2<String,OperatorProfiler>> getNodes() {
         return this.nodes;
     }
 
-    public void setNodes(LinkedHashMap nodes) {
+    public void setNodes(Stack nodes) {
         this.nodes = nodes;
     }
 
@@ -89,7 +115,7 @@ public class TopologyBase implements Topology {
      * create a copy of current topology
      * @return
      */
-    public Topology createCopy(){
+    public Topology createCopy(int topologyNumber){
         Topology newTopology = new TopologyBase();
 
         newTopology.setInputTopologySlots(this.inputTopologySlots);
@@ -118,4 +144,23 @@ public class TopologyBase implements Topology {
     public void setName(String name) {
         this.name = name;
     }
+
+    /*@Override
+    public boolean isSink() {
+        return isSink;
+    }
+
+    public void setSink(boolean sink) {
+        isSink = sink;
+    }
+
+    @Override
+    public boolean isSource() {
+        return isSource;
+    }
+
+    public void setSource(boolean source) {
+        isSource = source;
+    }*/
+
 }

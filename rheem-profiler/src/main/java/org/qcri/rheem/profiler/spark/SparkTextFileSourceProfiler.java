@@ -2,13 +2,16 @@ package org.qcri.rheem.profiler.spark;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Serializable;
 import java.util.function.Supplier;
 
 /**
@@ -26,7 +29,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
     private SparkTextFileSourceProfiler(String fileUrl,
                                         Configuration configuration,
                                         Supplier<?> dataQuantumGenerator) {
-        super(() -> {SparkTextFileSource op= new SparkTextFileSource(fileUrl); op.setName("SparkTextFileSource"); return op;},
+        super((Supplier<SparkExecutionOperator> & Serializable) () -> {SparkTextFileSource op= new SparkTextFileSource(fileUrl); op.setName("SparkTextFileSource"); return op;},
                 configuration, dataQuantumGenerator);
         this.fileUrl = fileUrl;
     }

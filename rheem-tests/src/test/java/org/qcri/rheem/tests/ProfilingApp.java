@@ -1,14 +1,12 @@
-package org.qcri.rheem.profiler.core.api;
+package org.qcri.rheem.tests;
 
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.java.Java;
 import org.qcri.rheem.profiler.core.*;
+import org.qcri.rheem.profiler.core.api.*;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -16,7 +14,7 @@ import java.util.stream.Collectors;
  */
 public class ProfilingApp {
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;
         if (args.length==1)
@@ -32,7 +30,7 @@ public class ProfilingApp {
 
         //RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
 
-        int nodeNumber = 3;
+        int nodeNumber = 2;
 
         switch (profileTesting){
             case "single_operator_profiling":

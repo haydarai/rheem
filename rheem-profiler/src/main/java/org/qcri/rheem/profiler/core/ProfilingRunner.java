@@ -13,10 +13,7 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.Java;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
-import org.qcri.rheem.profiler.core.api.PlanProfiler;
-import org.qcri.rheem.profiler.core.api.ProfilingConfig;
-import org.qcri.rheem.profiler.core.api.ProfilingPlan;
+import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
@@ -27,6 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -64,13 +63,84 @@ public class ProfilingRunner{
         gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
     }
 
-    public static void exhaustiveProfiling(List<List<PlanProfiler>> planProfiler,
+    /*public static void exhaustiveProfiling(List<List<PlanProfiler>> planProfiler,
                                          ProfilingConfig profilingConfiguration){
         profilingConfig = profilingConfiguration;
         for (List<PlanProfiler>list:planProfiler)
             list.stream()
                 .forEach(plan ->  System.out.println(executePipelineProfiling(plan).toCsvString()));
+    }*/
+
+    /**
+     * This method will execute the rheem plan associated with the input {@link Shape} with all possible configuration parameters:
+     * - input cardinality (for the source operators)
+     * // TODO: - input data type
+     * - data quanta size
+     * - udf complexity for each operator
+     * - selectivty complexity
+     * @param shapes
+     * @param profilingConfiguration
+     * @throws IOException
+     * @throws URISyntaxException
+     */
+    public static void exhaustiveProfiling(List<Shape> shapes,
+                                           ProfilingConfig profilingConfiguration) {
+        profilingConfig = profilingConfiguration;
+        for (Shape s:shapes){
+            // perform the exhaustive Run
+
+            // Loop through all dataInputSize
+            profilingConfiguration.getInputCardinality().stream()
+                    .forEach(inputCardinality ->{
+                            executeShapeProfiling(s);
+                    });
+
+        }
     }
+
+    private static OperatorProfiler.Result executeShapeProfiling(Shape shape) {
+
+
+        //RheemContext rheemContext1 = new RheemContext();
+        //rheemContext1.register(Spark.basicPlugin());
+        switch (profilingConfig.getProfilingPlateform()) {
+            case "java":
+                rheemContext = new RheemContext().with(Java.basicPlugin());
+               //rheemContext = new RheemContext().with(Java.basicPlugin());
+            case "spark":
+                rheemContext = new RheemContext().with(Spark.basicPlugin());
+        }
+        List<String> results = new ArrayList<>();
+
+        LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(results, String.class);
+
+        //plan.sinkOperatorProfiler.getOperator().connectTo(0,sink,0);
+
+        final long startTime = System.currentTimeMillis();
+
+        Topology sinkTopology = shape.getSinkTopology();
+        // Have Rheem execute the plan.
+        rheemContext.execute(new RheemPlan(sinkTopology.getNodes().elementAt(sinkTopology.getNodeNumber()).getField1().getOperator()));
+
+        final long endTime = System.currentTimeMillis();
+
+        List<Long> inputCardinalities = new ArrayList<>();
+        //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
+        // Gather and assemble all result metrics.
+        return new OperatorProfiler.Result(
+                inputCardinalities,
+1,
+//                (long)  shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumInputs(),
+                endTime - startTime,
+                provideDiskBytes(startTime, endTime),
+                provideNetworkBytes(startTime, endTime),
+                provideCpuCycles(startTime, endTime),
+                numMachines,
+                numCoresPerMachine
+        );
+
+    }
+
 
     public static void exhaustivePlanProfiling(List<List<PlanProfiler>> planProfiler,
                                            ProfilingConfig profilingConfiguration){

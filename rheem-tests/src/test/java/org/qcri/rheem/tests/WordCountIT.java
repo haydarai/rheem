@@ -25,11 +25,16 @@ import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+
+
+
+import static org.qcri.rheem.tests.RheemPlans.createUri;
 
 /**
  * Word count integration test. Besides going through different {@link Platform} combinations, each test addresses a different
@@ -39,11 +44,13 @@ public class WordCountIT {
 
     @Test
     public void testOnJava() throws URISyntaxException, IOException {
-        // Assignment mode: RheemContext.
+
 
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+
+        URI sourceLink = createUri("/genotypes.txt");
+        TextFileSource textFileSource = new TextFileSource(sourceLink.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
@@ -93,7 +100,6 @@ public class WordCountIT {
                 LoadEstimator.createFallback(1, 1)
         );
 
-
         // write results to a sink
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
@@ -107,6 +113,8 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         rheemContext.execute(new RheemPlan(sink));
 
+
+        System.out.println(results.toString());
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();

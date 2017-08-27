@@ -25,14 +25,14 @@ public class JunctureTopology extends TopologyBase implements Topology {
         this.outputTopologySlots[0] = new OutputTopologySlot<>("out", this);
     }
 
-    public JunctureTopology(int nodeNumber){
+    public JunctureTopology(int topologyNumber){
         this.inputTopologySlots = new InputTopologySlot[2];
         this.outputTopologySlots = new OutputTopologySlot[1];
 
         this.inputTopologySlots[0] = new InputTopologySlot<>("in0", this);
         this.inputTopologySlots[1] = new InputTopologySlot<>("in1", this);
         this.outputTopologySlots[0] = new OutputTopologySlot<>("out", this);
-        this.nodeNumber = nodeNumber;
+        this.topologyNumber = topologyNumber;
     }
 
     /**
@@ -53,26 +53,42 @@ public class JunctureTopology extends TopologyBase implements Topology {
      * create a copy of current topology
      * @return
      */
-    public Topology createCopy(){
+    public Topology createCopy(int topologyNumber){
         InputTopologySlot[] tmpInputTopologySlots = new InputTopologySlot[2];
         OutputTopologySlot[] tmpOutTopologySlots = new OutputTopologySlot[1];
 
 
+        // new junctureCopy
+        JunctureTopology newTopology = new JunctureTopology(topologyNumber);
+
         //for(InputTopologySlot in:this.inputTopologySlots){
         tmpInputTopologySlots[0]=this.inputTopologySlots[0].clone();
+
+        if (this.inputTopologySlots[0].getOccupant() != null){
+            // input1 topology copy
+            Topology tmpNewTopology = this.inputTopologySlots[0].getOccupant().getOwner().createCopy(topologyNumber-1);
+            // connect the input1Copy topology with the new junctureCopy input1
+            tmpInputTopologySlots[0].setOccupant(tmpNewTopology.getOutput(0));
+        }
+
         tmpInputTopologySlots[1]=this.inputTopologySlots[1].clone();
 
+        if (this.inputTopologySlots[1].getOccupant() != null){
+            // input2 topology copy
+            Topology tmpNewTopology = this.inputTopologySlots[1].getOccupant().getOwner().createCopy(topologyNumber-1);
+            // connect the input2Copy topology with the new junctureCopy input2
+            tmpInputTopologySlots[1].setOccupant(tmpNewTopology.getOutput(0));
+        }
         //}
 
         for(OutputTopologySlot out:this.outputTopologySlots){
             tmpOutTopologySlots[0]=out.clone();
         }
 
-        JunctureTopology newTopology = new JunctureTopology();
 
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
 
-        newTopology.setOutputTopologySlots(tmpOutTopologySlots);
+        //newTopology.setOutputTopologySlots(tmpOutTopologySlots);
 
         return newTopology;
     }
