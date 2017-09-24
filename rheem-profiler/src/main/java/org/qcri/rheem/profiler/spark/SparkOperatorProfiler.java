@@ -33,7 +33,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
 
     protected Supplier<SparkExecutionOperator> operatorGenerator;
 
-    protected final List<Supplier<?>> dataQuantumGenerators;
+    protected List<Supplier<?>> dataQuantumGenerators;
 
     private final String gangliaRrdsDir;
 
@@ -102,6 +102,10 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
             long inputCardinality = inputCardinalities[inputIndex];
             this.prepareInput(inputIndex, inputCardinality);
         }
+    }
+
+    public void setDataQuantumGenerators(Supplier<?> dataQuantumGenerators) {
+        this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
     }
 
     protected abstract void prepareInput(int inputIndex, long inputCardinality);

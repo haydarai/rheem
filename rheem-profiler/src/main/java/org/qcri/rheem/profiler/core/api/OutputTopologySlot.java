@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,10 +11,20 @@ import java.util.List;
  */
 public class OutputTopologySlot<T> extends TopologySlot<T> {
 
+    public List<InputTopologySlot<T>> getOccupiedSlots() {
+        //List<InputTopologySlot<T>> newList = new ArrayList<>();
+        return occupiedSlots;
+    }
+
+    public void setOccupiedSlots(List<InputTopologySlot<T>> occupiedSlots) {
+        this.occupiedSlots = occupiedSlots;
+    }
+
+
     /**
      * Output slot of another Topology that is connected to this output slot.
      */
-    private final List<InputTopologySlot<T>> occupiedSlots = new LinkedList<>() ;
+    private List<InputTopologySlot<T>> occupiedSlots = new LinkedList<>() ;
 
     protected OutputTopologySlot(String name, Topology owner) {
         super(name, owner);

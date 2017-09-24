@@ -1,18 +1,24 @@
 package org.qcri.rheem.profiler.data;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * Class that generates UDFs
  */
-public class UdfGenerators <Input, Output> {
+public class UdfGenerators <Input, Output> implements Serializable{
 
     protected final BasicDataUnitType<Input> inputType;
 
@@ -30,37 +36,127 @@ public class UdfGenerators <Input, Output> {
      * @param complexityCoef other coefficients to use when provided
      * @return
      */
-    public static FunctionDescriptor.SerializableFunction<Integer, Integer> mapIntUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
-            switch (complexity) {
-                case 1:
-                    // O(n) UDF complexity with linear cost
-                    return i -> i * 5;
-                case 12:
-                    // O(n) UDF complexity with log cost
-                    return i -> i * i + (int) Math.log(i);
-                case 13:
-                    // O(n) UDF complexity with exp cost
-                    return i -> (int) Math.exp(i);
+    public static FunctionDescriptor.SerializableFunction<Integer, Integer> mapIntUDF(int complexity, int dataQuataSize, long... complexityCoef) {
+        FunctionDescriptor.SerializableFunction<Integer, Integer> lala = null;
+        switch (complexity) {
+            case 1:
+                // O(n) UDF complexity with linear cost
+                lala = i -> {
+                    return i * 5;
+                };
+                break;
+            case 12:
+                // O(n) UDF complexity with log cost
+                lala = i -> i * i + (int) Math.log(i);
+                break;
+            case 13:
+                // O(n) UDF complexity with exp cost
+                lala = i -> (int) Math.exp(i);
                 //case 4:
                 //    return i -> (int) Math.cos(i);
-                case 2:
-                    //if (complexityCoef.length==1)
-                        // O(log(n)) UDF complexity
-                    return i -> { int iterations = 0; for (int count = 1; count<= dataQuataSize; count=count*2) {iterations = iterations + i * 5;} return iterations;};
+                break;
+            case 2:
+                //if (complexityCoef.length==1)
+                // O(log(n)) UDF complexity
+                lala = i -> {
+                    int iterations = 0;
+                    for (int count = 1; count <= dataQuataSize; count = count * 2) {
+                        iterations = iterations + i * 5;
+                    }
+                    return iterations;
+                };
+                break;
+                //else
+                //return i -> i * 5;
+            case 3:
+                lala = i -> {
+                    int iterations = 0;
+                    for (int count = 1; count <= dataQuataSize; count++) {
+                        iterations = iterations + i * 5;
+                    }
+                    return iterations;
+                };
+                //if (complexityCoef.length==1)
+                // O(n2) UDF complexity
 
                 //else
-                        //return i -> i * 5;
-                case 3:
-                    return i -> { int iterations = 0; for (int count = 1; count<= dataQuataSize; count++) {iterations = iterations + i * 5;} return iterations;};
-                    //if (complexityCoef.length==1)
-                        // O(n2) UDF complexity
+                //    return i -> i * 5;
+                //new RheemException("Missing UDF complexity coefficient!");
+                break;
+            default:
+                lala = null;
+                break;
+        }
 
-                    //else
-                    //    return i -> i * 5;
-                        //new RheemException("Missing UDF complexity coefficient!");
-                default:
-                    return null;
-            }
+        return lala;
+    }
+
+    /**
+     * FlatMap UDFs for Integer List Basic dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param complexityCoef other coefficients to use when provided
+     * @return
+     */
+    public static FunctionDescriptor.SerializableFunction<List, List> MapListIntUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return list -> (ArrayList<Integer>) list.stream().map(el->mapIntUDF(complexity,dataQuataSize).apply((Integer) el))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * FlatMap UDFs for Integer List Basic dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param complexityCoef other coefficients to use when provided
+     * @return
+     */
+    public static FunctionDescriptor.SerializableFunction<List, List> flatMapListIntUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return list -> {
+            List output = new ArrayList();
+            for(int itr=0;itr<=dataQuataSize;itr++)
+                output.add(list.stream().map(el->mapIntUDF(complexity,dataQuataSize).apply((Integer) el))
+                        .collect(Collectors.toList()));
+            return output;
+        };
+    }
+
+    /**
+     * FlatMap UDFs for Integer List Basic dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param complexityCoef other coefficients to use when provided
+     * @return
+     */
+    public static FunctionDescriptor.SerializableFunction<Integer, List> flatMapIntUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return  i -> {
+            List output = new ArrayList();
+            for(int itr=0;itr<=dataQuataSize;itr++)
+                output.add(i);
+            return output;
+        };
+    }
+
+    /**
+     * FlatMap UDFs for String list Basic dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param complexityCoef other coefficients to use when provided
+     * @return
+     */
+    public static FunctionDescriptor.SerializableFunction<List, List> MapListStringUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return list -> (ArrayList<String>) list.stream().map(el->mapStringUDF(complexity,dataQuataSize).apply((String) el))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * FlatMap UDFs for String list Basic dataType
+     * @param complexity CPU complexity of the processing of the UDF
+     * @param dataQuataSize data Quanta size to be processed
+     * @param complexityCoef other coefficients to use when provided
+     * @return
+     */
+    public static FunctionDescriptor.SerializableFunction<String, List> flatMapStringUDF( int complexity,  int dataQuataSize, long... complexityCoef) {
+        return s -> new ArrayList<>(Arrays.asList(s.split("a")));
     }
 
     /**
@@ -118,6 +214,31 @@ public class UdfGenerators <Input, Output> {
                 return null;
         }
     }
+
+    public static PredicateDescriptor.SerializablePredicate <String> filterStringUDF(int complexity,  int dataQuataSize, long... coef) {
+        switch (complexity) {
+            case 1:
+                return s ->  {
+                    //mapIntUDF(complexity).apply(i);
+                    //return (i & 1)==0;
+                    mapStringUDF(complexity,dataQuataSize).apply(s);
+                    return true;
+                };
+            case 2:
+                return s -> {
+                    mapStringUDF(complexity,dataQuataSize).apply(s);
+                    return (s.indexOf("a") > 0);
+                };
+            case 3:
+                return s -> {
+                    mapStringUDF(complexity,dataQuataSize).apply(s);
+                    return (s.indexOf("a")> 0 & ((s.indexOf("a") & 1) == 0));
+                };
+            default:
+                return null;
+        }
+    }
+
 
     public static PredicateDescriptor.SerializablePredicate <List> filterIntListUDF(int complexity,  int dataQuataSize, long... coef) {
         switch (complexity) {

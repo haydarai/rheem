@@ -27,7 +27,7 @@ public class JavaCollectionSourceProfiler extends JavaSourceProfiler {
 
 
     @Override
-    void setUpSourceData(long cardinality) throws Exception {
+    public void setUpSourceData(long cardinality) throws Exception {
         // Create the #sourceCollection.
         final Supplier<?> dataQuantumGenerator = this.dataQuantumGenerators.get(0);
         this.sourceCollection = new ArrayList<>((int) cardinality);

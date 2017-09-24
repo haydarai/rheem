@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 public class TopologyGenerator {
 
     public static List<Topology> getTopologyList() {
+        // add loop topologies
+        topologyList.addAll(loopTopologyList);
         return topologyList;
     }
 
@@ -22,6 +24,11 @@ public class TopologyGenerator {
      * Generated Topologies
      */
     private static List<Topology> topologyList = new ArrayList<>();
+
+    /**
+     * Generated Topologies with loop Topologies
+     */
+    private static List<Topology> loopTopologyList = new ArrayList<>();
 
     /**
      * Number of nodes in the topology; is used only to generate topology shapes;
@@ -40,6 +47,24 @@ public class TopologyGenerator {
      *
      */
     private static int newGeneratedTopologies = 0;
+
+    /**
+     * maximum number of Junctures Topologies to be used in generated topologies
+     *
+     */
+    //private static int maxJunctureTopologies = 0;
+
+    /**
+     * maximum number of Loops Topologies to be used in generated topologies
+     *
+     */
+    private static int maxLoopTopologies = 1 ;
+
+    /**
+     * maximum number of Juncture Topologies to be used in generated topologies
+     *
+     */
+    private static int maxJunctureTopologies = 0;
 
     private static ProfilingConfig config;
 
@@ -70,8 +95,6 @@ public class TopologyGenerator {
             // Single operator topology
             return singleOperatortopology();
 
-        //List<Topology> topologyList = new LinkedList<>();
-
         int previousGeneratedTopologies = newGeneratedTopologies;
         newGeneratedTopologies =0;
 
@@ -98,7 +121,7 @@ public class TopologyGenerator {
                 topologyList.add(tmpJuncture);
                 newGeneratedTopologies+=1;
 
-            } else {
+            } else if (tmpPreviousTopology.isJuncture()){
                 // create another copy because we will be adding two topoloogies here
                 Topology tmpPreviousTopology2 = tmpPreviousTopology.createCopy(nodesNumber-1);
 
@@ -123,6 +146,9 @@ public class TopologyGenerator {
                 topologyList.add(tmpJuncture);
 
                 newGeneratedTopologies+=2;
+            }
+            else if (tmpPreviousTopology.isLoop()){
+                // This eventually unecessery case cause the way a loop topology/operators sare implemented are topologycally connected
             }
         }
 
@@ -154,17 +180,64 @@ public class TopologyGenerator {
                 });
 
             }
+
         }
 
         // Handles the case of generating One Node Pipeline Topology
         if (nodesNumber==1) {
             topologyList.add(new PipelineTopology(nodesNumber));
             newGeneratedTopologies+=1;
-            // exit if the nodeNumber is equal to 1
-            if(nodeNumber==1){
-                return topologyList;
-            } else
-                return generateTopology(nodesNumber+1);
+        }
+
+        // Handles loops
+        // Add a loop to the last created node (Last Layer)
+        // Start the loop from the topl left topology
+        for(int i=1;i<=previousGeneratedTopologies;i++){
+            if(maxLoopTopologies!=0){
+
+                // create a loop topology topology
+                LoopTopology loopTopology = new LoopTopology(nodesNumber,1);
+
+                Topology tmpPreviousTopology = topologyList.get(topologyList.size()-i).createCopy(nodesNumber-1);
+
+                Topology sourceLeftNode = tmpPreviousTopology.getLeftTopNode();
+
+                Topology sourceLeftNodeSuccessor;
+                if(!sourceLeftNode.getOutput(0).getOccupiedSlots().isEmpty())
+                    sourceLeftNodeSuccessor = sourceLeftNode.getOutput(0).getOccupiedSlots().get(0).getOwner();
+                else
+                    sourceLeftNodeSuccessor = sourceLeftNode;
+
+                //Reset the output slot of sourceTop and connect with initialize 0
+                sourceLeftNode.resetOutputSlots(0);
+
+                if(sourceLeftNodeSuccessor!= sourceLeftNode)
+                    loopTopology.initialize(sourceLeftNode,0);
+
+                //Reset input slot for source successor and connect with begin iteration
+                sourceLeftNodeSuccessor.resetInputSlots(0);
+
+                loopTopology.beginIteration(sourceLeftNodeSuccessor,0);
+
+                // connect the end iteration with tmpPreviousTopology
+                loopTopology.endIteration(tmpPreviousTopology,0);
+
+                // the final output is left for the sunk in the runner
+
+
+                // add the
+                loopTopologyList.add(loopTopology);
+                maxLoopTopologies-=1;
+            } else {
+                // Exit for
+                break;
+            }
+        }
+
+
+        // exit if the nodeNumber is equal to 1
+        if(nodeNumber==1){
+            return topologyList;
         }
 
         // add recursively topologies until reaching the current TopologyGenerator node number

@@ -1,5 +1,7 @@
 package org.qcri.rheem.profiler.core.api;
 
+import java.util.Stack;
+
 /**
  * Created by migiwara on 07/07/17.
  */
@@ -79,16 +81,25 @@ public class JunctureTopology extends TopologyBase implements Topology {
             // connect the input2Copy topology with the new junctureCopy input2
             tmpInputTopologySlots[1].setOccupant(tmpNewTopology.getOutput(0));
         }
+
         //}
 
         for(OutputTopologySlot out:this.outputTopologySlots){
-            tmpOutTopologySlots[0]=out.clone();
+            tmpOutTopologySlots[0] = new OutputTopologySlot("in", newTopology);
+            tmpOutTopologySlots[0].setOccupiedSlots(out.getOccupiedSlots());
         }
 
 
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
 
-        //newTopology.setOutputTopologySlots(tmpOutTopologySlots);
+        newTopology.setOutputTopologySlots(tmpOutTopologySlots);
+
+        // Clone the nodes
+        newTopology.setNodes((Stack) this.getNodes().clone());
+
+        //Clone the nodenumber
+        newTopology.setNodeNumber(this.nodeNumber);
+        newTopology.setName(this.getName());
 
         return newTopology;
     }

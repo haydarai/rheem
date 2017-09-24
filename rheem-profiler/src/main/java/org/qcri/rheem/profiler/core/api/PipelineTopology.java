@@ -4,6 +4,7 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.util.Arrays;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 /**
@@ -48,22 +49,6 @@ public class PipelineTopology extends TopologyBase implements Topology {
         this.nodeNumber = nodeNumber;
     }
 
-    /**
-     * Connects the pipeline topology to another successive {@link Topology}
-     */
-    public void connectTo(int thisOutputIndex, Topology that, int thatInputIndex){
-        // create an input slot for the topology to connect To
-        // that.setInput(thatInputIndex,new InputTopologySlot<>("in", that));
-        final InputTopologySlot inputSlot = that.getInput(thatInputIndex);
-        // create output slot for current Topology
-        // outputTopologySlots[0] = new OutputTopologySlot<>("out", this);
-
-        // reget the created output slot of the current Topology
-        final OutputTopologySlot outputSlot = this.getOutput(thisOutputIndex);
-
-        // connect this output slot to that input slot
-        outputSlot.connectTo(inputSlot);
-    }
 
     /**
      * create a copy of current topology
@@ -72,8 +57,10 @@ public class PipelineTopology extends TopologyBase implements Topology {
     public Topology createCopy(int topologyNumber){
         PipelineTopology newTopology = new PipelineTopology(topologyNumber);
 
+        // Clone the input topologies
         InputTopologySlot[] tmpInputTopologySlots = new InputTopologySlot[1];
         OutputTopologySlot[] tmpOutTopologySlots = new OutputTopologySlot[1];
+
 
 
         for(InputTopologySlot in:this.inputTopologySlots){
@@ -88,12 +75,22 @@ public class PipelineTopology extends TopologyBase implements Topology {
         }
 
         for(OutputTopologySlot out:this.outputTopologySlots){
-            tmpOutTopologySlots[0]=out.clone();
+            // Initialize outputs
+            tmpOutTopologySlots[0] = new OutputTopologySlot("in", newTopology);
+            tmpOutTopologySlots[0].setOccupiedSlots(out.getOccupiedSlots());
         }
 
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
 
+        newTopology.setOutputTopologySlots(tmpOutTopologySlots);
 
+
+        // Clone the nodes
+        newTopology.setNodes((Stack) this.getNodes().clone());
+
+        //Clone the nodenumber
+        newTopology.setNodeNumber(this.nodeNumber);
+        newTopology.setName(this.getName());
         return newTopology;
     }
 }

@@ -34,6 +34,7 @@ import java.util.stream.Stream;
  */
 public class RheemPlans {
 
+    //public static final URI FILE_SOME_LINES_TXT = createUri("/long_cleaned_abstracts_en_100.tql");
     public static final URI FILE_SOME_LINES_TXT = createUri("/some-lines.txt");
 
     public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.txt");

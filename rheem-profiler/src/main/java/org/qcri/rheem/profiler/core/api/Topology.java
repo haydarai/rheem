@@ -45,9 +45,17 @@ public interface Topology {
 
     List<Topology> getPredecessors();
 
+    Topology getLeftTopNode();
+
+    boolean resetInputSlots(Integer slot);
+
+    boolean resetOutputSlots(Integer slot);
+
+
+
     /**
-     * @return the {@link InputTopologySlot}s of this instance;
-     */
+         * @return the {@link InputTopologySlot}s of this instance;
+         */
     InputTopologySlot<?>[] getAllInputs();
 
     /**
@@ -162,6 +170,13 @@ public interface Topology {
      * @return whether this topology is a juncture
      */
     default boolean isJuncture() {return this instanceof JunctureTopology;}
+
+    /**
+     * Tells whether this topology is a pipeline.
+     *
+     * @return whether this topology is a pipeline
+     */
+    default boolean isLoop() {return this instanceof LoopTopology;}
 
 
     /**

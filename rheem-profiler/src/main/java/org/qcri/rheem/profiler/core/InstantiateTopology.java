@@ -88,6 +88,8 @@ public class InstantiateTopology {
                 // correct node number
                 topology.setNodeNumber(nodeNumber);
             } else {
+                if ((topology.isLoop())&&(topology.getNodeNumber()!=-1))
+                    return new TopologyInstance();
                 // Handle the case of Juncture topology
 
                 //Set nodes for the sink topology
@@ -97,10 +99,11 @@ public class InstantiateTopology {
             }
             // Handle the case if the sink is juncture Topology
 
+        List<Topology> predecessors = topology.getPredecessors();
+
         // recurse the predecessor tpgs
         //get the predecessors of tmp topology
-        if  (!(topology.getInput(0).getOccupant()==null)){
-            List<Topology> predecessors = topology.getPredecessors();
+        if  (!(predecessors.isEmpty())){
             for(Topology t:predecessors)
                 instantiateTopology(t);
         }

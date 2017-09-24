@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
  */
 public class ProfilingApp {
 
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;
         if (args.length==1)
@@ -32,7 +32,10 @@ public class ProfilingApp {
 
         //RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
 
-        int nodeNumber = 3;
+        int maxNodeNumber = 10;
+
+        if (args.length==2)
+            maxNodeNumber = Integer.valueOf(args[1]);
 
         switch (profileTesting){
             case "single_operator_profiling":
@@ -41,27 +44,31 @@ public class ProfilingApp {
                 operatorProfilers = ProfilingPlanBuilder.PlanBuilder(topologies.get(0),profilingConfig);
                 ProfilingRunner.SingleOperatorProfiling(operatorProfilers,profilingConfig);
             case "exhaustive_profiling":
-                profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
+                for(int nodeNumber=1;nodeNumber<=maxNodeNumber;nodeNumber++){
 
-                // Initialize the generator
-                TopologyGenerator topologyGenerator =new TopologyGenerator(nodeNumber,profilingConfig);
+                    profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
 
-                // Generate the topologies
-                topologyGenerator.startGeneration();
-                topologies = topologyGenerator.getTopologyList();
+                    // Initialize the generator
+                    TopologyGenerator topologyGenerator =new TopologyGenerator(nodeNumber,profilingConfig);
 
-                // Instantiate the topologies
-                InstantiateTopology.instantiateTopology(topologies, nodeNumber);
+                    // Generate the topologies
+                    topologyGenerator.startGeneration();
+                    topologies = topologyGenerator.getTopologyList();
 
-                // create shapes
-                shapes = topologies.stream().map(t -> new Shape(t)).collect(Collectors.toList());
-                shapes.stream().forEach(s -> s.populateShape(s.getSinkTopology()));
+                    // Instantiate the topologies
+                    InstantiateTopology.instantiateTopology(topologies, nodeNumber);
 
-                // populate shapes
-                //profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
-                planProfilers = ProfilingPlanBuilder.exhaustiveProfilingPlanBuilder(shapes,profilingConfig);
-                ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
-                //System.out.println(result.toCsvString())
+                    // create shapes
+                    shapes = topologies.stream().map(t -> new Shape(t)).collect(Collectors.toList());
+                    shapes.stream().forEach(s -> s.populateShape(s.getSinkTopology()));
+
+                    // populate shapes
+                    //profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
+                    planProfilers = ProfilingPlanBuilder.exhaustiveProfilingPlanBuilder(shapes,profilingConfig);
+                    ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
+                    //System.out.println(result.toCsvString())
+
+                }
         }
 
     }

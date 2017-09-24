@@ -56,7 +56,6 @@ public abstract class OperatorProfiler {
     protected Platform platform;
 
     public OperatorProfiler(){
-
     }
 
     public OperatorProfiler(Supplier<? extends ExecutionOperator> operatorGenerator,
@@ -225,5 +224,7 @@ public abstract class OperatorProfiler {
                     + this.numCoresPerMachine;
         }
     }
+
+
 
 }

@@ -1,6 +1,10 @@
 package org.qcri.rheem.profiler.data;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -12,7 +16,7 @@ import java.util.function.Supplier;
 /**
  * Utility to create common data generators.
  */
-public class DataGenerators {
+public class DataGenerators implements Serializable {
 
     private static final String[] CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
 
@@ -90,6 +94,105 @@ public class DataGenerators {
         Validate.isTrue(min <= max);
         return () -> min + random.nextInt(max - min);
     }
+
+    /**
+     * Generate Generators
+     * @param dataQuantaSize
+     * @param type
+     * @return
+     */
+    public static Supplier generateGenerator(int dataQuantaSize, DataSetType type){
+        switch (type.getDataUnitType().getTypeClass().getSimpleName()) {
+            case "Integer":
+                return createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42));
+            case "String":
+                return createReservoirBasedStringSupplier(new ArrayList<>(), 0.90, new Random(42), 4 + dataQuantaSize, 20 + dataQuantaSize);
+            case "List":
+                return createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuantaSize);
+            default:
+                return createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42));
+        }
+    }
+
+    /**
+     * Generate UDFs
+     * @param UdfComplexity
+     * @param dataQuantaScale
+     * @param type
+     * @return
+     */
+    public static FunctionDescriptor.SerializableFunction generateUDF(int UdfComplexity, int dataQuantaScale, DataSetType type, String operator){
+
+        switch (type.getDataUnitType().getTypeClass().getSimpleName()) {
+            case "Integer":
+                switch (operator){
+                    case "map":
+                        return  UdfGenerators.mapIntUDF(UdfComplexity,dataQuantaScale);
+                    case "flatmap":
+                        return i -> UdfGenerators.flatMapIntUDF(UdfComplexity,dataQuantaScale).apply((Integer) i);
+                    default:
+                        return i -> UdfGenerators.mapIntUDF(UdfComplexity,dataQuantaScale).apply((Integer) i);
+                }
+            case "String":
+                switch (operator) {
+                    case "map":
+                        return s -> UdfGenerators.mapStringUDF(UdfComplexity, dataQuantaScale).apply((String) s);
+                    case "flatmap":
+                        return s -> UdfGenerators.flatMapStringUDF(UdfComplexity, dataQuantaScale).apply((String) s);
+                    default:
+                        return s -> UdfGenerators.mapStringUDF(UdfComplexity, dataQuantaScale).apply((String) s);
+                }
+            case "List":
+                switch (operator) {
+                    case "map":
+                        return list -> UdfGenerators.MapListIntUDF(UdfComplexity, dataQuantaScale).apply((List<Integer>) list);
+                    case "flatmap":
+                        return list -> UdfGenerators.flatMapListIntUDF(UdfComplexity, dataQuantaScale).apply((List<Integer>) list);
+                    default:
+                        return list -> UdfGenerators.MapListIntUDF(UdfComplexity, dataQuantaScale).apply((List<Integer>) list);
+                }
+            default:
+                return i -> new RheemException("Unsupported data type!");
+        }
+    }
+
+    /**
+     * Generate UDFs
+     * @param UdfComplexity
+     * @param dataQuantaScale
+     * @param type
+     * @return
+     */
+    public static PredicateDescriptor.SerializablePredicate generatefilterUDF(int UdfComplexity, int dataQuantaScale, DataSetType type, String operator) {
+        switch (type.getDataUnitType().getTypeClass().getSimpleName()) {
+            case "Integer":
+                return UdfGenerators.filterIntUDF(UdfComplexity, dataQuantaScale);
+            case "String":
+                return UdfGenerators.filterStringUDF(UdfComplexity, dataQuantaScale);
+            case "List":
+                return UdfGenerators.filterIntListUDF(UdfComplexity, dataQuantaScale);
+            default:
+                return UdfGenerators.filterIntUDF(UdfComplexity, dataQuantaScale);
+        }
+    }
+
+    /**
+     * GEnerate Binary UDFs
+     * @param type
+     * @return
+     */
+public  static FunctionDescriptor.SerializableBinaryOperator generateBinaryUDF(int UdfComplexity, int dataQuantaScale, DataSetType type){
+    switch (type.getDataUnitType().getTypeClass().getSimpleName()) {
+        case "Integer":
+            return (n,m) -> (Integer) n + (Integer) m;
+        case "String":
+            return (n,m) -> (String) n + (String) m;
+        case "List":
+            return (n,m) -> (List)n;
+        default:
+            return (n,m) -> (Integer) n + (Integer) m;
+    }
+}
 
     public interface Generator<T> extends Supplier<T>, Serializable {
         Random rand = new Random();

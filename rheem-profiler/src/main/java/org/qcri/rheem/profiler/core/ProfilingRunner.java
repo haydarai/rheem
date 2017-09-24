@@ -6,14 +6,21 @@ import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.mathex.model.Constant;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.profiler.core.api.*;
+import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.profiler.data.UdfGenerators;
+import org.qcri.rheem.profiler.java.JavaSourceProfiler;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
@@ -86,58 +93,124 @@ public class ProfilingRunner{
     public static void exhaustiveProfiling(List<Shape> shapes,
                                            ProfilingConfig profilingConfiguration) {
         profilingConfig = profilingConfiguration;
-        for (Shape s:shapes){
-            // perform the exhaustive Run
 
-            // Loop through all dataInputSize
-            profilingConfiguration.getInputCardinality().stream()
-                    .forEach(inputCardinality ->{
-                            executeShapeProfiling(s);
-                    });
+        shapes.stream().forEach(s -> s.getSubShapes().stream().forEach(executionShape->{
+            executeShapeProfiling(executionShape);
+            })
+        );
 
-        }
     }
 
-    private static OperatorProfiler.Result executeShapeProfiling(Shape shape) {
+    private static List<OperatorProfiler.Result> executeShapeProfiling(Shape shape) {
 
 
         //RheemContext rheemContext1 = new RheemContext();
         //rheemContext1.register(Spark.basicPlugin());
-        switch (profilingConfig.getProfilingPlateform()) {
+        switch (shape.getPlateform()) {
             case "java":
                 rheemContext = new RheemContext().with(Java.basicPlugin());
                //rheemContext = new RheemContext().with(Java.basicPlugin());
             case "spark":
                 rheemContext = new RheemContext().with(Spark.basicPlugin());
         }
-        List<String> results = new ArrayList<>();
 
-        LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(results, String.class);
+        // Check dataType of the generated plan
+        //checkDataType(shape);
+        List<OperatorProfiler.Result> results = new ArrayList<>();
 
-        //plan.sinkOperatorProfiler.getOperator().connectTo(0,sink,0);
+        // Loop through dataQuantas cardinality
 
-        final long startTime = System.currentTimeMillis();
+        // Loop through dataQuanta size
 
-        Topology sinkTopology = shape.getSinkTopology();
-        // Have Rheem execute the plan.
-        rheemContext.execute(new RheemPlan(sinkTopology.getNodes().elementAt(sinkTopology.getNodeNumber()).getField1().getOperator()));
+        for (int dataQuantaSize:profilingConfig.getDataQuantaSize()){
+            for (long inputCardinality:profilingConfig.getInputCardinality()){
 
-        final long endTime = System.currentTimeMillis();
+                System.out.printf("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
+                                " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
+                                " %d Loop Topologies  \n",
+                        inputCardinality,dataQuantaSize,
+                        shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
+                        shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
+                //shape.getAllTopologies().stream().forEach(t->t.getNodeNumber())
 
-        List<Long> inputCardinalities = new ArrayList<>();
-        //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
-        // Gather and assemble all result metrics.
-        return new OperatorProfiler.Result(
-                inputCardinalities,
-1,
+                // Clear the garbage collector
+                System.gc();
+
+
+                // create the result sink
+
+                //LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(results, String.class);
+
+                //plan.sinkOperatorProfiler.getOperator().connectTo(0,sink,0);
+
+                // Prepare input source operator
+                for (Topology t:shape.getSourceTopologies()){
+                    switch (shape.getPlateform()){
+                        case "java":
+                            JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
+
+                            // Update the dataQuantumGenerators with the appropriate dataQuanta size
+                            sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
+                                    sourceProfiler.getOperator().getOutput(0).getType()));
+                            try {
+                                // Prepare source operator
+                                sourceProfiler.setUpSourceData(inputCardinality);
+                            } catch (Exception e) {
+//                                LoggerFactory.getLogger(this.getClass()).error(
+//                                        String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
+//                                        e
+//                                );
+                            }
+                            break;
+                        case "spark":
+                            SparkOperatorProfiler sparkSourceProfiler = (SparkOperatorProfiler) t.getNodes().firstElement().getField1();
+
+                            // Update the dataQuantumGenerators with the appropriate dataQuanta size
+                            sparkSourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
+                                    sparkSourceProfiler.getOperator().getOutput(0).getType()));
+
+                            // Prepare source operator
+                            sparkSourceProfiler.prepare(dataQuantaSize,inputCardinality);
+                            break;
+                    }
+
+                }
+
+
+                final long startTime = System.currentTimeMillis();
+
+                Topology sinkTopology = shape.getSinkTopology();
+                // Have Rheem execute the plan.
+                Job job = rheemContext.createJob(null, new RheemPlan(sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator()));
+
+                job.addUdfJar(ReflectionUtils.getDeclaringJar(UdfGenerators.class));
+
+                try {
+                    job.execute();
+                }catch (Exception e){
+                    System.out.print("[ERROR] Job aborted! \n");
+                    System.out.print(e.getMessage()+"\n");
+                }
+                final long endTime = System.currentTimeMillis();
+
+                List<Long> inputCardinalities = new ArrayList<>();
+                //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
+                // Gather and assemble all result metrics.
+                results.add( new OperatorProfiler.Result(
+                        inputCardinalities,
+                        1,
 //                (long)  shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumInputs(),
-                endTime - startTime,
-                provideDiskBytes(startTime, endTime),
-                provideNetworkBytes(startTime, endTime),
-                provideCpuCycles(startTime, endTime),
-                numMachines,
-                numCoresPerMachine
-        );
+                        endTime - startTime,
+                        provideDiskBytes(startTime, endTime),
+                        provideNetworkBytes(startTime, endTime),
+                        provideCpuCycles(startTime, endTime),
+                        numMachines,
+                        numCoresPerMachine
+                    )
+                );
+            }
+        }
+        return results;
 
     }
 
@@ -158,7 +231,7 @@ public class ProfilingRunner{
     }
 
     public static void preparePipelineProfiling(PlanProfiler plan){
-        switch (profilingConfig.getProfilingPlateform()){
+        switch (profilingConfig.getProfilingPlateform().get(0)){
             case "java":
                 rheemContext = new RheemContext().with(Java.basicPlugin());
             case "spark":

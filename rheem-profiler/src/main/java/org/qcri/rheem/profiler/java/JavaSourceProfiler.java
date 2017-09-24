@@ -51,7 +51,6 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
         }
     }
 
-    abstract void setUpSourceData(long cardinality) throws Exception;
 
     @Override
     protected long executeOperator() {
@@ -61,4 +60,7 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
         );
         return this.outputChannelInstance.provideStream().count();
     }
+
+    public abstract void setUpSourceData(long cardinality) throws Exception;
+
 }

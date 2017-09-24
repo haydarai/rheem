@@ -1,6 +1,7 @@
 package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.api.exception.RheemException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -34,6 +35,33 @@ public class TopologyBase implements Topology {
     protected OutputTopologySlot[] outputTopologySlots;
 
 
+    public boolean resetInputSlots(Integer slot){
+        //if (this instanceof PipelineTopology)
+        if (slot<=inputTopologySlots.length)
+            this.inputTopologySlots[slot] = new InputTopologySlot("in", this);
+        else
+            throw new RheemException("out of index topology slot!");
+        /*if (this instanceof JunctureTopology)
+            this.inputTopologySlots = new InputTopologySlot[2];
+        if (this instanceof LoopTopology)
+            this.inputTopologySlots = new InputTopologySlot[2];*/
+
+        return true;
+    }
+
+    public boolean resetOutputSlots(Integer slot){
+        if (slot<=outputTopologySlots.length)
+            this.outputTopologySlots[slot] = new OutputTopologySlot("out",this);
+        else
+            throw new RheemException("out of index topology slot!");
+        /*if (this instanceof PipelineTopology)
+            this.outputTopologySlots = new OutputTopologySlot[1];
+        if (this instanceof JunctureTopology)
+            this.outputTopologySlots = new OutputTopologySlot[1];
+        if (this instanceof LoopTopology)
+            this.outputTopologySlots = new OutputTopologySlot[2];*/
+        return true;
+    }
 
 
     /**
@@ -105,10 +133,20 @@ public class TopologyBase implements Topology {
         InputTopologySlot[] inputSlots = this.getAllInputs();
         List<Topology> predecessors = new ArrayList<>();
         for(InputTopologySlot input:inputSlots){
-            OutputTopologySlot output = input.getOccupant();
-            predecessors.add(output.getOwner());
+            // check if there's predecessor
+            if (input.hasOccupant()){
+                OutputTopologySlot output = input.getOccupant();
+                predecessors.add(output.getOwner());
+            }
         }
         return predecessors;
+    }
+
+    public Topology getLeftTopNode(){
+        if(!this.getPredecessors().isEmpty())
+            return this.getPredecessors().get(0).getLeftTopNode();
+        else
+            return this;
     }
 
     /**
@@ -143,6 +181,21 @@ public class TopologyBase implements Topology {
     @Override
     public void setName(String name) {
         this.name = name;
+    }
+
+
+    /**
+     * Connects the pipeline topology to another successive {@link Topology}
+     */
+    public void connectTo(int thisOutputIndex, Topology that, int thatInputIndex){
+        // create an input slot for the topology to connect To
+        //that.setInput(thatInputIndex,new InputTopologySlot<>("in", that));
+        final InputTopologySlot inputSlot = that.getInput(thatInputIndex);
+        // create output slot for current Topology
+        //outputTopologySlots[thisOutputIndex] = new OutputTopologySlot<>("out", this);
+        final OutputTopologySlot outputSlot = this.getOutput(thisOutputIndex);
+
+        outputSlot.connectTo(inputSlot);
     }
 
     /*@Override

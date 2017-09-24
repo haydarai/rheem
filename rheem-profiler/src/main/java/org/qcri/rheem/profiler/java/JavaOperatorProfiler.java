@@ -132,9 +132,9 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
         return (CollectionChannel.Instance) channel.createInstance(null, null, -1);
     }
 
-    public JavaExecutionOperator getOperator() {
-        return this.operator;
-    }
+//    public JavaExecutionOperator getOperator() {
+//        return this.JavaOperator;
+//    }
 
     public void setDataQuantumGenerators(Supplier<?> dataQuantumGenerators) {
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);

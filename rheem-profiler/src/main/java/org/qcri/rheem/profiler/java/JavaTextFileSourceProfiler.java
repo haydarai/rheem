@@ -26,7 +26,7 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
     }
 
     @Override
-    void setUpSourceData(long cardinality) throws Exception {
+    public void setUpSourceData(long cardinality) throws Exception {
         if (this.tempFile != null) {
             if (!this.tempFile.delete()) {
                 this.logger.warn("Could not delete {}.", this.tempFile);

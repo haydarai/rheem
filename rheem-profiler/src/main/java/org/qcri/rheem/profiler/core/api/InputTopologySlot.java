@@ -10,7 +10,7 @@ public class InputTopologySlot<T> extends TopologySlot<T> {
     /**
      * Output slot of another topology that is connected to this input slot.
      */
-    private OutputTopologySlot<T> occupant;
+    private OutputTopologySlot<T> occupant = null;
 
 
     /**
@@ -45,6 +45,10 @@ public class InputTopologySlot<T> extends TopologySlot<T> {
     public InputTopologySlot<T> clone() {
         InputTopologySlot newInputTopologySlot = new InputTopologySlot(this.getName(),this.getOwner());
         return newInputTopologySlot;
+    }
+
+    public Boolean hasOccupant(){
+        return !(this.occupant == null);
     }
 
 }

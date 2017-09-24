@@ -11,7 +11,7 @@ public class JavaProfilerRunnerTest {
 
     @Test
     public void testJavaProfiler(){
-        String operator = "map";
+        String operator = "";
         //String cardinalities = "1,100,1000,10000,100000,1000000,10000000,20000000";
         DataUnitType dataType = DataUnitType.createBasicUnchecked(String.class);
         String cardinalities = "1";

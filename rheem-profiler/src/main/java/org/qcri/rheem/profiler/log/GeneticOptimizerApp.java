@@ -100,7 +100,7 @@ public class GeneticOptimizerApp {
             System.out.printf("Removed %d executions with a too large cardinality spread (> %.2f).\n", lastSize - newSize, minCardinalityConfidence);
             lastSize = newSize;
 
-            this.partialExecutions.removeIf(partialExecution -> !this.checkNonEmptyCardinalities(partialExecution));
+            //this.partialExecutions.removeIf(partialExecution -> !this.checkNonEmptyCardinalities(partialExecution));
             newSize = this.partialExecutions.size();
             System.out.printf("Removed %d executions with zero cardinalities.\n", lastSize - newSize);
             lastSize = newSize;
@@ -110,7 +110,7 @@ public class GeneticOptimizerApp {
             System.out.printf("Removed %d executions with a too low cardinality confidence (< %.2f).\n", lastSize - newSize, minCardinalityConfidence);
             lastSize = newSize;
 
-            this.partialExecutions.removeIf(partialExecution -> partialExecution.getMeasuredExecutionTime() < minExecutionTime);
+            //this.partialExecutions.removeIf(partialExecution -> partialExecution.getMeasuredExecutionTime() < minExecutionTime);
             newSize = this.partialExecutions.size();
             System.out.printf("Removed %d executions with a too short runtime (< %,d ms).\n", lastSize - newSize, minExecutionTime);
             lastSize = newSize;
@@ -129,6 +129,8 @@ public class GeneticOptimizerApp {
                 .collect(Collectors.toList());
 
         // Apply binning if requested.
+        //        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
+
         double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
         if (binningStretch > 1d) {
             System.out.print("Applying binning... ");

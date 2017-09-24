@@ -1,5 +1,8 @@
 package org.qcri.rheem.profiler.core;
 
+import org.apache.pig.builtin.SIN;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.profiler.core.api.ProfilingConfig;
 
 import java.util.*;
@@ -11,22 +14,51 @@ import java.util.stream.Collectors;
  */
 public class ProfilingConfigurer {
 
+    private static List<String> ALL_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("textsource", "collectionsource", "map", "filter", "flatmap", "reduce", "globalreduce", "distinct", "distinct-string",
+            "distinct-integer", "sort", "sort-string", "sort-integer", "count", "groupby", "join", "union", "cartesian", "callbacksink", "collect",
+            "word-count-split", "word-count-canonicalize", "word-count-count"));
+
+    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("textsource", "collectionsource"));
+
+    private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
+            "groupby","sort"));
+
+    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map" ));
+
+    private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "union"));
+
+    private static List<String> LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "repeat"));
+
+    private static List<String> TEST_LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "doWhile","loop","repeat"));
+
+
+    private static List<String> Test_BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("join", "union", "cartesian"));
+
+
+    private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
+
     //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
-    private static final String DEFAULT_INPUT_CARDINALITIES = "1";
+    private static final String DEFAULT_INPUT_CARDINALITIES = "10000";
 
     //private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
 
-    private static final String DEFAULT_DATA_QUATA_SIZES = "1";
+    private static final String DEFAULT_DATA_QUATA_SIZES = "100";
 
     // TODO: replace with actual read functions from a user input file
-    private static final String DEFAULT_UDF_COMPLEXITIES = "1,2,3";
+    private static final String DEFAULT_UDF_COMPLEXITIES = "1";
 
     private static final String DEFAULT_SELECTIVITY_COMPLEXITIES = "1,2,3";
 
     // The below can be applied only for unary operator profiling
     private static final String DEFAULT_BINARY_INPUT_RATIOS = "1,10,100";
 
-    private static final String DEFAULT_PLATEFORM = "java";
+    //
+    private static final String DEFAULT_LOOP_ITERATION_NUMBERS = "10,100";
+
+    private static final List<String> DEFAULT_PLATEFORM = Arrays.asList("java");
+
+    private static final List<DataSetType> DEFAULT_DATATYPE = Arrays.asList(DataSetType.createDefault(String.class));
+//DataSetType.createDefault(String.class),DataSetType.createDefault(List.class)
 
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
 
@@ -50,14 +82,23 @@ public class ProfilingConfigurer {
         List<Integer> inputRatio = Arrays.stream(DEFAULT_BINARY_INPUT_RATIOS.split(",")).map(Integer::valueOf).collect(Collectors.toList());
 
         // Set profiling configuration
-        pc.setProfilingPlateform("java");
+        pc.setProfilingPlateform(DEFAULT_PLATEFORM);
         pc.setBushyGeneration(DEFAULT_BUSHY_GENERATION);
+        pc.setDataType(DEFAULT_DATATYPE);
         pc.setProfilingPlanGenerationEnumeration("exhaustive");
         pc.setProfilingConfigurationEnumeration("exhaustive");
         pc.setInputCardinality(inputCardinality);
         pc.setDataQuantaSize(dataQuantas);
         pc.setUdfsComplexity(UdfsComplexity);
         pc.setInputRatio(inputRatio);
+
+        // Set execution operators
+        pc.setUnaryExecutionOperators(UNARY_EXECUTION_OPLERATORS);
+        pc.setBinaryExecutionOperators(BINARY_EXECUTION_OPLERATORS);
+        pc.setLoopExecutionOperators(LOOP_EXECUTION_OPLERATORS);
+        pc.setSourceExecutionOperators(SOURCE_EXECUTION_OPLERATORS);
+        pc.setSinkExecutionOperators(SINK_EXECUTION_OPLERATORS);
+
         return pc;
     }
 

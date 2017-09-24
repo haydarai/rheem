@@ -16,6 +16,11 @@ abstract public class TopologySlot<T> {
         return owner;
     }
 
+    public void setOwner(Topology topology) {
+        this.owner = topology;
+    }
+
+
     /**
      * The operator that is being decorated by this slot.
      */

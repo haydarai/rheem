@@ -16,6 +16,16 @@ import java.util.stream.Collectors;
  */
 public class JavaOperatorProfilers {
 
+
+    public static JavaTextFileSourceProfiler createJavaTextFileSourceProfiler(int dataQuantaScale, DataSetType type) {
+        Configuration configuration = new Configuration();
+        return new JavaTextFileSourceProfiler(
+                DataGenerators.generateGenerator(dataQuantaScale,type),
+                configuration.getStringProperty("rheem.profiler.datagen.url")
+        );
+    }
+
+    //**************************************************************** To remove
     public static JavaTextFileSourceProfiler createJavaTextFileSourceProfiler(int dataQuantaScale) {
         Configuration configuration = new Configuration();
         return new JavaTextFileSourceProfiler(
@@ -24,6 +34,12 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaCollectionSourceProfiler createJavaCollectionSourceProfiler(int dataQuantaScale, DataSetType type) {
+            return new JavaCollectionSourceProfiler(DataGenerators.generateGenerator(dataQuantaScale,type),
+                    new ArrayList(),type.getDataUnitType().getTypeClass());
+    }
+
+    //**************************************************************** To remove
     public static JavaCollectionSourceProfiler createJavaCollectionSourceProfiler(int dataQuantaScale) {
         if (dataQuantaScale==1) {
             return new JavaCollectionSourceProfiler(DataGenerators.createRandomStringSupplier(dataQuantaScale,dataQuantaScale,new Random()),
@@ -34,6 +50,15 @@ public class JavaOperatorProfilers {
         }
     }
 
+    public static JavaUnaryOperatorProfiler createJavaMapProfiler(int dataQuantaScale, int UdfComplexity, DataSetType type) {
+            return createJavaMapProfiler(
+                    DataGenerators.generateGenerator(dataQuantaScale,type),
+                    DataGenerators.generateUDF(UdfComplexity, dataQuantaScale,type,"map"),
+                    type.getDataUnitType().getTypeClass(), type.getDataUnitType().getTypeClass()
+            );
+    }
+
+    //**************************************************************** To remove
     public static JavaUnaryOperatorProfiler createJavaMapProfiler(int dataQuantaScale, int UdfComplexity) {
         if (dataQuantaScale==1){
             return createJavaMapProfiler(
@@ -71,6 +96,24 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaFlatMapProfiler(int dataQuantaScale, int UdfComplexity, DataSetType type) {
+        final Random random = new Random();
+            return new JavaUnaryOperatorProfiler(
+                    () -> new JavaFlatMapOperator<>(
+                            type,
+                            type,
+                            new FlatMapDescriptor<>(
+                                    DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"flatmap"),
+                                    type.getDataUnitType().getTypeClass(),
+                                    type.getDataUnitType().getTypeClass()
+                            )
+                    ),
+                    DataGenerators.generateGenerator(dataQuantaScale,type)
+            );
+
+    }
+
+    //**************************************************************** To remove
     public static JavaUnaryOperatorProfiler createJavaFlatMapProfiler(int dataQuantaScale, int UdfComplexity) {
         final Random random = new Random();
         if(dataQuantaScale==1){
@@ -117,6 +160,18 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaFilterProfiler(long dataQuantaSize, int UdfComplexity, DataSetType type) {
+        return new JavaUnaryOperatorProfiler(
+                () -> new JavaFilterOperator<>(
+                        type,
+                        new PredicateDescriptor<>(DataGenerators.generatefilterUDF(UdfComplexity,(int)dataQuantaSize,type,"filter"),
+                                type.getDataUnitType().getTypeClass())
+                ),
+                DataGenerators.generateGenerator((int)dataQuantaSize,type)
+        );
+    }
+
+    //**************************************************************** To remove
     public static JavaUnaryOperatorProfiler createJavaFilterProfiler(long dataQuantaSize, int UdfComplexity) {
         final Random random = new Random();
         if (dataQuantaSize==1){
@@ -138,7 +193,7 @@ public class JavaOperatorProfilers {
         }
     }
 
-    public static JavaUnaryOperatorProfiler createJavaFilterProfiler(int list, long dataQuantaSize, int UdfComplexity, int... cardinalities) {
+    /*public static JavaUnaryOperatorProfiler createJavaFilterProfiler(int list, long dataQuantaSize, int UdfComplexity, int... cardinalities) {
         Random random = new Random(42);
         final List<Integer> s;
         random.nextInt();
@@ -154,10 +209,21 @@ public class JavaOperatorProfilers {
                 ),
                 DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.00, new Random(42), (int) dataQuantaSize)
         );
+    }*/
+
+
+
+    public static <In> JavaUnaryOperatorProfiler createJavaReduceByProfiler(int dataQuantaScale, int UdfComplexity, DataSetType<In> type) {
+        return createJavaReduceByProfiler(
+                DataGenerators.generateGenerator(dataQuantaScale, type),
+                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"filter"),
+                DataGenerators.generateBinaryUDF(UdfComplexity,dataQuantaScale,type),
+                type.getDataUnitType().getTypeClass(),
+                type.getDataUnitType().getTypeClass()
+        );
     }
 
-
-    public static JavaUnaryOperatorProfiler createJavaReduceByProfiler(int dataQuantaScale, int UdfComplexity) {
+    public static <In> JavaUnaryOperatorProfiler createJavaReduceByProfiler(int dataQuantaScale, int UdfComplexity) {
         return createJavaReduceByProfiler(
                 DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.90, new Random(42), 4 + dataQuantaScale, 20 + dataQuantaScale),
                 String::new,
@@ -182,6 +248,16 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaGlobalReduceProfiler(int dataQuantaScale, int UdfComplexity, DataSetType type) {
+        return createJavaGlobalReduceProfiler(
+                DataGenerators.generateGenerator(dataQuantaScale,type),
+                DataGenerators.generateBinaryUDF(UdfComplexity,dataQuantaScale,type),
+                type.getDataUnitType().getTypeClass()
+        );
+    }
+
+    //**************************************************************** To remove
+
     public static JavaUnaryOperatorProfiler createJavaGlobalReduceProfiler(int dataQuantaScale, int UdfComplexity) {
         return createJavaGlobalReduceProfiler(
                 DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.0, new Random(), 4 + dataQuantaScale, 20 + dataQuantaScale),
@@ -201,6 +277,17 @@ public class JavaOperatorProfilers {
                 dataGenerator
         );
     }
+
+    public static JavaUnaryOperatorProfiler createJavaMaterializedGroupByProfiler(int dataQuantaScale, int UdfComplexity, DataSetType type) {
+        return createJavaMaterializedGroupByProfiler(
+                DataGenerators.generateGenerator(dataQuantaScale,type),
+                DataGenerators.generateUDF(UdfComplexity, dataQuantaScale,type,"map"),
+                type.getDataUnitType().getTypeClass(),
+                type.getDataUnitType().getTypeClass()
+        );
+    }
+
+    //**************************************************************** To remove
 
     public static JavaUnaryOperatorProfiler createJavaMaterializedGroupByProfiler(int dataQuantaScale, int UdfComplexity) {
         return createJavaMaterializedGroupByProfiler(
@@ -227,6 +314,15 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaCountProfiler(int dataQuantaSize, DataSetType type) {
+
+        return new JavaUnaryOperatorProfiler(
+                    () -> new JavaCountOperator<>(type),
+                    DataGenerators.generateGenerator(dataQuantaSize,type)
+            );
+    }
+
+    //**************************************************************** To remove
     public static JavaUnaryOperatorProfiler createJavaCountProfiler(int dataQuantaSize) {
         if (dataQuantaSize==1){
             return new JavaUnaryOperatorProfiler(
@@ -249,6 +345,14 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaDistinctProfiler(int dataQuantaScale, DataSetType type) {
+        return createJavaDistinctProfiler(
+                DataGenerators.generateGenerator(dataQuantaScale,type),
+                type.getDataUnitType().getTypeClass()
+        );
+    }
+
+    //**************************************************************** To remove
     public static JavaUnaryOperatorProfiler createJavaDistinctProfiler(int dataQuantaScale) {
         return createJavaDistinctProfiler(
                 DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.5, new Random(), 4 + dataQuantaScale, 20 + dataQuantaScale),
@@ -263,6 +367,14 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaSortProfiler(int dataQuantaScale,int UdfComplexity, DataSetType type) {
+        return new JavaUnaryOperatorProfiler(() -> new JavaSortOperator<>(new TransformationDescriptor<>(DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map")
+                , type.getDataUnitType().getTypeClass(), type.getDataUnitType().getTypeClass()),
+                type),
+                DataGenerators.generateGenerator(dataQuantaScale,type));
+    }
+
+    //**************************************************************** To remove
     public static JavaUnaryOperatorProfiler createJavaSortProfiler(int dataQuantaScale,int UdfComplexity) {
         return new JavaUnaryOperatorProfiler(() -> new JavaSortOperator<>(new TransformationDescriptor<>(in->{
             return UdfGenerators.mapStringUDF(UdfComplexity,dataQuantaScale).apply((String)in);
@@ -276,6 +388,34 @@ public class JavaOperatorProfilers {
                 DataSetType.createDefault(inClass)), dataGenerator);
     }
 
+
+    public static JavaBinaryOperatorProfiler createJavaJoinProfiler(int dataQuantaScale, int UdfComplexity, DataSetType type) {
+        final List<String> stringReservoir = new ArrayList<>();
+        final double reuseProbability = 1.0;
+        final Random random = new Random();
+        final int minLen = 4, maxLen = 6;
+        Supplier<String> reservoirStringSupplier = DataGenerators.generateGenerator(dataQuantaScale,type);
+        return new JavaBinaryOperatorProfiler(
+                () -> new JavaJoinOperator<>(
+                        type,
+                        type,
+                        new TransformationDescriptor<>(
+                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+                                type.getDataUnitType().getTypeClass(),
+                                type.getDataUnitType().getTypeClass()
+                        ),
+                        new TransformationDescriptor<>(
+                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+                                type.getDataUnitType().getTypeClass(),
+                                type.getDataUnitType().getTypeClass()
+                        )
+                ),
+                reservoirStringSupplier,
+                reservoirStringSupplier
+        );
+    }
+
+    //**************************************************************** To remove
     public static JavaBinaryOperatorProfiler createJavaJoinProfiler(int dataQuantaScale, int UdfComplexity) {
         final List<String> stringReservoir = new ArrayList<>();
         final double reuseProbability = 1.0;
@@ -304,9 +444,23 @@ public class JavaOperatorProfilers {
         );
     }
 
+
     /**
      * Creates a {@link JavaBinaryOperatorProfiler} for the {@link JavaCartesianOperator} with {@link Integer} data quanta.
      */
+    public static JavaBinaryOperatorProfiler createJavaCartesianProfiler(int dataQuantaSize, DataSetType type) {
+        return new JavaBinaryOperatorProfiler(
+                () -> new JavaCartesianOperator<>(
+                        type,
+                        type
+                ),
+                DataGenerators.generateGenerator(dataQuantaSize, type),
+                DataGenerators.generateGenerator(dataQuantaSize, type)
+        );
+    }
+
+
+        //**************************************************************** To remove
     public static JavaBinaryOperatorProfiler createJavaCartesianProfiler(int dataQuantaSize) {
         if (dataQuantaSize==1){
             return new JavaBinaryOperatorProfiler(
@@ -330,6 +484,27 @@ public class JavaOperatorProfilers {
 
     }
 
+    public static JavaBinaryOperatorProfiler createJavaUnionProfiler(int dataQuantaSize,DataSetType type) {
+
+        return new JavaBinaryOperatorProfiler(
+                () -> new JavaUnionAllOperator<>(type),
+                DataGenerators.generateGenerator(dataQuantaSize,type),
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
+
+    public static JavaBinaryOperatorProfiler createJavaRepeatProfiler(int dataQuantaSize,DataSetType type, int iterations) {
+        return new JavaBinaryOperatorProfiler(
+                () -> new JavaRepeatOperator<>(iterations, type),
+                DataGenerators.generateGenerator(dataQuantaSize,type),
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
+
+
+    /**
+     * To remove
+     */
     public static JavaBinaryOperatorProfiler createJavaUnionProfiler(int dataQuantaSize) {
         final List<String> stringReservoir = new ArrayList<>();
         final double reuseProbability = 0.0;
@@ -342,6 +517,19 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaSinkProfiler createJavaLocalCallbackSinkProfiler(int dataQuantaSize, DataSetType type) {
+        Collection collector = new LinkedList<>();
+        return new JavaSinkProfiler(
+                () -> new JavaLocalCallbackSink<>(collector::add, type),
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+
+    }
+
+
+    /**
+     * To Remove
+     */
     public static JavaSinkProfiler createJavaLocalCallbackSinkProfiler(int dataQuantaSize) {
         if (dataQuantaSize == 1){
             return new JavaSinkProfiler(
@@ -358,7 +546,6 @@ public class JavaOperatorProfilers {
         }
 
     }
-
     /*public static JavaSinkProfiler createJavaLocalCallbackSinkProfiler(int dataQuantaSize) {
         if (dataQuantaSize == 1){
             return new JavaSinkProfiler(
@@ -375,6 +562,18 @@ public class JavaOperatorProfilers {
         }
 
     }*/
+
+    public static <T> JavaSinkProfiler createCollectingJavaLocalCallbackSinkProfiler( int dataQuantaSize, DataSetType type) {
+        Collection<T> collector = new LinkedList<>();
+            return new JavaSinkProfiler(
+                    () -> new JavaLocalCallbackSink<>(collector::add, type),
+                    DataGenerators.generateGenerator(dataQuantaSize,type)
+            );
+    }
+
+    /****************************************** To Remove
+     *
+     */
 
     public static <T> JavaSinkProfiler createCollectingJavaLocalCallbackSinkProfiler( int dataQuantaSize) {
         Collection<T> collector = new LinkedList<>();

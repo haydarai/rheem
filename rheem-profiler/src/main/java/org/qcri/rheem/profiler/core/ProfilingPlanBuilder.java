@@ -3,43 +3,45 @@ package org.qcri.rheem.profiler.core;
 import org.apache.pig.builtin.TOP;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
+import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
+import org.qcri.rheem.profiler.spark.SparkUnaryOperatorProfiler;
+import org.qcri.rheem.spark.operators.SparkMapOperator;
 import sun.security.provider.SHA;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.function.Supplier;
+
+import static org.qcri.rheem.profiler.java.JavaOperatorProfilers.createJavaReduceByProfiler;
 
 /**
  * Generates rheem plans for profiling.
  */
-public class ProfilingPlanBuilder {
-
-    private static List<String> ALL_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("textsource", "collectionsource", "map", "filter", "flatmap", "reduce", "globalreduce", "distinct", "distinct-string",
-            "distinct-integer", "sort", "sort-string", "sort-integer", "count", "groupby", "join", "union", "cartesian", "callbacksink", "collect",
-            "word-count-split", "word-count-canonicalize", "word-count-count"));
-
-    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("textsource", "collectionsource"));
-
-    private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("reduce"));
-
-    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct", "distinct-string",
-            "distinct-integer", "sort", "sort-string", "sort-integer", "count",
-            "word-count-split", "word-count-canonicalize", "word-count-count"));
-
-    private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("groupby", "join", "union", "cartesian"));
-
-    private static List<String> Test_BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("union"));
+public class ProfilingPlanBuilder implements Serializable {
 
 
-    private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
-
-    private static Topology topology;
+    /**
+     * Configuration file for the plan builder
+     */
     private static ProfilingConfig profilingConfig;
+
+    /**
+     * Used to stop loop body connection from going into an endless loop
+     *
+     */
+    private static LoopTopology currentLoop;
 
     public static List< ? extends OperatorProfiler> PlanBuilder(Topology topology, ProfilingConfig profilingConfig){
         //topology = topology;
@@ -62,10 +64,10 @@ public class ProfilingPlanBuilder {
 
         for(Shape s:shapes){
             if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("exhaustive")){
-                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1));
+                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1, shapes));
             } else {
                 // TODO: add more profiling plan generation enumeration: random, worstPlanGen (more execution time),betterPlanGen (less execution time)
-                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1));
+                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1, shapes));
             }
         }
         return topologyPlanProfilers;
@@ -77,45 +79,66 @@ public class ProfilingPlanBuilder {
      * @param shape
      * @return
      */
-    public static List<PlanProfiler> randomProfilingPlanBuilder(Shape shape, int numberPlans){
+    public static List<PlanProfiler> randomProfilingPlanBuilder(Shape shape, int numberPlans, List<Shape> shapes){
         List<PlanProfiler> planProfilers = new ArrayList<>();
         PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
+        List<Shape> tmpSubShapes = new ArrayList<>();
+        // Loop through all dataTypes
+        for(DataSetType type:profilingConfig.getDataType()){
+            // Loop through all plateforms
+            for (String platform:profilingConfig.getProfilingPlateform()){
+                // Set the shape's platform
+                shape.setPlateform(platform);
+                for (int p=1;p<=profilingConfig.getUnaryExecutionOperators().size()*
+                        profilingConfig.getBinaryExecutionOperators().size();p++){
 
-        for (int p=1;p<=numberPlans;p++){
+                    // Fill the sources
+                    for(Topology t:shape.getSourceTopologies()){
+                        //if (t.getNodes().isEmpty())
+                            prepareSource(t,type,platform);
+                    }
 
-            // Fill the sources
-            for(Topology t:shape.getSourceTopologies()){
-                prepareSource(t);
+                    // Fill with unary operator profilers
+                    for(Topology t:shape.getPipelineTopologies()){
+                        // check if the nodes are not already filled in the source or sink
+                        if ((t.getNodes().isEmpty()||(!t.isSource())))
+                            for(int i=1;i<=t.getNodeNumber();i++)
+                            t.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill(type,platform)));
+                    }
+
+                    // Fill with binary operator profilers
+                    for(Topology t:shape.getJunctureTopologies()){
+                        // check if the nodes are not already filled in the source or sink
+                        //if (t.getNodes().isEmpty())
+                            t.getNodes().push(new Tuple2<String, OperatorProfiler>("binaryNode", binaryNodeFill(type,platform)));
+                    }
+
+                    // Fill the loop topologies
+                    for(Topology t:shape.getLoopTopologies()){
+                        t.getNodes().push(new Tuple2<String, OperatorProfiler>("LoopNode", loopNodeFill(type,platform)));
+                    }
+
+
+                    // Fill the sinks
+                    //for(Topology t:shape.getSinkTopology()){
+                    //if (shape.getSinkTopology().getNodes().isEmpty())
+                    prepareSink(shape.getSinkTopology(),type,platform);
+                    //}
+
+                    // Build the planProfiler
+                    buildPlanProfiler(shape, type);
+
+                    // add the filled shape to tempSubShapes
+                    tmpSubShapes.add(shape.clone());
+
+                    // Reset shape
+                    shape.resetAllNodes();
+                    //planProfiler
+                    planProfilers.add(planProfiler);
+                }
             }
-
-            // Fill with unary operator profilers
-            for(Topology t:shape.getPipelineTopologies()){
-                // check if the nodes are not already filled in the source or sink
-                if ((t.getNodes().isEmpty()||(!t.isSource())))
-                    for(int i=1;i<=t.getNodeNumber();i++)
-                    t.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
-            }
-
-            // Fill with binary operator profilers
-            for(Topology t:shape.getJunctureTopologies()){
-                // check if the nodes are not already filled in the source or sink
-                if (t.getNodes().isEmpty())
-                    t.getNodes().push(new Tuple2<String, OperatorProfiler>("binaryNode", binaryNodeFill()));
-            }
-
-
-            // Fill the sinks
-            //for(Topology t:shape.getSinkTopology()){
-                prepareSink(shape.getSinkTopology());
-            //}
-
-            // Build the planProfiler
-            buildPlanProfiler(shape);
-
-            //planProfiler
-            planProfilers.add(planProfiler);
-
         }
+        shape.setSubShapes(tmpSubShapes);
         return planProfilers;
     }
 
@@ -135,16 +158,20 @@ public class ProfilingPlanBuilder {
         /**
          * Build the plan profiler; connect the nodes and build rheem plan;
          */
-    private static void buildPlanProfiler(Shape shape){
+    private static void buildPlanProfiler(Shape shape, DataSetType type){
 
         // Start with the sink operator
         Topology sinkTopology = shape.getSinkTopology();
 
+
+        // Check the dataType
+        checkDataType(shape, type);
         // recursively connect predecessor nodes
 
         Stack<Tuple2<String, OperatorProfiler>> sinkNodes = (Stack<Tuple2<String, OperatorProfiler>>) sinkTopology.getNodes().clone();
 
-        //Tuple2<String, OperatorProfiler> sinkNode = (Tuple2<String, OperatorProfiler>) sinkTopology.getNodes().iterator().next();
+        //Tuple2<String, OperatorProfiler> sinkNode =sinkTopology.getNodes().pop();
+        // Check if it's not already connected
         Tuple2<String, OperatorProfiler> lastConnectedNode = connectNodes(sinkTopology, sinkTopology.getNodes().pop(),0);
 
 
@@ -156,6 +183,51 @@ public class ProfilingPlanBuilder {
 
     }
 
+    private static void checkDataType(Shape shape, DataSetType type) {
+        final DataSetType tst = DataSetType.createDefault(Integer.class);
+        for (Topology t:shape.getAllTopologies()){
+            t.getNodes().stream()
+                    .forEach(n->{
+                        OperatorProfiler op = n.getField1();
+                        DataSetType opIn1DataType,opOutDataType;
+                        // check the operator type
+                        // handle the source case
+                        if (op.getOperator().isSource()) {
+                            opIn1DataType = null;
+                            opOutDataType = op.getOperator().getOutput(0).getType();
+                        }else if (op.getOperator().isSink()) {
+                            opIn1DataType = op.getOperator().getInput(0).getType();
+                            opOutDataType = null;
+                        }else {
+                            opIn1DataType = op.getOperator().getInput(0).getType();
+                            opOutDataType = op.getOperator().getOutput(0).getType();
+                        }
+
+                        // check if the operator profiler has the required dataType
+                        if((opIn1DataType!=null)&&(!opIn1DataType.equals(profilingConfig.getDataType()))){
+                            // TODO: Need to change the operator udf to be compatible with new datatype or create intermediate operator
+                            // Remplace the slot
+                            op.getOperator().setInput(0,new InputSlot<>("in", op.getOperator(), type));
+                        }
+
+                        if((opOutDataType!=null)&&(!opOutDataType.equals(profilingConfig.getDataType()))){
+                            // TODO: Need to change the operator udf to be compatible with new datatype or create intermediate operator
+                            // Remplace the slot
+                            op.getOperator().setOutput(0,new OutputSlot<>("out", op.getOperator(), type));
+                        }
+                    });
+
+            if(profilingConfig.getDataType().equals(DataSetType.createDefault(Integer.class))){
+                // Check that all dataTypes are conforming to the datatype otherwise change them accordingly
+
+            } else if(profilingConfig.getDataType().equals(DataSetType.createDefault(String.class))){
+
+            } else if(profilingConfig.getDataType().equals(DataSetType.createDefault(List.class))){
+
+            }
+        }
+    }
+
     /**
      * The below method will connect nodes inside of a topology and returns the head node so to connect it with the previous topology
      * @param topology
@@ -163,19 +235,22 @@ public class ProfilingPlanBuilder {
      */
     private static Tuple2<String,OperatorProfiler> connectNodes(Topology topology, Tuple2<String, OperatorProfiler> currentnode, int inputSlot) {
 
-        Stack nodes = topology.getNodes();
+        // check if the current topology is loop
+        if (topology.isLoop())
+            return connectLoopNodes((LoopTopology) topology, currentnode,inputSlot);
+        Stack nodes = (Stack) topology.getNodes().clone();
+
+        // previous = bottom to top ((previous) sink => (current) source)
         Tuple2<String, OperatorProfiler> previousNode = null;
         Tuple2<String, OperatorProfiler> currentNode = currentnode;
 
         // Loop through all the nodes
         while(!nodes.isEmpty()){
-            previousNode=currentNode;
+            previousNode = currentNode;
             currentNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
 
-            //check if the first input slot of the previous node is filled
-            //if(previousNode.getField1().getOperator().isUnconnected()){
+
                 // TODO: check the dataType and correct it
-                //currentNode.getField1().getOperator()
                 // connect previous with current node
                 currentNode.getField1().getOperator().connectTo(0,previousNode.getField1().getOperator(),inputSlot);
 
@@ -183,7 +258,6 @@ public class ProfilingPlanBuilder {
                 // so to avoid error when connecting the nodes of a pipeline topology
                 if (inputSlot!=0)
                     inputSlot = 0;
-           // }
         }
 
         // at the end of this method should connect the lastConnectedNode with the head node of predecessor topology
@@ -202,6 +276,81 @@ public class ProfilingPlanBuilder {
         return currentNode;
     }
 
+    /**
+     * Connects a loop topology what's inside a loop then returns the previous node (source )
+     * @param loopTopology
+     * @param currentnode
+     * @param inputSlot
+     * @return
+     */
+    private static Tuple2<String,OperatorProfiler> connectLoopNodes(LoopTopology loopTopology, Tuple2<String, OperatorProfiler> currentnode, int inputSlot) {
+
+        Stack nodes = (Stack) loopTopology.getNodes().clone();
+
+
+        if (loopTopology.equals(currentLoop)){
+            // should stop the current loop execution adn return the initialization input
+
+            // thereis connect here Loop => initial iteration on the current node
+            Tuple2<String, OperatorProfiler> loopNode = currentnode;
+            loopNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
+
+            loopNode.getField1().getOperator().connectTo(LoopTopology.ITERATION_OUTPUT_INDEX,
+                    currentnode.getField1().getOperator(),inputSlot);
+
+            // return null
+            return new Tuple2<>();
+        }
+
+        currentLoop = loopTopology;
+        Tuple2<String, OperatorProfiler> previousNode = null;
+        Tuple2<String, OperatorProfiler> loopNode = currentnode;
+
+        if (loopNode.getField1().getOperator().isSink()){
+            // Handle the case where loop topology is sink topology too
+
+            // update the nodes
+            // previous = bottom to top ((previous) sink => (current) source)
+            previousNode=loopNode;
+            loopNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
+
+            // connect the loop topology to final output
+            loopNode.getField1().getOperator().connectTo(LoopTopology.FINAL_OUTPUT_INDEX,previousNode.getField1().getOperator(),inputSlot);
+            // Get the start Iteration Topology
+            Topology startInterationTopology = loopTopology.getLoopBodyInput();
+
+            // Get the final Iteration Topology
+            Topology endIterationTopology = loopTopology.getLoopBodyOutput();
+
+            // connect final Iteration Topology to loop topology
+            connectNodes(endIterationTopology, loopNode,LoopTopology.ITERATION_INPUT_INDEX);
+            // Reset current loop
+
+        }
+
+        //return connectNodes(loopTopology,loopNode,inputSlot);
+
+        //get the initial topology of loop topology
+        if  (!(loopTopology.getInput(0).getOccupant()==null)){
+            //If exist
+            List<Topology> predecessors = loopTopology.getPredecessors();
+
+            // this will connect the INITIAL_INPUT_INDEX
+            connectNodes(predecessors.get(0), loopNode, LoopTopology.INITIAL_INPUT_INDEX);
+        } else{
+            // means the loop is a source node too
+            // connect the source node to loop node
+            Tuple2<String, OperatorProfiler> sourceNode;
+            sourceNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
+
+            sourceNode.getField1().getOperator().connectTo(0,loopNode.getField1().getOperator(), LoopTopology.INITIAL_INPUT_INDEX);
+        }
+
+        currentLoop = new LoopTopology(0,0);
+
+        return loopNode;
+    }
+
     private static void preparePlanProfiler(Topology topology) {
         //for(Topology t:planProfiler.ge)
     }
@@ -211,66 +360,87 @@ public class ProfilingPlanBuilder {
      * PS: Source node i counted in the node number
      * @param topology
      */
-    private static void prepareSource(Topology topology) {
+    private static void prepareSource(Topology topology, DataSetType type, String plateform) {
         // add the first source node
-        topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sourceNode", sourceNodeFill()));
+        topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sourceNode", sourceNodeFill(type, plateform)));
+
+        // exit in the case of a loop
+        if (topology.isLoop())
+                return;
+
         // add the remaining nodes with unary nodes
-        for(int i=1;i<=topology.getNodeNumber()-1;i++)
-                topology.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
+        for(int i=1;i<=topology.getNodeNumber();i++)
+                topology.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill(type, plateform)));
     }
 
     /**
      * Add the sink to the sink topology; NOTE: that the sink is node included as a node
      * @param topology
      */
-    private static void prepareSink(Topology topology) {
+    private static void prepareSink(Topology topology, DataSetType type, String plateform) {
+
         // check if the sink is already filled as pipeline/source Topology.
         if (topology.getNodes().empty()){
             //Add the first unary nodes
             for(int i=1;i<=topology.getNodeNumber();i++)
-                topology.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill()));
+                topology.getNodes().push(new Tuple2<String, OperatorProfiler>("unaryNode", unaryNodeFill(type, plateform)));
             // Add the last sink node
-            topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sinkNode", sinkNodeFill()));
+            topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sinkNode", sinkNodeFill(type, plateform)));
         } else{
-            topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sinkNode", sinkNodeFill()));
+            topology.getNodes().push(new Tuple2<String, OperatorProfiler>("sinkNode", sinkNodeFill(type, plateform)));
         }
 
     }
 
+    private static void prepareSinkLoop(LoopTopology topology) {
+    }
+
     /**
      * Fills the toplogy instance with unary profiling operators
      * @return
      */
-    private static OperatorProfiler sinkNodeFill(){
+    private static OperatorProfiler sinkNodeFill(DataSetType type, String plateform){
         // we currently support use the collection source
-        return getProfilingOperator(SINK_EXECUTION_OPLERATORS.get(0));
+        return getProfilingOperator(profilingConfig.getSinkExecutionOperators().get(0), type, plateform,1,1);
     }
 
     /**
      * Fills the toplogy instance with unary profiling operators
      * @return
      */
-    private static OperatorProfiler sourceNodeFill(){
+    private static OperatorProfiler sourceNodeFill(DataSetType type, String plateform){
         // we currently support collection source
-        return getProfilingOperator(SOURCE_EXECUTION_OPLERATORS.get(1));
+        return getProfilingOperator(profilingConfig.getSourceExecutionOperators().get(1), type, plateform,1,1);
     }
 
     /**
      * Fills the toplogy instance with unary profiling operators
      * @return
      */
-    private static OperatorProfiler unaryNodeFill(){
-        int rnd = (int)(Math.random() * Test_UNARY_EXECUTION_OPLERATORS.size());
-        return getProfilingOperator(Test_UNARY_EXECUTION_OPLERATORS.get(rnd));
+    private static OperatorProfiler unaryNodeFill(DataSetType type, String plateform){
+        int rnd = (int)(Math.random() * profilingConfig.getUnaryExecutionOperators().size());
+        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        return getProfilingOperator(profilingConfig.getUnaryExecutionOperators().get(rnd), type, plateform,1,udfRnd);
     }
 
     /**
      * Fills the toopology instance with binary profiling operator
      * @return
      */
-    private static OperatorProfiler binaryNodeFill(){
-        int rnd = (int)(Math.random() * Test_BINARY_EXECUTION_OPLERATORS.size());
-        return getProfilingOperator(Test_BINARY_EXECUTION_OPLERATORS.get(rnd));
+    private static OperatorProfiler binaryNodeFill(DataSetType type, String plateform){
+        int rnd = (int)(Math.random() * profilingConfig.getBinaryExecutionOperators().size());
+        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        return getProfilingOperator(profilingConfig.getBinaryExecutionOperators().get(rnd), type, plateform,1,udfRnd);
+    }
+
+    /**
+     * Fills the toopology instance with binary profiling operator
+     * @return
+     */
+    private static OperatorProfiler loopNodeFill(DataSetType type, String plateform){
+        int rnd = (int)(Math.random() * profilingConfig.getLoopExecutionOperators().size());
+        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        return getProfilingOperator(profilingConfig.getLoopExecutionOperators().get(rnd), type, plateform,1,udfRnd);
     }
 
     /**
@@ -371,13 +541,158 @@ public class ProfilingPlanBuilder {
      */
     public static List<? extends OperatorProfiler> singleOperatorProfilingPlanBuilder(ProfilingConfig profilingConfig){
         if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("exhaustive")){
-            return exhaustiveSingleOperatorProfilingPlanBuilder(profilingConfig.getProfilingPlateform());
+            return exhaustiveSingleOperatorProfilingPlanBuilder(profilingConfig.getProfilingPlateform().get(0));
         } else {
             // TODO: add more profiling plan generation enumeration: random, worstPlanGen (more execution time),betterPlanGen (less execution time)
-            return exhaustiveSingleOperatorProfilingPlanBuilder(profilingConfig.getProfilingPlateform());
+            return exhaustiveSingleOperatorProfilingPlanBuilder(profilingConfig.getProfilingPlateform().get(0));
         }
     }
 
+    /**
+     * Get the {@link OperatorProfiler} of the input string
+     * @param operator
+     * @return
+     */
+    private static OperatorProfiler getProfilingOperator(String operator, DataSetType type, String plateform,
+                                                         int dataQuantaScale, int UdfComplexity) {
+        //List allCardinalities = this.profilingConfig.getInputCardinality();
+        //List dataQuata = this.profilingConfig.getDataQuantaSize();
+        //List UdfComplexity = this.profilingConfig.getUdfsComplexity();
+
+        switch (plateform) {
+            case "spark":
+                switch (operator) {
+                    case "textsource":
+                        return SparkPlanOperatorProfilers.createSparkTextFileSourceProfiler(1, type);
+                    case "collectionsource":
+                        return SparkPlanOperatorProfilers.createSparkCollectionSourceProfiler(1000, type);
+                    case "map":
+                        return SparkPlanOperatorProfilers.createSparkMapProfiler(1, UdfComplexity,type);
+                        /*return new SparkUnaryOperatorProfiler(
+                                () -> new SparkMapOperator<>(
+                                        type,
+                                        type,
+                                        new TransformationDescriptor<>((FunctionDescriptor.SerializableFunction<Integer,Integer>) i -> {
+                                            return i;
+                                            }
+                                            , Integer.class, Integer.class)
+                                ),
+                                new Configuration(),
+                                DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.0, new Random(), dataQuantaScale)
+                        );*/
+
+                    case "filter":
+                        return (SparkPlanOperatorProfilers.createSparkFilterProfiler(1, UdfComplexity, type));
+
+                    case "flatmap":
+                        return (SparkPlanOperatorProfilers.createSparkFlatMapProfiler(1, UdfComplexity, type));
+
+                    case "reduce":
+                        return (SparkPlanOperatorProfilers.createSparkReduceByProfiler(1, UdfComplexity, type));
+
+                    case "globalreduce":
+                        return (SparkPlanOperatorProfilers.createSparkGlobalReduceProfiler(1000, UdfComplexity, type));
+
+                    case "distinct":
+                        return (SparkPlanOperatorProfilers.createSparkDistinctProfiler(1, type));
+
+                    case "sort":
+                        return (SparkPlanOperatorProfilers.createSparkSortProfiler(1, type));
+
+                    case "count":
+                        return (SparkPlanOperatorProfilers.createSparkCountProfiler(1, type));
+
+                    case "groupby":
+                        return (SparkPlanOperatorProfilers.createSparkMaterializedGroupByProfiler(1, UdfComplexity, type));
+
+                    case "join":
+                        return (SparkPlanOperatorProfilers.createSparkJoinProfiler(1, UdfComplexity, type));
+
+                    case "union":
+                        return (SparkPlanOperatorProfilers.createSparkUnionProfiler(1, type));
+
+                    case "cartesian":
+                        return (SparkPlanOperatorProfilers.createSparkCartesianProfiler(1, type));
+
+                    case "callbacksink":
+                        return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
+                    case "repeat":
+                        return (SparkPlanOperatorProfilers.createSparkRepeatProfiler(1, type,10 ));
+
+                    default:
+                        System.out.println("Unknown operator: " + operator);
+                        return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
+                }
+            case "java":
+                switch (operator) {
+                    case "textsource":
+                        return (JavaOperatorProfilers.createJavaTextFileSourceProfiler(1));
+
+                    case "collectionsource":
+                        return (JavaOperatorProfilers.createJavaCollectionSourceProfiler(1000,type));
+
+                    case "map":
+                        return (JavaOperatorProfilers.createJavaMapProfiler(1, UdfComplexity,type));
+
+                    case "filter":
+                        return (JavaOperatorProfilers.createJavaFilterProfiler(1, UdfComplexity,type));
+                    case "flatmap":
+                        return (JavaOperatorProfilers.createJavaFlatMapProfiler(1, UdfComplexity,type));
+
+                    case "reduce":
+                        return (JavaOperatorProfilers.createJavaReduceByProfiler(1, UdfComplexity, type));
+                        /*return createJavaReduceByProfiler(
+                                null,
+                                Integer::new,
+                                (s1, s2) -> { return UdfGenerators.mapIntUDF(1,1).apply(s1);},
+                                Integer.class,
+                                Integer.class
+                        );*/
+
+                    case "globalreduce":
+                        return (JavaOperatorProfilers.createJavaGlobalReduceProfiler(1, UdfComplexity,type));
+
+                    case "distinct":
+                        return (JavaOperatorProfilers.createJavaDistinctProfiler(1,type));
+
+                    case "sort":
+                        return (JavaOperatorProfilers.createJavaSortProfiler(1, UdfComplexity,type));
+
+                    case "count":
+                        return (JavaOperatorProfilers.createJavaCountProfiler(1,type));
+
+                    case "groupby":
+                        return (JavaOperatorProfilers.createJavaMaterializedGroupByProfiler(1, UdfComplexity,type));
+
+                    case "join":
+                        return (JavaOperatorProfilers.createJavaJoinProfiler(1, UdfComplexity,type));
+
+                    case "union":
+                        return (JavaOperatorProfilers.createJavaUnionProfiler(1, type));
+
+                    case "cartesian":
+                        return (JavaOperatorProfilers.createJavaCartesianProfiler(1,type));
+
+                    case "repeat":
+                        return (JavaOperatorProfilers.createJavaRepeatProfiler(1,type,10));
+
+                    case "callbacksink":
+                        return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1,type));
+
+                    case "collect":
+                        return (JavaOperatorProfilers.createCollectingJavaLocalCallbackSinkProfiler(1,type));
+
+                    default:
+                        System.out.println("Unknown operator: " + operator);
+                        return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
+                }
+            default:
+                System.out.println("Unknown operator: " + operator);
+                return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
+        }
+    }
+
+// The below is for single operator profiling
     /**
      * Builds an operator profiling specifically for single operator profiling with fake jobs
      * @param Plateform
@@ -460,173 +775,5 @@ public class ProfilingPlanBuilder {
         return profilingOperators;
     }
 
-    /**
-     * Get the {@link OperatorProfiler} of the input string
-     * @param operator
-     * @return
-     */
-    private static OperatorProfiler getProfilingOperator(String operator) {
-        //List allCardinalities = this.profilingConfig.getInputCardinality();
-        //List dataQuata = this.profilingConfig.getDataQuantaSize();
-        //List UdfComplexity = this.profilingConfig.getUdfsComplexity();
-
-        if (profilingConfig.getProfilingPlateform().equals("spark")){
-            switch (operator) {
-                case "textsource":
-                    return SparkOperatorProfilers.createSparkTextFileSourceProfiler(1);
-                case "collectionsource":
-                    return SparkOperatorProfilers.createSparkCollectionSourceProfiler(1);
-                case "map":
-                    return SparkOperatorProfilers.createSparkMapProfiler(1, 1);
-                case "filter":
-                    return (SparkOperatorProfilers.createSparkFilterProfiler(1, 1));
-                case "flatmap":
-                    return (SparkOperatorProfilers.createSparkFlatMapProfiler(1, 1));
-                case "reduce":
-                    return (SparkOperatorProfilers.createSparkReduceByProfiler(1, 1));
-                case "globalreduce":
-                    return (SparkOperatorProfilers.createSparkGlobalReduceProfiler(1, 1));
-
-                case "distinct":
-                case "distinct-string":
-                    return (SparkOperatorProfilers.createSparkDistinctProfiler(1));
-
-                case "distinct-integer":
-                    return (SparkOperatorProfilers.createSparkDistinctProfiler(
-                            DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
-                            Integer.class,
-                            new Configuration()
-                    ));
-
-                case "sort":
-                case "sort-string":
-                    return (SparkOperatorProfilers.createSparkSortProfiler(1));
-
-                case "sort-integer":
-                    return (SparkOperatorProfilers.createSparkSortProfiler(
-                            DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
-                            Integer.class,
-                            new Configuration()
-                    ));
-
-                case "count":
-                    return (SparkOperatorProfilers.createSparkCountProfiler(1));
-
-                case "groupby":
-                    return (SparkOperatorProfilers.createSparkMaterializedGroupByProfiler(1, 1));
-
-                case "join":
-                    return (SparkOperatorProfilers.createSparkJoinProfiler(1, 1));
-
-                case "union":
-                    return (SparkOperatorProfilers.createSparkUnionProfiler(1));
-
-                case "cartesian":
-                    return (SparkOperatorProfilers.createSparkCartesianProfiler(1));
-
-                case "callbacksink":
-                    return (SparkOperatorProfilers.createSparkLocalCallbackSinkProfiler(1));
-
-                default:
-                    System.out.println("Unknown operator: " + operator);
-                    return (SparkOperatorProfilers.createSparkLocalCallbackSinkProfiler(1));
-            }
-        } else{
-            switch (operator) {
-                case "textsource":
-                    return (JavaOperatorProfilers.createJavaTextFileSourceProfiler(1));
-
-                case "collectionsource":
-                    return (JavaOperatorProfilers.createJavaCollectionSourceProfiler(1));
-
-                case "map":
-                    return (JavaOperatorProfilers.createJavaMapProfiler(1, 1));
-
-                case "filter":
-                    return (JavaOperatorProfilers.createJavaFilterProfiler(1, 1));
-                case "flatmap":
-                    return (JavaOperatorProfilers.createJavaFlatMapProfiler(1, 1));
-
-                case "reduce":
-                    return (JavaOperatorProfilers.createJavaReduceByProfiler(1, 1));
-
-                case "globalreduce":
-                    return (JavaOperatorProfilers.createJavaGlobalReduceProfiler(1, 1));
-
-                case "distinct":
-                case "distinct-string":
-                    return (JavaOperatorProfilers.createJavaDistinctProfiler(1));
-
-                case "distinct-integer":
-                    return (JavaOperatorProfilers.createJavaDistinctProfiler(
-                            DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.0, new Random(), 1),
-                            List.class
-                    ));
-
-                case "sort":
-                case "sort-string":
-                    return (JavaOperatorProfilers.createJavaSortProfiler(1, 1));
-
-                case "sort-integer":
-                    return (JavaOperatorProfilers.createJavaSortProfiler(
-                            DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.0, new Random(), 1),
-                            List.class
-                    ));
-
-                case "count":
-                    return (JavaOperatorProfilers.createJavaCountProfiler(1));
-
-                case "groupby":
-                    return (JavaOperatorProfilers.createJavaMaterializedGroupByProfiler(1, 1));
-
-                case "join":
-                    return (JavaOperatorProfilers.createJavaJoinProfiler(1, 1));
-
-                case "union":
-                    return (JavaOperatorProfilers.createJavaUnionProfiler(1));
-
-                case "cartesian":
-                    return (JavaOperatorProfilers.createJavaCartesianProfiler(1));
-
-                case "callbacksink":
-                    return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
-
-                case "collect":
-                    return (JavaOperatorProfilers.createCollectingJavaLocalCallbackSinkProfiler(1));
-
-                case "word-count-split": {
-                    final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2 + 1, 10 + 1, new Random(42));
-                    return (
-                            JavaOperatorProfilers.createJavaFlatMapProfiler(
-                                    () -> String.format("%s %s %s %s %s %s %s %s %s",
-                                            randomStringSupplier.get(), randomStringSupplier.get(),
-                                            randomStringSupplier.get(), randomStringSupplier.get(),
-                                            randomStringSupplier.get(), randomStringSupplier.get(),
-                                            randomStringSupplier.get(), randomStringSupplier.get(),
-                                            randomStringSupplier.get()),
-                                    str -> Arrays.asList(str.split(" ")),
-                                    String.class,
-                                    String.class
-                            ));
-
-                }
-                case "word-count-canonicalize": {
-                    final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2 + 1, 10 + 1, new Random(42));
-                    return (
-                            JavaOperatorProfilers.createJavaMapProfiler(
-                                    randomStringSupplier,
-                                    word -> new Tuple2<>(word.toLowerCase(), 1),
-                                    String.class,
-                                    Tuple2.class
-                            )
-                    );
-
-                }
-                default:
-                    System.out.println("Unknown operator: " + operator);
-                    return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
-            }
-        }
-    }
 
 }

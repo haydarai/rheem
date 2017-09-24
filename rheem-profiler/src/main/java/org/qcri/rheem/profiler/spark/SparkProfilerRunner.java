@@ -11,6 +11,7 @@ import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -18,7 +19,7 @@ import java.util.stream.StreamSupport;
 /**
  * Starts a profiling run of Spark.
  */
-public class SparkProfilerRunner {
+public class SparkProfilerRunner implements Serializable {
 
     public static void main(String[] args) {
         if (args.length < 2) {
