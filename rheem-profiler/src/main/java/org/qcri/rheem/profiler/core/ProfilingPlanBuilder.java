@@ -334,7 +334,7 @@ public class ProfilingPlanBuilder implements Serializable {
         if  (!(loopTopology.getInput(0).getOccupant()==null)){
             //If exist
             List<Topology> predecessors = loopTopology.getPredecessors();
-
+            
             // this will connect the INITIAL_INPUT_INDEX
             connectNodes(predecessors.get(0), loopNode, LoopTopology.INITIAL_INPUT_INDEX);
         } else{
