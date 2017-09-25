@@ -58,7 +58,7 @@ public class TopologyGenerator {
      * maximum number of Loops Topologies to be used in generated topologies
      *
      */
-    private static int maxLoopTopologies = 1 ;
+    private static int maxLoopTopologies = 2 ;
 
     /**
      * maximum number of Juncture Topologies to be used in generated topologies
@@ -186,10 +186,29 @@ public class TopologyGenerator {
         // Handles the case of generating One Node Pipeline Topology
         if (nodesNumber==1) {
             topologyList.add(new PipelineTopology(nodesNumber));
+            generateLoops(1,nodesNumber);
             newGeneratedTopologies+=1;
         }
 
         // Handles loops
+        generateLoops(previousGeneratedTopologies, nodesNumber);
+
+
+        // exit if the nodeNumber is equal to 1
+        if(nodeNumber==1){
+            return topologyList;
+        }
+
+        // add recursively topologies until reaching the current TopologyGenerator node number
+        //while((nodesNumber+1)<=nodeNumber)
+        if ((nodesNumber+1)<=nodeNumber)
+            generateTopology(nodesNumber+1);
+        return topologyList;
+    }
+
+
+    static private void generateLoops(int previousGeneratedTopologies, int nodesNumber){
+
         // Add a loop to the last created node (Last Layer)
         // Start the loop from the topl left topology
         for(int i=1;i<=previousGeneratedTopologies;i++){
@@ -233,19 +252,9 @@ public class TopologyGenerator {
                 break;
             }
         }
-
-
-        // exit if the nodeNumber is equal to 1
-        if(nodeNumber==1){
-            return topologyList;
-        }
-
-        // add recursively topologies until reaching the current TopologyGenerator node number
-        //while((nodesNumber+1)<=nodeNumber)
-        if ((nodesNumber+1)<=nodeNumber)
-            generateTopology(nodesNumber+1);
-        return topologyList;
     }
+
+
 
     private static Topology mergeTopologies(Topology t1, Topology t2, int nodeNumber) {
         Topology t1Copy = t1.createCopy(nodeNumber-1);
