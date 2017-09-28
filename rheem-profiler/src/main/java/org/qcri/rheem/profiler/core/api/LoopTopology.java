@@ -26,11 +26,30 @@ public class LoopTopology extends TopologyBase implements Topology {
     /**
      * Number of iterations
      */
-    private final Integer numIterations;
+    private Integer numIterations = -1;
+
+    private static Stack<Topology> loops = new Stack<>();
+
+    private static Stack<Topology> loopsCopies = new Stack<>();
+
+
+
 
     // 3 inputs ()
 
     // 2 outputs
+
+    public LoopTopology(int topologyNumber){
+        this.inputTopologySlots = new InputTopologySlot[2];
+        this.outputTopologySlots = new OutputTopologySlot[2];
+        this.inputTopologySlots[INITIAL_INPUT_INDEX] = new InputTopologySlot("initIn", this);
+        this.inputTopologySlots[ITERATION_INPUT_INDEX] = new InputTopologySlot("iterIn", this);
+
+        this.outputTopologySlots[ITERATION_OUTPUT_INDEX] = new OutputTopologySlot("iterOut", this);
+        this.outputTopologySlots[FINAL_OUTPUT_INDEX] = new OutputTopologySlot("finOut", this);
+
+        this.topologyNumber=topologyNumber;
+    }
 
     public LoopTopology(int topologyNumber, int numIterations){
         this.inputTopologySlots = new InputTopologySlot[2];
@@ -66,30 +85,67 @@ public class LoopTopology extends TopologyBase implements Topology {
      * @return
      */
     public Topology createCopy(int topologyNumber){
-        PipelineTopology newTopology = new PipelineTopology(topologyNumber);
-
-        // Clone the input topologies
-        InputTopologySlot[] tmpInputTopologySlots = new InputTopologySlot[1];
-        OutputTopologySlot[] tmpOutTopologySlots = new OutputTopologySlot[1];
-
-
-        for(InputTopologySlot in:this.inputTopologySlots){
-            tmpInputTopologySlots[0]=in.clone();
-
-            if (this.inputTopologySlots[0].getOccupant() != null){
-                // input1 topology copy
-                Topology tmpNewTopology = this.inputTopologySlots[0].getOccupant().getOwner().createCopy(topologyNumber-1);
-                // connect the input1Copy topology with the new junctureCopy input1
-                tmpInputTopologySlots[0].setOccupant(tmpNewTopology.getOutput(0));
+        if (!loops.isEmpty())
+            if (loops.peek()==this){
+                // remove the top node
+                loops.pop();
+                // connect the out2
+                // exit the loop
+                return loopsCopies.pop();
             }
+
+
+
+        LoopTopology newTopology = new LoopTopology(topologyNumber);
+
+
+        // push the current loop
+        loops.push(this);
+
+        // push the loop copy
+        loopsCopies.push(newTopology);
+        // Clone the input topologies
+        InputTopologySlot[] tmpInputTopologySlots = new InputTopologySlot[2];
+        OutputTopologySlot[] tmpOutTopologySlots = new OutputTopologySlot[2];
+
+        Integer counter=0;
+
+        // Clone input slots
+        for(InputTopologySlot in:this.inputTopologySlots){
+            tmpInputTopologySlots[counter]=in.clone();
+
+            if ((this.inputTopologySlots[counter].getOccupant() != null)&&(counter==1)){
+                // case of cloning iteration input (iteration last node ) should be treated in a non recursive way to prevent infinity looping
+                // input1 topology copy
+                Topology tmpNewTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+                // connect the input1Copy topology with the new junctureCopy input1
+                tmpInputTopologySlots[counter].setOccupant(tmpNewTopology.getOutput(0));
+            } else if ((this.inputTopologySlots[counter].getOccupant() != null)){
+                    // input1 topology copy
+                    Topology tmpNewTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+                    // connect the input1Copy topology with the new junctureCopy input1
+                    tmpInputTopologySlots[counter].setOccupant(tmpNewTopology.getOutput(0));
+            }
+            counter++;
         }
 
+        // Reinitialize the counter
+        /*counter=0;
         for(OutputTopologySlot out:this.outputTopologySlots){
-            tmpOutTopologySlots[0]=out.clone();
-        }
+            tmpOutTopologySlots[counter] = new OutputTopologySlot("in", newTopology);
+            tmpOutTopologySlots[counter].setOccupiedSlots(out.getOccupiedSlots());
 
+            // Increment output slot counter
+            counter++;
+        }*/
+
+        // Prepare the output slots : with adding  finOut output slot
+        OutputTopologySlot tmpOutTopologySlot = new OutputTopologySlot("finOut", newTopology);
+        tmpOutTopologySlot.setOccupiedSlots(this.outputTopologySlots[1].getOccupiedSlots());
+
+        // Add tmpInputTopologySlots
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
-
+        newTopology.setOutputTopologySlot(tmpOutTopologySlot,1);
 
         // Clone the nodes
         newTopology.setNodes((Stack) this.getNodes().clone());

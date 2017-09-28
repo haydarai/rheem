@@ -84,9 +84,12 @@ public class JunctureTopology extends TopologyBase implements Topology {
 
         //}
 
+        Integer counter=0;
         for(OutputTopologySlot out:this.outputTopologySlots){
-            tmpOutTopologySlots[0] = new OutputTopologySlot("in", newTopology);
-            tmpOutTopologySlots[0].setOccupiedSlots(out.getOccupiedSlots());
+            tmpOutTopologySlots[counter] = new OutputTopologySlot("in"+counter, newTopology);
+            tmpOutTopologySlots[counter].setOccupiedSlots(out.getOccupiedSlots());
+
+            counter++;
         }
 
 

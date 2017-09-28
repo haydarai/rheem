@@ -61,6 +61,24 @@ public class TopologyGenerator {
     private static int maxLoopTopologies = 2 ;
 
     /**
+     * maximum number of Loops Topologies to be used in generated topologies
+     *
+     */
+    private static int minLoopTopologies = 2 ;
+
+    /**
+     * Position of the loop topology; in which layer the loop topology begins in the generated Topology
+     */
+    private Integer Lpos = -1;
+
+    /**
+     * number of nodes inside of the loop topology;
+     */
+    private Integer Lbody = -1;
+
+
+
+    /**
      * maximum number of Juncture Topologies to be used in generated topologies
      *
      */
@@ -90,7 +108,7 @@ public class TopologyGenerator {
 
     public static List<Topology> generateTopology(int nodesNumber){
         // Disabled case that handles single Operator Topology
-        // TODO the below case should be put in an outside part befor the the topology loops
+        // TODO the below case should be put in an outside part before the the topology loops
         if((nodesNumber==1)&&(false))
             // Single operator topology
             return singleOperatortopology();
@@ -190,7 +208,7 @@ public class TopologyGenerator {
             newGeneratedTopologies+=1;
         }
 
-        // Handles loops
+        // Handles loop topologies
         generateLoops(previousGeneratedTopologies, nodesNumber);
 
 
@@ -229,6 +247,10 @@ public class TopologyGenerator {
 
                 //Reset the output slot of sourceTop and connect with initialize 0
                 sourceLeftNode.resetOutputSlots(0);
+
+                //Reset the first input slot of sourceTopSucessor and connect with beginIteration
+                sourceLeftNodeSuccessor.resetInputSlots(0);
+
 
                 if(sourceLeftNodeSuccessor!= sourceLeftNode)
                     loopTopology.initialize(sourceLeftNode,0);

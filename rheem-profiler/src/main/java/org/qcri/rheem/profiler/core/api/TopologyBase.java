@@ -24,6 +24,9 @@ public class TopologyBase implements Topology {
         this.outputTopologySlots = outputTopologySlots;
     }
 
+    public void setOutputTopologySlot(OutputTopologySlot outputTopologySlot, Integer index) {
+        this.outputTopologySlots[index] = outputTopologySlot;
+    }
     /**
      * Input Slots associated with the topology instance
      */

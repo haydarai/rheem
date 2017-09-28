@@ -55,6 +55,8 @@ public class PipelineTopology extends TopologyBase implements Topology {
      * @return
      */
     public Topology createCopy(int topologyNumber){
+
+
         PipelineTopology newTopology = new PipelineTopology(topologyNumber);
 
         // Clone the input topologies
@@ -64,7 +66,7 @@ public class PipelineTopology extends TopologyBase implements Topology {
 
 
         for(InputTopologySlot in:this.inputTopologySlots){
-            tmpInputTopologySlots[0]=in.clone();
+            tmpInputTopologySlots[0] = in.clone();
 
             if (this.inputTopologySlots[0].getOccupant() != null){
                 // input1 topology copy
@@ -81,7 +83,6 @@ public class PipelineTopology extends TopologyBase implements Topology {
         }
 
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
-
         newTopology.setOutputTopologySlots(tmpOutTopologySlots);
 
 

@@ -327,6 +327,7 @@ public class ProfilingPlanBuilder implements Serializable {
             // Reset current loop
 
         }
+        // TODO: Handle the case where the loop is not a sink topology
 
         //return connectNodes(loopTopology,loopNode,inputSlot);
 
@@ -334,9 +335,11 @@ public class ProfilingPlanBuilder implements Serializable {
         if  (!(loopTopology.getInput(0).getOccupant()==null)){
             //If exist
             List<Topology> predecessors = loopTopology.getPredecessors();
-            
+
             // this will connect the INITIAL_INPUT_INDEX
-            connectNodes(predecessors.get(0), loopNode, LoopTopology.INITIAL_INPUT_INDEX);
+            //connectNodes(predecessors.get(0), loopNode, LoopTopology.INITIAL_INPUT_INDEX);
+            Tuple2<String, OperatorProfiler> initialInputIndexNode = predecessors.get(0).getNodes().peek();
+            initialInputIndexNode.getField1().getOperator().connectTo(0,loopNode.getField1().getOperator(),LoopTopology.INITIAL_INPUT_INDEX);
         } else{
             // means the loop is a source node too
             // connect the source node to loop node
