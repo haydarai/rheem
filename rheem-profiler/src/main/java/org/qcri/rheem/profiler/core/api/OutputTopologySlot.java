@@ -20,6 +20,9 @@ public class OutputTopologySlot<T> extends TopologySlot<T> {
         this.occupiedSlots = occupiedSlots;
     }
 
+    public void setOccupiedSlot(Integer slotNumber, InputTopologySlot<T> occupiedSlot) {
+        this.occupiedSlots.set(slotNumber, occupiedSlot);
+    }
 
     /**
      * Output slot of another Topology that is connected to this output slot.

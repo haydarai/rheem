@@ -63,14 +63,19 @@ public class JunctureTopology extends TopologyBase implements Topology {
         // new junctureCopy
         JunctureTopology newTopology = new JunctureTopology(topologyNumber);
 
+        /*
         //for(InputTopologySlot in:this.inputTopologySlots){
         tmpInputTopologySlots[0]=this.inputTopologySlots[0].clone();
 
         if (this.inputTopologySlots[0].getOccupant() != null){
             // input1 topology copy
-            Topology tmpNewTopology = this.inputTopologySlots[0].getOccupant().getOwner().createCopy(topologyNumber-1);
+            Topology previousTopology = this.inputTopologySlots[0].getOccupant().getOwner().createCopy(topologyNumber-1);
             // connect the input1Copy topology with the new junctureCopy input1
-            tmpInputTopologySlots[0].setOccupant(tmpNewTopology.getOutput(0));
+            tmpInputTopologySlots[0].setOccupant(previousTopology.getOutput(0));
+
+            // Add the input tmpInputTopologySlots[counter] to the output of the previous topology tmpNewTopology
+            previousTopology.getOutput(0).setOccupiedSlot(0,tmpInputTopologySlots[0]);
+
         }
 
         tmpInputTopologySlots[1]=this.inputTopologySlots[1].clone();
@@ -84,7 +89,29 @@ public class JunctureTopology extends TopologyBase implements Topology {
 
         //}
 
+*/
+
         Integer counter=0;
+
+        for(InputTopologySlot in:this.inputTopologySlots){
+            tmpInputTopologySlots[counter]=in.clone();
+
+            if ((this.inputTopologySlots[counter].getOccupant() != null)){
+                // case of cloning iteration input (iteration last node ) should be treated in a non recursive way to prevent infinity looping
+                // input1 topology copy
+                Topology previousTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+
+                // Add the input tmpInputTopologySlots[counter] to the output of the previous topology tmpNewTopology
+                previousTopology.getOutput(0).connectTo(tmpInputTopologySlots[counter]);
+
+                // connect the input1Copy topology with the new junctureCopy input1
+                // TODO: To be modified with the duplicate topology
+                tmpInputTopologySlots[counter].setOccupant(previousTopology.getOutput(0));
+            }
+            counter++;
+        }
+
+        counter=0;
         for(OutputTopologySlot out:this.outputTopologySlots){
             tmpOutTopologySlots[counter] = new OutputTopologySlot("in"+counter, newTopology);
             tmpOutTopologySlots[counter].setOccupiedSlots(out.getOccupiedSlots());
@@ -95,7 +122,7 @@ public class JunctureTopology extends TopologyBase implements Topology {
 
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
 
-        newTopology.setOutputTopologySlots(tmpOutTopologySlots);
+        //newTopology.setOutputTopologySlots(tmpOutTopologySlots);
 
         // Clone the nodes
         newTopology.setNodes((Stack) this.getNodes().clone());

@@ -1,5 +1,6 @@
 package org.qcri.rheem.profiler.core.api;
 
+import org.antlr.v4.codegen.model.Loop;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 
@@ -152,19 +153,6 @@ public class TopologyBase implements Topology {
             return this;
     }
 
-    /**
-     * create a copy of current topology
-     * @return
-     */
-    public Topology createCopy(int topologyNumber){
-        Topology newTopology = new TopologyBase();
-
-        newTopology.setInputTopologySlots(this.inputTopologySlots);
-
-        newTopology.setOutputTopologySlots(this.outputTopologySlots);
-
-        return newTopology;
-    }
 
     @Override
     public InputTopologySlot<?>[] getAllInputs() {
@@ -200,6 +188,66 @@ public class TopologyBase implements Topology {
 
         outputSlot.connectTo(inputSlot);
     }
+
+
+    /**
+     * create a copy of current topology
+     * @return
+     */
+    public Topology createCopy(int topologyNumber){
+
+        Topology copiedTopology = new TopologyBase();
+
+        // Initialize copied Topology
+        if (this instanceof PipelineTopology){
+             copiedTopology = new PipelineTopology(topologyNumber);
+        } else if (this instanceof JunctureTopology){
+             copiedTopology = new JunctureTopology(topologyNumber);
+        } else if (this instanceof JunctureTopology){
+             copiedTopology = new LoopTopology(topologyNumber);
+        }
+
+        // Clone the input topologies
+        InputTopologySlot[] tmpInputTopologySlots = new InputTopologySlot[2];
+        OutputTopologySlot[] tmpOutTopologySlots = new OutputTopologySlot[2];
+
+        Integer counter=0;
+
+        // Clone input slots
+        for(InputTopologySlot in:this.inputTopologySlots){
+            tmpInputTopologySlots[counter]=in.clone();
+
+            if ((this.inputTopologySlots[counter].getOccupant() != null)){
+                // case of cloning iteration input (iteration last node ) should be treated in a non recursive way to prevent infinity looping
+                // input1 topology copy
+                Topology previousTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+
+                // Add the input tmpInputTopologySlots[counter] to the output of the previous topology tmpNewTopology
+                previousTopology.getOutput(0).connectTo(tmpInputTopologySlots[counter]);
+
+                // connect the input1Copy topology with the new junctureCopy input1
+                // TODO: To be modified with the duplicate topology
+                tmpInputTopologySlots[counter].setOccupant(previousTopology.getOutput(0));
+
+
+
+            }
+            counter++;
+        }
+
+        // Add tmpInputTopologySlots
+        copiedTopology.setInputTopologySlots(tmpInputTopologySlots);
+        //newTopology.setOutputTopologySlot(tmpOutTopologySlot,1);
+
+        // Clone the nodes
+        copiedTopology.setNodes((Stack) this.getNodes().clone());
+
+        //Clone the nodenumber
+        copiedTopology.setNodeNumber(this.nodeNumber);
+        copiedTopology.setName(this.getName());
+        return copiedTopology;
+    }
+
 
     /*@Override
     public boolean isSink() {

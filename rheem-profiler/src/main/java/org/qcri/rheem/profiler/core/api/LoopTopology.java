@@ -114,17 +114,24 @@ public class LoopTopology extends TopologyBase implements Topology {
         for(InputTopologySlot in:this.inputTopologySlots){
             tmpInputTopologySlots[counter]=in.clone();
 
-            if ((this.inputTopologySlots[counter].getOccupant() != null)&&(counter==1)){
+            if ((this.inputTopologySlots[counter].getOccupant() != null)){
                 // case of cloning iteration input (iteration last node ) should be treated in a non recursive way to prevent infinity looping
                 // input1 topology copy
-                Topology tmpNewTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+                Topology previousTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+
+                // Add the input tmpInputTopologySlots[counter] to the output of the previous topology tmpNewTopology
+                previousTopology.getOutput(0).connectTo(tmpInputTopologySlots[counter]);
+
                 // connect the input1Copy topology with the new junctureCopy input1
-                tmpInputTopologySlots[counter].setOccupant(tmpNewTopology.getOutput(0));
-            } else if ((this.inputTopologySlots[counter].getOccupant() != null)){
+                // TODO: To be modified with the duplicate topology
+                tmpInputTopologySlots[counter].setOccupant(previousTopology.getOutput(0));
+
+
+            //} else if ((this.inputTopologySlots[counter].getOccupant() != null)&&(counter==1)){
                     // input1 topology copy
-                    Topology tmpNewTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
+                    //Topology tmpNewTopology = in.getOccupant().getOwner().createCopy(topologyNumber-1);
                     // connect the input1Copy topology with the new junctureCopy input1
-                    tmpInputTopologySlots[counter].setOccupant(tmpNewTopology.getOutput(0));
+                    //tmpInputTopologySlots[counter].setOccupant(tmpNewTopology.getOutput(0));
             }
             counter++;
         }
@@ -140,12 +147,12 @@ public class LoopTopology extends TopologyBase implements Topology {
         }*/
 
         // Prepare the output slots : with adding  finOut output slot
-        OutputTopologySlot tmpOutTopologySlot = new OutputTopologySlot("finOut", newTopology);
-        tmpOutTopologySlot.setOccupiedSlots(this.outputTopologySlots[1].getOccupiedSlots());
+        //OutputTopologySlot tmpOutTopologySlot = new OutputTopologySlot("finOut", newTopology);
+        //tmpOutTopologySlot.setOccupiedSlots(this.outputTopologySlots[1].getOccupiedSlots());
 
         // Add tmpInputTopologySlots
         newTopology.setInputTopologySlots(tmpInputTopologySlots);
-        newTopology.setOutputTopologySlot(tmpOutTopologySlot,1);
+        //newTopology.setOutputTopologySlot(tmpOutTopologySlot,1);
 
         // Clone the nodes
         newTopology.setNodes((Stack) this.getNodes().clone());
