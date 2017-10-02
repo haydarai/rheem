@@ -61,7 +61,7 @@ public class CollectionSource<T> extends UnarySource<T> implements ElementaryOpe
     }
 
     /**
-     * Creates a new instance without any data quanta.
+     * Creates a new instance with only one data quanta.
      */
     public static <T> CollectionSource<T> singleton(T value, Class<T> typeClass) {
         final CollectionSource<T> instance = new CollectionSource<>(Collections.singleton(value), typeClass);

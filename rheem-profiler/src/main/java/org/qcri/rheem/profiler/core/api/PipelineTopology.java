@@ -73,7 +73,8 @@ public class PipelineTopology extends TopologyBase implements Topology {
                 Topology previousTopology = this.inputTopologySlots[0].getOccupant().getOwner().createCopy(topologyNumber-1);
 
                 // Add the input tmpInputTopologySlots[counter] to the output of the previous topology tmpNewTopology
-                previousTopology.getOutput(0).connectTo(tmpInputTopologySlots[0]);
+                //previousTopology.getOutput(0).connectTo(tmpInputTopologySlots[0]);
+                previousTopology.getOutput(0).connectTo((InputTopologySlot)newTopology.getInput(0));
 
                 // connect the input1Copy topology with the new junctureCopy input1
                 tmpInputTopologySlots[0].setOccupant(previousTopology.getOutput(0));

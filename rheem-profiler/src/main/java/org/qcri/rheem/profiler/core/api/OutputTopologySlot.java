@@ -21,7 +21,7 @@ public class OutputTopologySlot<T> extends TopologySlot<T> {
     }
 
     public void setOccupiedSlot(Integer slotNumber, InputTopologySlot<T> occupiedSlot) {
-        this.occupiedSlots.set(slotNumber, occupiedSlot);
+        this.occupiedSlots.add(slotNumber, occupiedSlot);
     }
 
     /**
