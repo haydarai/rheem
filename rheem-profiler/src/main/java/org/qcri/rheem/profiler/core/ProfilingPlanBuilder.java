@@ -339,7 +339,10 @@ public class ProfilingPlanBuilder implements Serializable {
             // this will connect the INITIAL_INPUT_INDEX
             //connectNodes(predecessors.get(0), loopNode, LoopTopology.INITIAL_INPUT_INDEX);
             Tuple2<String, OperatorProfiler> initialInputIndexNode = predecessors.get(0).getNodes().peek();
-            initialInputIndexNode.getField1().getOperator().connectTo(0,loopNode.getField1().getOperator(),LoopTopology.INITIAL_INPUT_INDEX);
+            //initialInputIndexNode.getField1().getOperator().connectTo(0,loopNode.getField1().getOperator(),LoopTopology.INITIAL_INPUT_INDEX);
+
+            // connect the nodes of the initialization topology
+            connectNodes(predecessors.get(0), loopNode,LoopTopology.INITIAL_INPUT_INDEX);
         } else{
             // means the loop is a source node too
             // connect the source node to loop node
@@ -350,6 +353,8 @@ public class ProfilingPlanBuilder implements Serializable {
         }
 
         currentLoop = new LoopTopology(0,0);
+
+        // should
 
         return loopNode;
     }

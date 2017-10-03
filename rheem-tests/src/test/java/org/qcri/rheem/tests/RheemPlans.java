@@ -379,6 +379,14 @@ public class RheemPlans {
         RepeatOperator<Integer> repeat = new RepeatOperator<>(numIterations, Integer.class);
         repeat.setName("repeat");
 
+
+        // Begin of New added part below
+        MapOperator<Integer, Integer> preprocessing = new MapOperator<>(
+                i -> i, Integer.class, Integer.class
+        );
+        source.connectTo(0,preprocessing,0);
+        // End of New added part below
+
         MapOperator<Integer, Integer> increment = new MapOperator<>(
                 i -> i + 1, Integer.class, Integer.class
         );
