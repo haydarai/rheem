@@ -21,13 +21,15 @@ import java.util.stream.Collectors;
  */
 public class SparkPlanOperatorProfilers implements Serializable{
 
+     private static Configuration configuration = new Configuration();
+
     /**
      * Create a default {@link SparkTextFileSource} profiler.
      */
     public static SparkTextFileSourceProfiler createSparkTextFileSourceProfiler(int dataQuantaScale, DataSetType type) {
         return createSparkTextFileSourceProfiler(
                 DataGenerators.generateGenerator(dataQuantaScale,type),
-                new Configuration()
+                configuration
         );
     }
 
@@ -45,7 +47,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
     public static SparkCollectionSourceProfiler createSparkCollectionSourceProfiler(int dataQuataSize, DataSetType type) {
             return createSparkCollectionSourceProfiler(
                     DataGenerators.generateGenerator(dataQuataSize,type),
-                    new Configuration(),type.getDataUnitType().getTypeClass()
+                    configuration,type.getDataUnitType().getTypeClass()
             );
 
     }
@@ -81,7 +83,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
                                     type.getDataUnitType().getTypeClass(),
                                     type.getDataUnitType().getTypeClass()
                             )),
-                    new Configuration(),
+                    configuration,
                     DataGenerators.generateGenerator(dataQuataSize,type)
             );
 
@@ -119,7 +121,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
                             new TransformationDescriptor<>(DataGenerators.generateUDF(UdfComplexity,dataQuataSize,type,"map")
                                     ,type.getDataUnitType().getTypeClass(), type.getDataUnitType().getTypeClass())
                     ),
-                    new Configuration(),
+                    configuration,
                     DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuataSize)
             );
 
@@ -156,7 +158,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
                             type,
                             new PredicateDescriptor<>(DataGenerators.generatefilterUDF(UdfComplexity,dataQuataSize,type,"filter"), type.getDataUnitType().getTypeClass())
                     ),
-                    new Configuration(),
+                    configuration,
                     DataGenerators.generateGenerator(dataQuataSize,type)
             );
 
@@ -191,7 +193,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
                 DataGenerators.generateBinaryUDF(UdfComplexity,dataQuataSize,type),
                 type.getDataUnitType().getTypeClass(),
                 type.getDataUnitType().getTypeClass(),
-                new Configuration()
+                configuration
         );
     }
 
@@ -223,7 +225,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
                 DataGenerators.generateGenerator(dataQuataSize,type),
                 DataGenerators.generateBinaryUDF(UdfComplexity,dataQuataSize,type),
                 type.getDataUnitType().getTypeClass(),
-                new Configuration()
+                configuration
         );
     }
 
@@ -251,7 +253,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
         return createSparkDistinctProfiler(
                 DataGenerators.generateGenerator(dataQuataSize,type),
                 type.getDataUnitType().getTypeClass(),
-                new Configuration()
+                configuration
         );
     }
 
@@ -275,7 +277,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
         return createSparkSortProfiler(
                 DataGenerators.generateGenerator(dataQuataSize,type),
                 type.getDataUnitType().getTypeClass(),
-                new Configuration()
+                configuration
         );
     }
 
@@ -300,7 +302,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
         return createSparkCountProfiler(
                 DataGenerators.generateGenerator(dataQuataSize,type),
                 type.getDataUnitType().getTypeClass(),
-                new Configuration()
+                configuration
         );
     }
 
@@ -326,7 +328,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
                 DataGenerators.generateUDF(UdfComplexity, dataQuataSize,type,"map"),
                 type.getDataUnitType().getTypeClass(),
                 type.getDataUnitType().getTypeClass(),
-                new Configuration()
+                configuration
         );
     }
 
@@ -357,7 +359,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
         return createSparkJoinProfiler(
                 DataGenerators.generateGenerator(dataQuataSize,type), type.getDataUnitType().getTypeClass(), DataGenerators.generateUDF(UdfComplexity, dataQuataSize,type,"map"),
                 DataGenerators.generateGenerator(dataQuataSize,type), type.getDataUnitType().getTypeClass(), DataGenerators.generateUDF(UdfComplexity, dataQuataSize,type,"map"),
-                type.getDataUnitType().getTypeClass(), new Configuration()
+                type.getDataUnitType().getTypeClass(), configuration
         );
     }
 
@@ -393,7 +395,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
 
             return new BinaryOperatorProfiler(
                     () -> new SparkUnionAllOperator<>(type),
-                    new Configuration(),
+                    configuration,
                     DataGenerators.generateGenerator(dataQuataSize,type),
                     DataGenerators.generateGenerator(dataQuataSize,type)
             );
@@ -408,7 +410,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
 
             return new BinaryOperatorProfiler(
                     () -> new SparkCartesianOperator<>(type, type),
-                    new Configuration(),
+                    configuration,
                     DataGenerators.generateGenerator(dataQuataSize,type),
                     DataGenerators.generateGenerator(dataQuataSize,type)
             );
@@ -421,7 +423,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
 
         return new BinaryOperatorProfiler(
                 () -> new SparkRepeatOperator<>(ierations, type),
-                new Configuration(),
+                configuration,
                 DataGenerators.generateGenerator(dataQuataSize,type),
                 DataGenerators.generateGenerator(dataQuataSize,type)
         );
@@ -435,7 +437,7 @@ public class SparkPlanOperatorProfilers implements Serializable{
 
             return new SparkSinkProfiler(
                     () -> new SparkLocalCallbackSink<>(dataQuantum -> { }, type),
-                    new Configuration(),
+                    configuration,
                     DataGenerators.generateGenerator(dataQuataSize,type)
             );
 

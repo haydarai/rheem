@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -58,13 +57,13 @@ public class TopologyGenerator {
      * maximum number of Loops Topologies to be used in generated topologies
      *
      */
-    private static int maxLoopTopologies = 2 ;
+    private static int maxLoopTopologies = 0 ;
 
     /**
      * maximum number of Loops Topologies to be used in generated topologies
      *
      */
-    private static int minLoopTopologies = 2 ;
+    private static int minLoopTopologies = 0 ;
 
     /**
      * Position of the loop topology; in which layer the loop topology begins in the generated Topology
@@ -77,12 +76,17 @@ public class TopologyGenerator {
     private Integer Lbody = -1;
 
 
+    /**
+     * Current number of Juncture Topologies to be used in generated topologies
+     *
+     */
+    private static Integer currentJunctureNumber = 0 ;
 
     /**
      * maximum number of Juncture Topologies to be used in generated topologies
      *
      */
-    private static int maxJunctureTopologies = 0;
+    private static int maxJunctureTopologies = 1;
 
     private static ProfilingConfig config;
 
@@ -100,6 +104,10 @@ public class TopologyGenerator {
     public TopologyGenerator( int nodesNumber,  ProfilingConfig configuration) {
         config = configuration;
         nodeNumber = nodesNumber;
+
+        // set up current generator
+        maxJunctureTopologies = config.getMaxJunctureTopologies();
+        maxLoopTopologies = config.getMaxLoopTopologies();
     }
 
     public static void startGeneration(){
@@ -124,7 +132,8 @@ public class TopologyGenerator {
             //Topology[] tmp2 = new Topology[1];
             //tmp2[0] = topologyList.get(topologyList.size()-i);
             //System.arraycopy(tmp2, 0, tmp, 0,0);
-            if (tmpPreviousTopology.isPipeline()){
+
+                if (tmpPreviousTopology.isPipeline()){
                 // if the tmpPreviousTopology is pipeline the only one topology possiblity to generate (i.e 1 new juncture + 1 new pipeline)
                 // Handles the case of creating the first merge Topology (i.e with only one Juncture Topology)
                 PipelineTopology tmpPipeline = new PipelineTopology(nodesNumber);
@@ -138,6 +147,9 @@ public class TopologyGenerator {
                 // Add the new Topology with Juncture
                 topologyList.add(tmpJuncture);
                 newGeneratedTopologies+=1;
+
+                // update the number of junctions
+                currentJunctureNumber =+1;
 
             } else if (tmpPreviousTopology.isJuncture()){
                 // create another copy because we will be adding two topoloogies here
@@ -164,9 +176,11 @@ public class TopologyGenerator {
                 topologyList.add(tmpJuncture);
 
                 newGeneratedTopologies+=2;
+                currentJunctureNumber =+1;
+
             }
             else if (tmpPreviousTopology.isLoop()){
-                // This eventually unecessery case cause the way a loop topology/operators sare implemented are topologycally connected
+                // This eventually unecessery case cause the way a loop topology/operators are implemented are topologycally connected
             }
         }
 
@@ -191,9 +205,11 @@ public class TopologyGenerator {
 
                 SubListN.stream().forEach(t1 ->{
                     finalSubListM.stream().forEach(t2 -> {
-                        Topology newT = mergeTopologies(t1,t2,nodesNumber);
-                        topologyList.add(newT);
-                        newGeneratedTopologies+=1;
+                        if(currentJunctureNumber <=maxJunctureTopologies){
+                            Topology newT = mergeTopologies(t1,t2,nodesNumber);
+                            topologyList.add(newT);
+                            newGeneratedTopologies+=1;
+                        }
                     });
                 });
 
@@ -219,8 +235,15 @@ public class TopologyGenerator {
 
         // add recursively topologies until reaching the current TopologyGenerator node number
         //while((nodesNumber+1)<=nodeNumber)
-        if ((nodesNumber+1)<=nodeNumber)
+        if ((nodesNumber+1)<=nodeNumber){
+            // check if the number of junctions are exceeded
+            if(currentJunctureNumber >= maxJunctureTopologies){
+                // exit generation
+                return topologyList;
+            }
             generateTopology(nodesNumber+1);
+        }
+
         return topologyList;
     }
 
@@ -288,6 +311,8 @@ public class TopologyGenerator {
         t1Copy.connectTo(0,tmpJuncture,0);
         t2Copy.connectTo(0,tmpJuncture,1);
 
+        // Update juncture number
+        currentJunctureNumber +=1;
         return tmpJuncture;
     }
 

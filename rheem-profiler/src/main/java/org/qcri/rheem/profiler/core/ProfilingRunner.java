@@ -9,6 +9,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
@@ -180,8 +181,10 @@ public class ProfilingRunner{
                 final long startTime = System.currentTimeMillis();
 
                 Topology sinkTopology = shape.getSinkTopology();
+
+                ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator();
                 // Have Rheem execute the plan.
-                Job job = rheemContext.createJob(null, new RheemPlan(sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator()));
+                Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
 
                 job.addUdfJar(ReflectionUtils.getDeclaringJar(UdfGenerators.class));
 

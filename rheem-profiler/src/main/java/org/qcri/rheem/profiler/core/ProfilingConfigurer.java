@@ -62,6 +62,9 @@ public class ProfilingConfigurer {
 
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
 
+    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 1;
+
+    private static final Integer MAX_LOOP_TOPOLOGIES = 0;
 
     public static String getPlateform() {
         return plateform;
@@ -91,6 +94,8 @@ public class ProfilingConfigurer {
         pc.setDataQuantaSize(dataQuantas);
         pc.setUdfsComplexity(UdfsComplexity);
         pc.setInputRatio(inputRatio);
+        pc.setMaxJunctureTopologies(MAX_JUNCTURE_TOPOLOGIES);
+        pc.setMaxLoopTopologies(MAX_LOOP_TOPOLOGIES);
 
         // Set execution operators
         pc.setUnaryExecutionOperators(UNARY_EXECUTION_OPLERATORS);

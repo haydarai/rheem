@@ -34,7 +34,7 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
 
     protected Supplier<JavaExecutionOperator> operatorGenerator;
 
-    protected JavaExecutionOperator operator;
+    //protected JavaExecutionOperator operator;
 
     protected JavaExecutor executor;
 
@@ -55,7 +55,10 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
         this.operatorGenerator = operatorGenerator;
         this.operator = operatorGenerator.get();
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
-        this.executor = ProfilingUtils.fakeJavaExecutor();
+
+        // No need for fake job  in the case of plan generation
+        // Should be enabled for single operator profiling
+        //this.executor = ProfilingUtils.fakeJavaExecutor();
         this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
     }
 
@@ -148,7 +151,8 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
                             ChannelInstance[] outputs) {
         OptimizationContext optimizationContext = new DefaultOptimizationContext(this.executor.getJob());
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
-        operator.evaluate(inputs, outputs, this.executor, operatorContext);
+        JavaExecutionOperator javaOperator = (JavaExecutionOperator) operator;
+        javaOperator.evaluate(inputs, outputs, this.executor, operatorContext);
     }
 
     /**

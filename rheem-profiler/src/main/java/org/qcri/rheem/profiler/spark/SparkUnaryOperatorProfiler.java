@@ -68,7 +68,7 @@ public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                this.operator,
+                (SparkExecutionOperator) this.operator,
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputChannelInstance}
         );
@@ -100,7 +100,7 @@ public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                this.operator,
+                (SparkExecutionOperator) this.operator,
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputCollectionChannelInstance}
         );

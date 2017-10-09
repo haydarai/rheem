@@ -47,7 +47,7 @@ public class BinaryOperatorProfiler extends SparkOperatorProfiler {
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                this.operator,
+                (SparkExecutionOperator)this.operator,
                 new ChannelInstance[]{inputChannelInstance0, inputChannelInstance1},
                 new ChannelInstance[]{outputChannelInstance}
         );

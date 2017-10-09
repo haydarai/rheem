@@ -15,8 +15,15 @@ public class ProfilingConfig {
 
 
 
+    private Integer maxJunctureTopologies;
+    private Integer maxLoopTopologies;
     private String profilingPlanGenerationEnumeration;
     private String profilingConfigurationEnumeration;
+    private List<String> loopExecutionOperators = new ArrayList<>();
+    private List<String> sinkExecutionOperators = new ArrayList<>();
+    private List<String> sourceExecutionOperators = new ArrayList<>();
+    private List<String> unaryExecutionOperators = new ArrayList<>();
+    private List<String> binaryExecutionOperators = new ArrayList<>();
     private List<Long> inputCardinality = new ArrayList<>();
     private List<Integer> dataQuantaSize = new ArrayList<>();
     private List<Integer> UdfsComplexity = new ArrayList<>();
@@ -56,8 +63,22 @@ public class ProfilingConfig {
         this.sourceExecutionOperators = sourceExecutionOperators;
     }
 
-    private List<String> unaryExecutionOperators = new ArrayList<>();
-    private List<String> binaryExecutionOperators = new ArrayList<>();
+    public Integer getMaxJunctureTopologies() {
+        return maxJunctureTopologies;
+    }
+
+    public void setMaxJunctureTopologies(Integer maxJunctureTopologies) {
+        this.maxJunctureTopologies = maxJunctureTopologies;
+    }
+
+    public Integer getMaxLoopTopologies() {
+        return maxLoopTopologies;
+    }
+
+    public void setMaxLoopTopologies(Integer maxLoopTopologies) {
+        this.maxLoopTopologies = maxLoopTopologies;
+    }
+
 
     public List<String> getLoopExecutionOperators() {
         return loopExecutionOperators;
@@ -67,10 +88,6 @@ public class ProfilingConfig {
         this.loopExecutionOperators = loopExecutionOperators;
     }
 
-    private List<String> loopExecutionOperators = new ArrayList<>();
-
-    private List<String> sinkExecutionOperators = new ArrayList<>();
-    private List<String> sourceExecutionOperators = new ArrayList<>();
 
 
 

@@ -27,7 +27,7 @@ public abstract class SparkSourceProfiler extends SparkOperatorProfiler {
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                this.operator,
+                (SparkExecutionOperator)this.operator,
                 new ChannelInstance[]{},
                 new ChannelInstance[]{outputChannelInstance}
         );

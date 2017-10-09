@@ -106,7 +106,7 @@ public class JavaUnaryOperatorProfiler extends JavaOperatorProfiler {
 
     @Override
     public JavaExecutionOperator getOperator() {
-        return this.operator;
+        return (JavaExecutionOperator)this.operator;
     }
 
 }

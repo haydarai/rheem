@@ -47,16 +47,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
 
     protected final long executionPaddingTime;
 
-    @Override
-    public SparkExecutionOperator getOperator() {
-        return operator;
-    }
-
-    public void setOperator(SparkExecutionOperator operator) {
-        this.operator = operator;
-    }
-
-    protected SparkExecutionOperator operator;
+    //protected SparkExecutionOperator operator;
 
     protected SparkExecutor sparkExecutor;
 
@@ -97,7 +88,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
     public void prepare(long dataQuantaSize,long... inputCardinalities) {
         this.operator = this.operatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
-        this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
+        //this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
         for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
             long inputCardinality = inputCardinalities[inputIndex];
             this.prepareInput(inputIndex, inputCardinality);
@@ -330,4 +321,20 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
     public void cleanUp() {
     }
 
+    /**
+     * Get the operator
+     * @return
+     */
+    @Override
+    public SparkExecutionOperator getOperator() {
+        return (SparkExecutionOperator) operator;
+    }
+
+    /**
+     * Set the operator
+     * @param operator
+     */
+    public void setOperator(SparkExecutionOperator operator) {
+        this.operator = operator;
+    }
 }
