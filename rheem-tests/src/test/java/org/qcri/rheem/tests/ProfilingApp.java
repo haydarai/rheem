@@ -63,6 +63,8 @@ public class ProfilingApp {
                     // populate shapes
                     //profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
                     planProfilers = ProfilingPlanBuilder.exhaustiveProfilingPlanBuilder(shapes,profilingConfig);
+
+                    shapes.stream().forEach(s -> s.prepareVectorLogs());
                     ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
                     //System.out.println(result.toCsvString())
 

@@ -1,9 +1,8 @@
 package org.qcri.rheem.profiler.core.api;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Stack;
+import org.qcri.rheem.basic.data.Tuple2;
+
+import java.util.*;
 
 /**
  * Created by migiwara on 16/07/17.
@@ -13,31 +12,29 @@ public class Shape {
     // subshapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
     private List<Shape> subShapes = new ArrayList<>();
     private List<Topology> allTopologies = new ArrayList<>();
-
     private List<Topology> sourceTopologies = new ArrayList<>();
-
-
-
-
     private String plateform;
-
-    public Topology getSinkTopology() {
-        return sinkTopology;
-    }
+    private List<PipelineTopology> pipelineTopologies = new ArrayList<>();
+    private List<JunctureTopology> junctureTopologies = new ArrayList<>();
+    private List<LoopTopology> loopTopologies = new ArrayList<>();
+    int[] vectorLogs= new int[104];
+    private int topologyNumber;
 
     // TODO: Currently only single sink topology generation is supported
     private final Topology sinkTopology;
 
+    public int[] getVectorLogs() {
+        return vectorLogs;
+    }
+
+    public void setVectorLogs(int[] vectorLogs) {
+        this.vectorLogs = vectorLogs;
+    }
 
 
-    private List<PipelineTopology> pipelineTopologies = new ArrayList<>();
-
-    private List<JunctureTopology> junctureTopologies = new ArrayList<>();
-
-    private List<LoopTopology> loopTopologies = new ArrayList<>();
-
-
-    private int topologyNumber;
+    public Topology getSinkTopology() {
+        return sinkTopology;
+    }
 
     //private int nodeNumber = sinkTopologies.getNodeNumber()
 
@@ -67,11 +64,108 @@ public class Shape {
         for(Topology t:allTopologies)
             t.setNodes(new Stack<>());
     }
+
+    /**
+     * prepare vector logs to be used for learning the cost model
+     * Each below operators will be encoded into 7 variables so overall 98 for 14 operators: Plat1, Plat2, Top1, Top2, Top3, Top4, Select
+     * in this order "map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
+     "groupby","sort","join", "union", "cartesian","repeat","collectionsource", "collect"
+
+     and added also: Input cardinality, DataQuantaSize at the end and numberPipeline; numberJunture; numberLoop; numberDuplicate at the beginning
+     TODO: to be added datamovement and Topology encoding
+     * @return
+     */
+
+    public void prepareVectorLogs(){
+        int[] logs = new int[104];
+        // Loop through all subShapes
+        this.subShapes.stream()
+                .forEach(s->{
+                    logs[0]=s.getPipelineTopologies().size();
+                    logs[1]=s.getJunctureTopologies().size();
+                    logs[2]=s.getLoopTopologies().size();
+                    logs[3]=0;
+                    // Loop through all topologies
+                    s.allTopologies.stream()
+                            .forEach(t -> {
+                                // Loop through all nodes
+                                t.getNodes().stream()
+                                        .forEach(tuple ->{
+                                            switch (tuple.getField0()){
+                                                case "map":
+                                                    fillLog(tuple,logs,t,3);
+                                                    break;
+                                                case "filter":
+                                                    fillLog(tuple,logs,t,3+7);
+                                                    break;
+                                                case "flatmap":
+                                                    fillLog(tuple,logs,t,3+14);
+                                                    break;
+                                                case "reduce":
+                                                    fillLog(tuple,logs,t,3+21);
+                                                    break;
+                                                case "globalreduce":
+                                                    fillLog(tuple,logs,t,3+28);
+                                                    break;
+                                                case "distinct":
+                                                    fillLog(tuple,logs,t,3+35);
+                                                    break;
+                                                case "groupby":
+                                                    fillLog(tuple,logs,t,3+42);
+                                                    break;
+                                                case "sort":
+                                                    fillLog(tuple,logs,t,3+49);
+                                                    break;
+                                                case "join":
+                                                    fillLog(tuple,logs,t,3+56);
+                                                    break;
+                                                case "union":
+                                                    fillLog(tuple,logs,t,3+63);
+                                                    break;
+                                                case "cartesian":
+                                                    fillLog(tuple,logs,t,3+70);
+                                                    break;
+                                                case "repeat":
+                                                    fillLog(tuple,logs,t,3+77);
+                                                    break;
+                                                case "collectionsource":
+                                                    fillLog(tuple,logs,t,3+84);
+                                                    break;
+                                                case "collect":
+                                                    fillLog(tuple,logs,t,3+91);
+                                                    break;
+                                            }
+                                        });
+                                });
+                    s.setVectorLogs(logs.clone());
+                    // reinitialize log array every subShape
+                    Arrays.fill(logs, 0);
+                });
+    }
+
+    void fillLog(Tuple2<String,OperatorProfiler> tuple, int[] logs, Topology t, int start){
+        switch (tuple.getField1().getOperator().getPlatform().getName()){
+            case "Java Streams":
+                logs[start]+=1;
+                break;
+            case "spark":
+                logs[start+1]+=1;
+                break;
+            default:
+                System.out.println("wrong plateform!");
+        }
+
+        if (t.isPipeline())
+            logs[start+2]+=1;
+        else if(t.isJuncture())
+            logs[start+3]+=1;
+        else if(t.isLoop())
+            logs[start+4]+=1;
+    }
     /**
      * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )
      * @param topology
      */
-
     public void populateShape(Topology topology){
 
         // Handle the case if the topology is pipeline Topology
