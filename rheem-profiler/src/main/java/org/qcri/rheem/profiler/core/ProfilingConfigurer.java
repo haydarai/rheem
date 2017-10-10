@@ -23,29 +23,31 @@ public class ProfilingConfigurer {
     private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
             "groupby","sort"));
 
-    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map" ));
-
-    private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "union"));
-
-    private static List<String> LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "repeat"));
-
-    private static List<String> TEST_LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "doWhile","loop","repeat"));
+    private static List<String> Test_LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "doWhile","loop","repeat"));
 
 
     private static List<String> Test_BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("join", "union", "cartesian"));
 
 
+    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
+            "groupby","sort" ));
+
+    private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "join", "union", "cartesian"));
+
+    private static List<String> LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "repeat"));
+
+
     private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
 
     //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
-    private static final String DEFAULT_INPUT_CARDINALITIES = "10000";
+    private static final String DEFAULT_INPUT_CARDINALITIES = "1,1000,100000,1000000,10000000";
 
     //private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
 
-    private static final String DEFAULT_DATA_QUATA_SIZES = "100";
+    private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000";
 
     // TODO: replace with actual read functions from a user input file
-    private static final String DEFAULT_UDF_COMPLEXITIES = "1";
+    private static final String DEFAULT_UDF_COMPLEXITIES = "1,2,3";
 
     private static final String DEFAULT_SELECTIVITY_COMPLEXITIES = "1,2,3";
 
@@ -55,14 +57,14 @@ public class ProfilingConfigurer {
     //
     private static final String DEFAULT_LOOP_ITERATION_NUMBERS = "10,100";
 
-    private static final List<String> DEFAULT_PLATEFORM = Arrays.asList("java");
+    private static final List<String> DEFAULT_PLATEFORM = Arrays.asList("java","spark");
 
     private static final List<DataSetType> DEFAULT_DATATYPE = Arrays.asList(DataSetType.createDefault(String.class));
 //DataSetType.createDefault(String.class),DataSetType.createDefault(List.class)
 
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
 
-    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 1;
+    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 0;
 
     private static final Integer MAX_LOOP_TOPOLOGIES = 0;
 

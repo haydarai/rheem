@@ -12,6 +12,7 @@ import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
@@ -42,20 +43,15 @@ import java.util.List;
  * Runs profiling Configuration
  */
 public class ProfilingRunner{
+    private static final Logger logger = LoggerFactory.getLogger(ProfilingRunner.class);
+
     PlatformExecution profilingPlatformExecution;
     private static ProfilingConfig profilingConfig;
     ProfilingPlan profilingPlan;
-
     private static RheemContext rheemContext;
-
     private static int cpuMhz, numMachines, numCoresPerMachine, numPartitions;
-
-    //Logger logger = new LoggerFactory(this.class);
-
     private static String gangliaRrdsDir;
-
-    private Configuration configuration = new Configuration();
-
+    private static Configuration configuration = new Configuration();
 
     public void ProfilingRunner(ProfilingConfig profilingConfig, PlatformExecution profilingPlatformExecution,
                                  ProfilingPlan profilingPlan){
@@ -67,8 +63,8 @@ public class ProfilingRunner{
         this.numMachines = (int) configuration.getLongProperty("rheem.spark.machines", 1);
         this.numCoresPerMachine = (int) configuration.getLongProperty("rheem.spark.cores-per-machine", 1);
         this.numPartitions = (int) configuration.getLongProperty("rheem.spark.partitions", -1);
-
         gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
+
     }
 
     /*public static void exhaustiveProfiling(List<List<PlanProfiler>> planProfiler,
@@ -137,13 +133,6 @@ public class ProfilingRunner{
                 // Clear the garbage collector
                 System.gc();
 
-
-                // create the result sink
-
-                //LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(results, String.class);
-
-                //plan.sinkOperatorProfiler.getOperator().connectTo(0,sink,0);
-
                 // Prepare input source operator
                 for (Topology t:shape.getSourceTopologies()){
                     switch (shape.getPlateform()){
@@ -157,10 +146,10 @@ public class ProfilingRunner{
                                 // Prepare source operator
                                 sourceProfiler.setUpSourceData(inputCardinality);
                             } catch (Exception e) {
-//                                LoggerFactory.getLogger(this.getClass()).error(
-//                                        String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
-//                                        e
-//                                );
+                                LoggerFactory.getLogger(ProfilingRunner.class).error(
+                                        String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
+                                        e
+                                );
                             }
                             break;
                         case "spark":
@@ -177,15 +166,16 @@ public class ProfilingRunner{
 
                 }
 
-
+                // save the starting execution time of current {@link RheemPlan}
                 final long startTime = System.currentTimeMillis();
 
                 Topology sinkTopology = shape.getSinkTopology();
-
                 ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator();
+
                 // Have Rheem execute the plan.
                 Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
 
+                // Add jars to spark workers
                 job.addUdfJar(ReflectionUtils.getDeclaringJar(UdfGenerators.class));
 
                 try {
@@ -195,6 +185,13 @@ public class ProfilingRunner{
                     System.out.print(e.getMessage()+"\n");
                 }
                 final long endTime = System.currentTimeMillis();
+
+                // Refresh the input cardinality and DAtaQuantaSize for logging
+                int[] vectorLogs = shape.getVectorLogs();
+                vectorLogs[103] = (int) inputCardinality;
+                vectorLogs[104] =  dataQuantaSize;
+
+                logExecution(shape,endTime - startTime);
 
                 List<Long> inputCardinalities = new ArrayList<>();
                 //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
@@ -218,6 +215,16 @@ public class ProfilingRunner{
     }
 
 
+    /**
+     * Generate the log for training the ML for learning Topology models
+     */
+    private static void logExecution(Shape shape, long executionTime){
+        try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
+            executionLog.storeVector(shape.getVectorLogs(),executionTime);
+        } catch (Exception e) {
+            logger.error("Storing partial executions failed.", e);
+        }
+    }
     public static void exhaustivePlanProfiling(List<List<PlanProfiler>> planProfiler,
                                            ProfilingConfig profilingConfiguration){
         profilingConfig = profilingConfiguration;

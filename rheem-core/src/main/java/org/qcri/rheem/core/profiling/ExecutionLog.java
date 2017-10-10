@@ -156,4 +156,26 @@ public class ExecutionLog implements AutoCloseable {
     public void close() throws Exception {
         IOUtils.closeQuietly(this.writer);
     }
+
+    public void storeVector(int[] logs, long executionTime) throws IOException {
+
+        try {
+            File file = new File(configuration.getStringProperty("rheem.core.log.planVector"));
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+            this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
+        }
+
+        for(int i=0;i<logs.length;i++){
+            writer.write(Integer.toString(logs[i]) + " ");
+        }
+        writer.write(Long.toString(executionTime));
+        writer.write("\n");
+    }
 }

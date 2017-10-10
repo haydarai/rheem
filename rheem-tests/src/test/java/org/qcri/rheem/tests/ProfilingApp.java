@@ -30,7 +30,7 @@ public class ProfilingApp {
 
         //RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
 
-        int maxNodeNumber = 10;
+        int maxNodeNumber = 20;
 
         if (args.length==2)
             maxNodeNumber = Integer.valueOf(args[1]);

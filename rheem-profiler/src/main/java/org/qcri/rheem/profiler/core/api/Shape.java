@@ -77,7 +77,7 @@ public class Shape {
      */
 
     public void prepareVectorLogs(){
-        int[] logs = new int[104];
+        int[] logs = new int[105];
         // Loop through all subShapes
         this.subShapes.stream()
                 .forEach(s->{
@@ -91,48 +91,49 @@ public class Shape {
                                 // Loop through all nodes
                                 t.getNodes().stream()
                                         .forEach(tuple ->{
+                                            int start = 4;
                                             switch (tuple.getField0()){
                                                 case "map":
-                                                    fillLog(tuple,logs,t,3);
+                                                    fillLog(tuple,logs,t,start);
                                                     break;
                                                 case "filter":
-                                                    fillLog(tuple,logs,t,3+7);
+                                                    fillLog(tuple,logs,t,start +7);
                                                     break;
                                                 case "flatmap":
-                                                    fillLog(tuple,logs,t,3+14);
+                                                    fillLog(tuple,logs,t,start +14);
                                                     break;
                                                 case "reduce":
-                                                    fillLog(tuple,logs,t,3+21);
+                                                    fillLog(tuple,logs,t,start +21);
                                                     break;
                                                 case "globalreduce":
-                                                    fillLog(tuple,logs,t,3+28);
+                                                    fillLog(tuple,logs,t,start +28);
                                                     break;
                                                 case "distinct":
-                                                    fillLog(tuple,logs,t,3+35);
+                                                    fillLog(tuple,logs,t,start +35);
                                                     break;
                                                 case "groupby":
-                                                    fillLog(tuple,logs,t,3+42);
+                                                    fillLog(tuple,logs,t,start +42);
                                                     break;
                                                 case "sort":
-                                                    fillLog(tuple,logs,t,3+49);
+                                                    fillLog(tuple,logs,t,start +49);
                                                     break;
                                                 case "join":
-                                                    fillLog(tuple,logs,t,3+56);
+                                                    fillLog(tuple,logs,t,start +56);
                                                     break;
                                                 case "union":
-                                                    fillLog(tuple,logs,t,3+63);
+                                                    fillLog(tuple,logs,t,start +63);
                                                     break;
                                                 case "cartesian":
-                                                    fillLog(tuple,logs,t,3+70);
+                                                    fillLog(tuple,logs,t,start +70);
                                                     break;
                                                 case "repeat":
-                                                    fillLog(tuple,logs,t,3+77);
+                                                    fillLog(tuple,logs,t,start +77);
                                                     break;
                                                 case "collectionsource":
-                                                    fillLog(tuple,logs,t,3+84);
+                                                    fillLog(tuple,logs,t,start +84);
                                                     break;
-                                                case "collect":
-                                                    fillLog(tuple,logs,t,3+91);
+                                                case "callbacksink":
+                                                    fillLog(tuple,logs,t,start +91);
                                                     break;
                                             }
                                         });
@@ -161,6 +162,8 @@ public class Shape {
             logs[start+3]+=1;
         else if(t.isLoop())
             logs[start+4]+=1;
+
+        //TODO: duplicate and selectivity to be added below
     }
     /**
      * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )

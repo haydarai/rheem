@@ -549,6 +549,11 @@ public class Configuration {
                 File.separator
         ));
 
+        configuration.setProperty("rheem.core.log.planVector", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector.txt"),
+                File.separator
+        ));
+
         // Supplement with a customizable layer.
         final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
         configuration.setProperties(customizableProperties);
