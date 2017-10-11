@@ -8,10 +8,7 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Serializable;
+import java.io.*;
 import java.util.function.Supplier;
 
 /**
@@ -23,7 +20,8 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
 
     public SparkTextFileSourceProfiler(Configuration configuration,
                                        Supplier<?> dataQuantumGenerator) {
-        this(configuration.getStringProperty("rheem.profiler.datagen.url"), configuration, dataQuantumGenerator);
+        //this(configuration.getStringProperty("rheem.profiler.datagen.url"), configuration, dataQuantumGenerator);
+        this(configuration.getStringProperty("rheem.core.log.syntheticData"),configuration,dataQuantumGenerator);
     }
 
     private SparkTextFileSourceProfiler(String fileUrl,
@@ -38,6 +36,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
     protected void prepareInput(int inputIndex, long inputCardinality) {
         assert inputIndex == 0;
 
+        /*
         // Obtain access to the file system.
         final FileSystem fileSystem = FileSystems.getFileSystem(this.fileUrl).orElseThrow(
                 () -> new RheemException(String.format("File system of %s not supported.", this.fileUrl))
@@ -51,6 +50,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
         } catch (IOException e) {
             this.logger.error(String.format("Deleting %s failed.", this.fileUrl), e);
         }
+
 
         // Generate and write the test data.
         try (BufferedWriter writer = new BufferedWriter(
@@ -66,6 +66,34 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
             }
         } catch (Exception e) {
             throw new RheemException(String.format("Could not write test data to %s.", this.fileUrl), e);
+        }
+        */
+        try {
+            File file = new File(this.fileUrl);
+
+            // Try to delete existing file
+            try{
+                file.delete();
+            } catch (Exception e){
+                this.logger.error(String.format("Deleting %s failed.", this.fileUrl), e);
+            }
+
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+
+            final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
+
+            for (long i = 0; i < inputCardinality; i++) {
+                writer.write(supplier.get().toString());
+                writer.write('\n');
+            }
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.fileUrl), e);
         }
     }
 

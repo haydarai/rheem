@@ -1,13 +1,12 @@
 package org.qcri.rheem.profiler.java;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.*;
 import java.net.URI;
+import java.net.URL;
 import java.util.function.Supplier;
 
 /**
@@ -22,11 +21,13 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
     public JavaTextFileSourceProfiler(Supplier<String> dataQuantumGenerator, String fileUrl) {
         //this.setFileUrl(fileUrl);
         super(() -> new JavaTextFileSource(fileUrl), dataQuantumGenerator);
-        this.setFileUrl(fileUrl);
+        //this.fileUrl = fileUrl;
+        this.setFileUrl(URL.create(fileUrl));
     }
 
     @Override
     public void setUpSourceData(long cardinality) throws Exception {
+
         if (this.tempFile != null) {
             if (!this.tempFile.delete()) {
                 this.logger.warn("Could not delete {}.", this.tempFile);
@@ -52,6 +53,35 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
                 writer.write(supplier.get().toString());
                 writer.write('\n');
             }
+        }
+
+        // write
+        try {
+            File file = new File(this.fileUrl);
+
+            // Try to delete existing file
+            try{
+                file.delete();
+            } catch (Exception e){
+                this.logger.error(String.format("Deleting %s failed.", this.fileUrl), e);
+            }
+
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+
+            final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
+
+            for (long i = 0; i < cardinality; i++) {
+                writer.write(supplier.get().toString());
+                writer.write('\n');
+            }
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.fileUrl), e);
         }
     }
 

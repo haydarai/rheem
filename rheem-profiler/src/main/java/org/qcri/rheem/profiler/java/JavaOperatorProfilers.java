@@ -21,7 +21,7 @@ public class JavaOperatorProfilers {
         Configuration configuration = new Configuration();
         return new JavaTextFileSourceProfiler(
                 DataGenerators.generateGenerator(dataQuantaScale,type),
-                configuration.getStringProperty("rheem.profiler.datagen.url")
+                configuration.getStringProperty("rheem.core.log.syntheticData")
         );
     }
 

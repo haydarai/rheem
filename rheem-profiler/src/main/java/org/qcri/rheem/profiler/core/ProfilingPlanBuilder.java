@@ -639,7 +639,7 @@ public class ProfilingPlanBuilder implements Serializable {
             case "java":
                 switch (operator) {
                     case "textsource":
-                        return (JavaOperatorProfilers.createJavaTextFileSourceProfiler(1));
+                        return (JavaOperatorProfilers.createJavaTextFileSourceProfiler(1,type));
 
                     case "collectionsource":
                         return (JavaOperatorProfilers.createJavaCollectionSourceProfiler(1000,type));

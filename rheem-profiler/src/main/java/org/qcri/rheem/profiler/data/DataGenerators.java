@@ -104,13 +104,13 @@ public class DataGenerators implements Serializable {
     public static Supplier generateGenerator(int dataQuantaSize, DataSetType type){
         switch (type.getDataUnitType().getTypeClass().getSimpleName()) {
             case "Integer":
-                return createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42));
+                return createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.5d, new Random());
             case "String":
-                return createReservoirBasedStringSupplier(new ArrayList<>(), 0.90, new Random(42), 4 + dataQuantaSize, 20 + dataQuantaSize);
+                return createReservoirBasedStringSupplier(new ArrayList<>(), 0.1, new Random(), 4 + dataQuantaSize, 20 + dataQuantaSize);
             case "List":
                 return createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(),0.0,new Random(),dataQuantaSize);
             default:
-                return createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42));
+                return createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.5d, new Random());
         }
     }
 

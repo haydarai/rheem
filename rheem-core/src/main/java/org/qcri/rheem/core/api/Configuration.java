@@ -554,6 +554,11 @@ public class Configuration {
                 File.separator
         ));
 
+        configuration.setProperty("rheem.core.log.syntheticData", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "syntheticData.txt"),
+                File.separator
+        ));
+
         // Supplement with a customizable layer.
         final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
         configuration.setProperties(customizableProperties);

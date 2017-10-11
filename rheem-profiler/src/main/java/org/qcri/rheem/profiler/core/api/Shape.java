@@ -149,7 +149,7 @@ public class Shape {
             case "Java Streams":
                 logs[start]+=1;
                 break;
-            case "spark":
+            case "Apache Spark":
                 logs[start+1]+=1;
                 break;
             default:
