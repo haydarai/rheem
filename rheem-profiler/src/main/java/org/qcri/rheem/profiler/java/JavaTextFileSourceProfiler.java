@@ -20,14 +20,14 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
 
     public JavaTextFileSourceProfiler(Supplier<String> dataQuantumGenerator, String fileUrl) {
         //this.setFileUrl(fileUrl);
-        super(() -> new JavaTextFileSource(fileUrl), dataQuantumGenerator);
+        super(() -> new JavaTextFileSource("file:/"+fileUrl), dataQuantumGenerator);
         //this.fileUrl = fileUrl;
-        this.setFileUrl(URL.create(fileUrl));
+        this.setFileUrl(fileUrl);
     }
 
     @Override
     public void setUpSourceData(long cardinality) throws Exception {
-
+/*
         if (this.tempFile != null) {
             if (!this.tempFile.delete()) {
                 this.logger.warn("Could not delete {}.", this.tempFile);
@@ -36,6 +36,7 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
         this.tempFile = File.createTempFile("rheem-java", "txt");
         URI uri = URI.create(this.fileUrl);
         File inputFile = new File(uri.getRawPath());
+
 
         // Create a file if does not exist
         if (!inputFile.exists()) {
@@ -54,6 +55,7 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
                 writer.write('\n');
             }
         }
+        */
 
         // write
         try {

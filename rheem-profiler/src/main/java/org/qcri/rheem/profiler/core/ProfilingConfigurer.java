@@ -46,7 +46,7 @@ public class ProfilingConfigurer {
     private static final String DEFAULT_DATA_QUATA_SIZES = "100";
 
     // TODO: replace with actual read functions from a user input file
-    private static final String DEFAULT_UDF_COMPLEXITIES = "1,2,3";
+    private static final String DEFAULT_UDF_COMPLEXITIES = "1";
 
     private static final String DEFAULT_SELECTIVITY_COMPLEXITIES = "1,2,3";
 

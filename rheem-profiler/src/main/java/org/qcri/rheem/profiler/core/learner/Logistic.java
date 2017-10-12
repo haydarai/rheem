@@ -88,10 +88,16 @@ public class Logistic {
 
                 // skip first column and last column is the label
                 int i = 1;
-                int[] data = new int[columns.length-2];
-                for (i=1; i<columns.length-1; i++) {
-                    data[i-1] = Integer.parseInt(columns[i]);
+                //int[] data = new int[columns.length-2];
+
+                //for (i=1; i<columns.length-1; i++) {
+                //    data[i-1] = Integer.parseInt(columns[i]);
+                //}
+                int[] data = new int[columns.length-1];
+                for (i=0; i<columns.length-1; i++) {
+                    data[i] = Integer.parseInt(columns[i]);
                 }
+
                 int label = Integer.parseInt(columns[i]);
                 Instance instance = new Instance(label, data);
                 dataset.add(instance);
@@ -106,14 +112,16 @@ public class Logistic {
 
     public static void  main(String... args) throws FileNotFoundException {
         //ClassLoader classLoader = getClass().getClassLoader();
-        List<Instance> instances = readDataSet(Logistic.class.getResource("/dataset.txt").getFile());
-        Logistic logistic = new Logistic(5);
+        List<Instance> instances = readDataSet(Logistic.class.getResource("/planVectors").getFile());
+        //Logistic logistic = new Logistic(5);
+        Logistic logistic = new Logistic(104);
         logistic.train(instances);
-        int[] x = {2, 1, 1, 0, 1};
+        //int[] x = {2, 1, 1, 0, 1};
+        int[] x = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,100,100};
         System.out.println("prob(1|x) = " + logistic.classify(x));
 
-        int[] x2 = {1, 0, 1, 0, 0};
-        System.out.println("prob(1|x2) = " + logistic.classify(x2));
+        //int[] x2 = {1, 0, 1, 0, 0};
+        //System.out.println("prob(1|x2) = " + logistic.classify(x2));
 
     }
 
