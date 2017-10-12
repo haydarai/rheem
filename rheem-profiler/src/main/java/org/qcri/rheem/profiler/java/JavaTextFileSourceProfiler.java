@@ -72,7 +72,7 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
                 throw new RheemException("Could not initialize cardinality repository.");
             }
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+            final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 
             Supplier<?> supplier = this.dataQuantumGenerators.get(0);
 
@@ -88,6 +88,11 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
         } catch (Exception e) {
             throw new RheemException(String.format("Cannot write to %s.", this.fileUrl), e);
         }
+    }
+
+    @Override
+    public void clearSourceData() {
+
     }
 
     public void setFileUrl(String fileUrl) {

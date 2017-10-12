@@ -11,9 +11,9 @@ import java.util.function.Supplier;
 /**
  * {@link OperatorProfiler} for {@link JavaCollectionSource}s.
  */
-public class JavaCollectionSourceProfiler extends JavaSourceProfiler {
+public class JavaCollectionSourceProfiler<Type> extends JavaSourceProfiler {
 
-    private Collection<Object> sourceCollection;
+    private Collection<Type> sourceCollection;
 
     public <T extends Object>JavaCollectionSourceProfiler(Supplier<?> dataQuantumGenerator, ArrayList<T> collection, Class<T> out) {
         super(()->new JavaCollectionSource<>(collection, DataSetType.createDefault(out)), dataQuantumGenerator);
@@ -30,10 +30,14 @@ public class JavaCollectionSourceProfiler extends JavaSourceProfiler {
     public void setUpSourceData(long cardinality) throws Exception {
         // Create the #sourceCollection.
         final Supplier<?> dataQuantumGenerator = this.dataQuantumGenerators.get(0);
-        this.sourceCollection = new ArrayList<>((int) cardinality);
+        sourceCollection = new ArrayList<>((int) cardinality);
         for (int i = 0; i < cardinality; i++) {
-            this.sourceCollection.add(dataQuantumGenerator.get());
+            sourceCollection.add((Type) dataQuantumGenerator.get());
         }
+    }
+
+    public void clearSourceData(){
+        sourceCollection.clear();
     }
 
 }

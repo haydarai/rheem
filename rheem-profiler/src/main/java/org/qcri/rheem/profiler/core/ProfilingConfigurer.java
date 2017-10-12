@@ -18,7 +18,7 @@ public class ProfilingConfigurer {
             "distinct-integer", "sort", "sort-string", "sort-integer", "count", "groupby", "join", "union", "cartesian", "callbacksink", "collect",
             "word-count-split", "word-count-canonicalize", "word-count-count"));
 
-    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("collectionsource","textsource"));
+    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("textsource","collectionsource"));
 
     private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
             "groupby","sort"));

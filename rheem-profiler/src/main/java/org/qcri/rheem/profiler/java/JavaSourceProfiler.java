@@ -63,4 +63,7 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
 
     public abstract void setUpSourceData(long cardinality) throws Exception;
 
+    public abstract void clearSourceData();
+
+
 }

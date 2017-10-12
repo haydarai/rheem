@@ -131,7 +131,7 @@ public class ProfilingRunner{
                 //shape.getAllTopologies().stream().forEach(t->t.getNodeNumber())
 
                 // Clear the garbage collector
-                System.gc();
+                //System.gc();
 
                 // Prepare input source operator
                 for (Topology t:shape.getSourceTopologies()){
@@ -146,8 +146,6 @@ public class ProfilingRunner{
                                 System.out.printf("[PROFILING] Preparing input data! \n");
                                 // Prepare source operator
                                 sourceProfiler.setUpSourceData(inputCardinality);
-                                System.gc();
-
                             } catch (Exception e) {
                                 LoggerFactory.getLogger(ProfilingRunner.class).error(
                                         String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
@@ -172,11 +170,11 @@ public class ProfilingRunner{
                 // save the starting execution time of current {@link RheemPlan}
                 final long startTime = System.currentTimeMillis();
 
-                Topology sinkTopology = shape.getSinkTopology();
+                final Topology sinkTopology = shape.getSinkTopology();
                 ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator();
 
                 // Have Rheem execute the plan.
-                Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
+                final Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
 
                 // Add jars to spark workers
                 job.addUdfJar(ReflectionUtils.getDeclaringJar(UdfGenerators.class));
@@ -189,7 +187,15 @@ public class ProfilingRunner{
                 }
                 final long endTime = System.currentTimeMillis();
 
-                // Refresh the input cardinality and DAtaQuantaSize for logging
+
+                for (Topology t:shape.getSourceTopologies()) {
+                    switch (shape.getPlateform()) {
+                        case "java":
+                            JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
+                            sourceProfiler.clearSourceData();
+                    }
+                }
+                            // Refresh the input cardinality and DAtaQuantaSize for logging
                 int[] vectorLogs = shape.getVectorLogs();
                 vectorLogs[103] = (int) inputCardinality;
                 vectorLogs[104] =  dataQuantaSize;
