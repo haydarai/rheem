@@ -70,23 +70,17 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
         */
         try {
             File file = new File(this.fileUrl);
-
-            // Try to delete existing file
-            try{
-                file.delete();
-            } catch (Exception e){
-                this.logger.error(String.format("Deleting %s failed.", this.fileUrl), e);
-            }
-
             final File parentFile = file.getParentFile();
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
-                throw new RheemException("Could not initialize cardinality repository.");
+                throw new RheemException("Could not initialize log repository.");
             }
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 
             final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
 
             for (long i = 0; i < inputCardinality; i++) {
+                if (i%(inputCardinality/2)==0)
+
                 writer.write(supplier.get().toString());
                 writer.write('\n');
             }

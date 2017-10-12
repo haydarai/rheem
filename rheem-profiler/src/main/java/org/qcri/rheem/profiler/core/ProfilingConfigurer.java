@@ -18,7 +18,7 @@ public class ProfilingConfigurer {
             "distinct-integer", "sort", "sort-string", "sort-integer", "count", "groupby", "join", "union", "cartesian", "callbacksink", "collect",
             "word-count-split", "word-count-canonicalize", "word-count-count"));
 
-    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "collectionsource","textsource"));
+    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("collectionsource","textsource"));
 
     private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
             "groupby","sort"));
@@ -29,7 +29,7 @@ public class ProfilingConfigurer {
     private static List<String> Test_BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("join", "union", "cartesian"));
 
 
-    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("globalreduce"));
+    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map"));
 
     private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "join", "union", "cartesian"));
 
@@ -39,7 +39,7 @@ public class ProfilingConfigurer {
     private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
 
     //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
-    private static final String DEFAULT_INPUT_CARDINALITIES = "100";
+    private static final String DEFAULT_INPUT_CARDINALITIES = "10000000";
 
     //private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
 

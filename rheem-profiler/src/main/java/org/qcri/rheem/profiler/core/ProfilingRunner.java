@@ -143,8 +143,11 @@ public class ProfilingRunner{
                             sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
                                     sourceProfiler.getOperator().getOutput(0).getType()));
                             try {
+                                System.out.printf("[PROFILING] Preparing input data! \n");
                                 // Prepare source operator
                                 sourceProfiler.setUpSourceData(inputCardinality);
+                                System.gc();
+
                             } catch (Exception e) {
                                 LoggerFactory.getLogger(ProfilingRunner.class).error(
                                         String.format("Failed to set up source data for input cardinality %d.", inputCardinality),

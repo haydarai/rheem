@@ -74,12 +74,15 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
             }
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 
-            final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
+            Supplier<?> supplier = this.dataQuantumGenerators.get(0);
 
             for (long i = 0; i < cardinality; i++) {
                 writer.write(supplier.get().toString());
                 writer.write('\n');
             }
+            writer.close();
+            //supplier=null;
+            //writer = null;
         } catch (RheemException e) {
             throw e;
         } catch (Exception e) {
