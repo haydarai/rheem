@@ -122,7 +122,6 @@ public class Logistic {
 
         //int[] x2 = {1, 0, 1, 0, 0};
         //System.out.println("prob(1|x2) = " + logistic.classify(x2));
-
     }
 
 }

@@ -145,7 +145,7 @@ public class ProfilingRunner{
                             try {
                                 System.out.printf("[PROFILING] Preparing input data! \n");
                                 // Prepare source operator
-                                sourceProfiler.setUpSourceData(inputCardinality);
+                                //sourceProfiler.setUpSourceData(inputCardinality);
                             } catch (Exception e) {
                                 LoggerFactory.getLogger(ProfilingRunner.class).error(
                                         String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
@@ -161,7 +161,7 @@ public class ProfilingRunner{
                                     sparkSourceProfiler.getOperator().getOutput(0).getType()));
 
                             // Prepare source operator
-                            sparkSourceProfiler.prepare(dataQuantaSize,inputCardinality);
+                            //sparkSourceProfiler.prepare(dataQuantaSize,inputCardinality);
                             break;
                     }
 
@@ -173,18 +173,7 @@ public class ProfilingRunner{
                 final Topology sinkTopology = shape.getSinkTopology();
                 ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator();
 
-                // Have Rheem execute the plan.
-                final Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
-
-                // Add jars to spark workers
-                job.addUdfJar(ReflectionUtils.getDeclaringJar(UdfGenerators.class));
-
-                try {
-                    job.execute();
-                }catch (Exception e){
-                    System.out.print("[ERROR] Job aborted! \n");
-                    System.out.print(e.getMessage()+"\n");
-                }
+                executePlan(sinkOperator);
                 final long endTime = System.currentTimeMillis();
 
 
@@ -195,6 +184,7 @@ public class ProfilingRunner{
                             sourceProfiler.clearSourceData();
                     }
                 }
+
                             // Refresh the input cardinality and DAtaQuantaSize for logging
                 int[] vectorLogs = shape.getVectorLogs();
                 vectorLogs[103] = (int) inputCardinality;
@@ -221,6 +211,24 @@ public class ProfilingRunner{
         }
         return results;
 
+    }
+
+    private static void executePlan(ExecutionOperator sinkOperator) {
+        // Have Rheem execute the plan.
+        Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
+
+        // Add jars to spark workers
+        job.addUdfJar(ReflectionUtils.getDeclaringJar(UdfGenerators.class));
+
+        try {
+            job.execute();
+        }catch (Exception e){
+            e.getStackTrace();
+            System.out.print("[ERROR] Job aborted! \n");
+            System.out.print(e.getMessage()+"\n");
+        }
+
+        job = null;
     }
 
 
