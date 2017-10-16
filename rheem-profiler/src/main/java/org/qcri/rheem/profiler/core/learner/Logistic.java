@@ -66,6 +66,15 @@ public class Logistic {
 
     public static class Instance {
         public int label;
+
+        public int[] getX() {
+            return x;
+        }
+
+        public void setX(int[] x) {
+            this.x = x;
+        }
+
         public int[] x;
 
         public Instance(int label, int[] x) {
@@ -73,6 +82,7 @@ public class Logistic {
             this.x = x;
         }
     }
+
 
     public static List<Instance> readDataSet(String file) throws FileNotFoundException {
         List<Instance> dataset = new ArrayList<Instance>();
