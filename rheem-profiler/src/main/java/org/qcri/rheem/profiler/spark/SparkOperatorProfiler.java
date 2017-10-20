@@ -91,7 +91,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
         //this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
         for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
             long inputCardinality = inputCardinalities[inputIndex];
-            this.prepareInput(inputIndex, inputCardinality);
+            this.prepareInput(inputIndex, dataQuantaSize, inputCardinality);
         }
     }
 
@@ -99,7 +99,6 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
     }
 
-    protected abstract void prepareInput(int inputIndex, long inputCardinality);
 
     /**
      * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}. Uses an implementation
@@ -334,7 +333,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
      * Set the operator
      * @param operator
      */
-    public void setOperator(SparkExecutionOperator operator) {
-        this.operator = operator;
-    }
+    //public void setOperator(SparkExecutionOperator operator) {
+    //    this.operator = operator;
+    //}
 }

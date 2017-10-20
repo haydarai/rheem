@@ -35,6 +35,11 @@ public class JavaSinkProfiler extends JavaOperatorProfiler {
     }
 
     @Override
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+
+    }
+
+    @Override
     protected long executeOperator() {
         this.evaluate(
                 new JavaChannelInstance[]{this.inputChannelInstance},

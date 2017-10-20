@@ -116,7 +116,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         rheemContext.execute(new RheemPlan(sink));
 
-
+        /*
         System.out.println(results.toString());
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
@@ -130,6 +130,7 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
+        */
         //Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 
@@ -189,6 +190,7 @@ public class WordCountIT {
         Spark.basicPlugin().configure(job.getConfiguration());
         job.execute();
 
+        /*
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
@@ -201,6 +203,7 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
+        */
         //Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 

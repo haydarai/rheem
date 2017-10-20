@@ -55,6 +55,19 @@ public abstract class OperatorProfiler {
 
     protected Platform platform;
 
+    public int getUDFcomplexity() {
+        return UDFcomplexity;
+    }
+
+    public void setUDFcomplexity(int UDFcomplexity) {
+        this.UDFcomplexity = UDFcomplexity;
+    }
+
+    public void setDataQuantumGenerators(Supplier<?> dataQuantumGenerators) {
+        this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
+    }
+    private int UDFcomplexity;
+
     public OperatorProfiler(){
     }
 
@@ -225,6 +238,7 @@ public abstract class OperatorProfiler {
         }
     }
 
+    protected abstract void prepareInput(int inputIndex, long dataQuantaSize ,long inputCardinality);
 
 
 }

@@ -1,5 +1,6 @@
 package org.qcri.rheem.profiler.spark;
 
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FunctionDescriptor;
@@ -9,6 +10,8 @@ import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -17,6 +20,8 @@ import java.util.function.Supplier;
 public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
 
     private final String fileUrl;
+
+    private static List<Tuple2> createdData = new ArrayList<>();
 
     public SparkTextFileSourceProfiler(Configuration configuration,
                                        Supplier<?> dataQuantumGenerator) {
@@ -33,57 +38,33 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
     }
 
     @Override
-    protected void prepareInput(int inputIndex, long inputCardinality) {
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
         assert inputIndex == 0;
+        File file = new File(this.fileUrl+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
 
-        /*
-        // Obtain access to the file system.
-        final FileSystem fileSystem = FileSystems.getFileSystem(this.fileUrl).orElseThrow(
-                () -> new RheemException(String.format("File system of %s not supported.", this.fileUrl))
-        );
+        Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
+        // check if input data is already created
+        if(createdData.contains(newData)||file.exists())
+            return;
 
-        // Try to delete any existing file.
+        // add new data
+        createdData.add(newData);
         try {
-            if (!fileSystem.delete(this.fileUrl, true)) {
-                this.logger.warn("Could not delete {}.", this.fileUrl);
-            }
-        } catch (IOException e) {
-            this.logger.error(String.format("Deleting %s failed.", this.fileUrl), e);
-        }
-
-
-        // Generate and write the test data.
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(
-                        fileSystem.create(this.fileUrl),
-                        "UTF-8"
-                )
-        )) {
-            final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
-            for (long i = 0; i < inputCardinality; i++) {
-                writer.write(supplier.get().toString());
-                writer.write('\n');
-            }
-        } catch (Exception e) {
-            throw new RheemException(String.format("Could not write test data to %s.", this.fileUrl), e);
-        }
-        */
-        try {
-            File file = new File(this.fileUrl);
             final File parentFile = file.getParentFile();
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
                 throw new RheemException("Could not initialize log repository.");
             }
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false), "UTF-8"));
 
             final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
 
             for (long i = 0; i < inputCardinality; i++) {
-                if (i%(inputCardinality/2)==0)
-
-                writer.write(supplier.get().toString());
+                String tmp= supplier.get().toString();
+                writer.write(tmp);
                 writer.write('\n');
             }
+            writer.flush();
+            writer.close();
         } catch (RheemException e) {
             throw e;
         } catch (Exception e) {

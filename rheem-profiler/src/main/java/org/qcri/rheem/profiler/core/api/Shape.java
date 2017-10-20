@@ -17,17 +17,17 @@ public class Shape {
     private List<PipelineTopology> pipelineTopologies = new ArrayList<>();
     private List<JunctureTopology> junctureTopologies = new ArrayList<>();
     private List<LoopTopology> loopTopologies = new ArrayList<>();
-    int[] vectorLogs= new int[104];
+    double[] vectorLogs= new double[104];
     private int topologyNumber;
 
     // TODO: Currently only single sink topology generation is supported
     private final Topology sinkTopology;
 
-    public int[] getVectorLogs() {
+    public double[] getVectorLogs() {
         return vectorLogs;
     }
 
-    public void setVectorLogs(int[] vectorLogs) {
+    public void setVectorLogs(double[] vectorLogs) {
         this.vectorLogs = vectorLogs;
     }
 
@@ -77,7 +77,7 @@ public class Shape {
      */
 
     public void prepareVectorLogs(){
-        int[] logs = new int[105];
+        double[] logs = new double[105];
         // Loop through all subShapes
         this.subShapes.stream()
                 .forEach(s->{
@@ -126,10 +126,13 @@ public class Shape {
                                                 case "cartesian":
                                                     fillLog(tuple,logs,t,start +70);
                                                     break;
-                                                case "repeat":
+                                                //case "repeat":
+                                                //    fillLog(tuple,logs,t,start +77);
+                                                //    break;
+                                                case "collectionsource":
                                                     fillLog(tuple,logs,t,start +77);
                                                     break;
-                                                case "collectionsource":
+                                                case "textsource":
                                                     fillLog(tuple,logs,t,start +84);
                                                     break;
                                                 case "callbacksink":
@@ -138,13 +141,23 @@ public class Shape {
                                             }
                                         });
                                 });
+                    averageSelectivityComplexity(logs);
                     s.setVectorLogs(logs.clone());
                     // reinitialize log array every subShape
                     Arrays.fill(logs, 0);
                 });
     }
 
-    void fillLog(Tuple2<String,OperatorProfiler> tuple, int[] logs, Topology t, int start){
+    void averageSelectivityComplexity(double[] logs){
+        for(int i=9; i<=97; i=i+7){
+            if(logs[i-4]+logs[i-5]!=0){
+                logs[i]=logs[i]/(logs[i-4]+logs[i-5]);
+                logs[i+1]=logs[i+1]/(logs[i-4]+logs[i-5]);
+            }
+        }
+    }
+
+    void fillLog(Tuple2<String,OperatorProfiler> tuple, double[] logs, Topology t, int start){
         switch (tuple.getField1().getOperator().getPlatform().getName()){
             case "Java Streams":
                 logs[start]+=1;
@@ -163,6 +176,17 @@ public class Shape {
         else if(t.isLoop())
             logs[start+4]+=1;
 
+        // average complexity
+        logs[start+5] += tuple.getField1().getUDFcomplexity();
+
+        // average selectivity
+        double  selectivity = 0;
+        if ((!tuple.getField1().getOperator().isSource())&&(!tuple.getField1().getOperator().isSink()))
+            selectivity= tuple.getField1().getOperator().getOutput(0).getCardinalityEstimate().getAverageEstimate()/
+                tuple.getField1().getOperator().getInput(0).getCardinalityEstimate().getAverageEstimate();
+        else if(tuple.getField1().getOperator().isSource())
+            selectivity = 1;
+        logs[start+6] += (int) selectivity;
         //TODO: duplicate and selectivity to be added below
     }
     /**

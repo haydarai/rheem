@@ -555,7 +555,7 @@ public class Configuration {
         ));
 
         configuration.setProperty("rheem.core.log.syntheticData", StringUtils.join(
-                Arrays.asList(System.getProperty("user.home"), ".rheem", "syntheticData.txt"),
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "syntheticData"),
                 File.separator
         ));
 

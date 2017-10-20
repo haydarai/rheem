@@ -40,4 +40,8 @@ public class JavaCollectionSourceProfiler<Type> extends JavaSourceProfiler {
         sourceCollection.clear();
     }
 
+    @Override
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+
+    }
 }

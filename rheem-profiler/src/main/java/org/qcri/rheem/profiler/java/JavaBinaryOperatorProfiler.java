@@ -51,6 +51,11 @@ public class JavaBinaryOperatorProfiler extends JavaOperatorProfiler {
         this.outputChannelInstance = createChannelInstance();
     }
 
+    @Override
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+
+    }
+
 
     public long executeOperator() {
         this.evaluate(

@@ -36,7 +36,7 @@ public class SparkCollectionSourceProfiler extends SparkSourceProfiler {
      * @param inputCardinality
      */
     @Override
-    protected void prepareInput(int inputIndex, long inputCardinality) {
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
         assert inputIndex == 0;
         assert inputCardinality <= Integer.MAX_VALUE;
 

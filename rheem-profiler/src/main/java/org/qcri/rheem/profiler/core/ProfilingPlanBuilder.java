@@ -1,28 +1,19 @@
 package org.qcri.rheem.profiler.core;
 
-import org.apache.pig.builtin.TOP;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
-import org.qcri.rheem.profiler.spark.SparkUnaryOperatorProfiler;
-import org.qcri.rheem.spark.operators.SparkMapOperator;
-import sun.security.provider.SHA;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.function.Supplier;
 
 import static org.qcri.rheem.profiler.java.JavaOperatorProfilers.createJavaReduceByProfiler;
 
@@ -89,52 +80,57 @@ public class ProfilingPlanBuilder implements Serializable {
             for (String platform:profilingConfig.getProfilingPlateform()){
                 // Set the shape's platform
                 shape.setPlateform(platform);
-                for (int p=1;p<=profilingConfig.getUnaryExecutionOperators().size()*
-                        profilingConfig.getBinaryExecutionOperators().size();p++){
+                //Loop through all unary operators
+                for (String unaryOperator:profilingConfig.getUnaryExecutionOperators()){
+                    //Loop through all binary operators
+                    for (String binaryOperator:profilingConfig.getUnaryExecutionOperators()){
+                        //Loop through all loop operators
+                        for (String loopOperator:profilingConfig.getUnaryExecutionOperators()) {
+                            // Fill the sources
+                            for (Topology t : shape.getSourceTopologies()) {
+                                //if (t.getNodes().isEmpty())
+                                prepareSource(t, type, platform);
+                            }
 
-                    // Fill the sources
-                    for(Topology t:shape.getSourceTopologies()){
-                        //if (t.getNodes().isEmpty())
-                            prepareSource(t,type,platform);
+                            // Fill with unary operator profilers
+                            for (Topology t : shape.getPipelineTopologies()) {
+                                // check if the nodes are not already filled in the source or sink
+                                if ((t.getNodes().isEmpty() || (!t.isSource())))
+                                    for (int i = 1; i <= t.getNodeNumber(); i++)
+                                        t.getNodes().push(UnaryNodeFill(type, platform,unaryOperator));
+                            }
+
+                            // Fill with binary operator profilers
+                            for (Topology t : shape.getJunctureTopologies()) {
+                                // check if the nodes are not already filled in the source or sink
+                                //if (t.getNodes().isEmpty())
+                                t.getNodes().push(binaryNodeFill(type, platform));
+                            }
+
+                            // Fill the loop topologies
+                            for (Topology t : shape.getLoopTopologies()) {
+                                t.getNodes().push(loopNodeFill(type, platform));
+                            }
+
+
+                            // Fill the sinks
+                            //for(Topology t:shape.getSinkTopology()){
+                            //if (shape.getSinkTopology().getNodes().isEmpty())
+                            prepareSink(shape.getSinkTopology(), type, platform);
+                            //}
+
+                            // Build the planProfiler
+                            buildPlanProfiler(shape, type);
+
+                            // add the filled shape to tempSubShapes
+                            tmpSubShapes.add(shape.clone());
+
+                            // Reset shape
+                            shape.resetAllNodes();
+                            //planProfiler
+                            planProfilers.add(planProfiler);
+                        }
                     }
-
-                    // Fill with unary operator profilers
-                    for(Topology t:shape.getPipelineTopologies()){
-                        // check if the nodes are not already filled in the source or sink
-                        if ((t.getNodes().isEmpty()||(!t.isSource())))
-                            for(int i=1;i<=t.getNodeNumber();i++)
-                            t.getNodes().push(unaryNodeFill(type,platform));
-                    }
-
-                    // Fill with binary operator profilers
-                    for(Topology t:shape.getJunctureTopologies()){
-                        // check if the nodes are not already filled in the source or sink
-                        //if (t.getNodes().isEmpty())
-                            t.getNodes().push(binaryNodeFill(type,platform));
-                    }
-
-                    // Fill the loop topologies
-                    for(Topology t:shape.getLoopTopologies()){
-                        t.getNodes().push(loopNodeFill(type,platform));
-                    }
-
-
-                    // Fill the sinks
-                    //for(Topology t:shape.getSinkTopology()){
-                    //if (shape.getSinkTopology().getNodes().isEmpty())
-                    prepareSink(shape.getSinkTopology(),type,platform);
-                    //}
-
-                    // Build the planProfiler
-                    buildPlanProfiler(shape, type);
-
-                    // add the filled shape to tempSubShapes
-                    tmpSubShapes.add(shape.clone());
-
-                    // Reset shape
-                    shape.resetAllNodes();
-                    //planProfiler
-                    planProfilers.add(planProfiler);
                 }
             }
         }
@@ -378,7 +374,7 @@ public class ProfilingPlanBuilder implements Serializable {
 
         // add the remaining nodes with unary nodes
         for(int i=1;i<=topology.getNodeNumber();i++)
-                topology.getNodes().push(unaryNodeFill(type, plateform));
+                topology.getNodes().push(randomUnaryNodeFill(type, plateform));
     }
 
     /**
@@ -391,7 +387,7 @@ public class ProfilingPlanBuilder implements Serializable {
         if (topology.getNodes().empty()){
             //Add the first unary nodes
             for(int i=1;i<=topology.getNodeNumber();i++)
-                topology.getNodes().push(unaryNodeFill(type, plateform));
+                topology.getNodes().push(randomUnaryNodeFill(type, plateform));
             // Add the last sink node
             topology.getNodes().push(sinkNodeFill(type, plateform));
         } else{
@@ -410,7 +406,9 @@ public class ProfilingPlanBuilder implements Serializable {
     private static Tuple2<String,OperatorProfiler> sinkNodeFill(DataSetType type, String plateform){
         // we currently support use the collection source
         String operator = profilingConfig.getSinkExecutionOperators().get(0);
-        return new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,1));
+        Tuple2<String,OperatorProfiler> returnNode =new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,1)) ;
+        returnNode.getField1().setUDFcomplexity(1);
+        return returnNode;
     }
 
     /**
@@ -420,18 +418,33 @@ public class ProfilingPlanBuilder implements Serializable {
     private static Tuple2<String,OperatorProfiler> sourceNodeFill(DataSetType type, String plateform){
         // we currently support collection source
         String operator = profilingConfig.getSourceExecutionOperators().get(1);
-        return new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,1));
+        Tuple2<String,OperatorProfiler> returnNode = new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,1));
+        returnNode.getField1().setUDFcomplexity(1);
+        return returnNode;
     }
 
     /**
      * Fills the toplogy instance with unary profiling operators
      * @return
      */
-    private static Tuple2<String,OperatorProfiler> unaryNodeFill(DataSetType type, String plateform){
+    private static Tuple2<String,OperatorProfiler> randomUnaryNodeFill(DataSetType type, String plateform){
         int rnd = (int)(Math.random() * profilingConfig.getUnaryExecutionOperators().size());
         int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
         String operator = profilingConfig.getUnaryExecutionOperators().get(rnd);
-        return new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,udfRnd));
+        Tuple2<String,OperatorProfiler> returnNode = new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,udfRnd));
+        returnNode.getField1().setUDFcomplexity(udfRnd);
+        return returnNode;
+    }
+
+    /**
+     * Fills the toplogy instance with unary profiling operators
+     * @return
+     */
+    private static Tuple2<String,OperatorProfiler> UnaryNodeFill(DataSetType type, String plateform, String operator){
+        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        Tuple2<String,OperatorProfiler> returnNode = new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,udfRnd));
+        returnNode.getField1().setUDFcomplexity(udfRnd);
+        return returnNode;
     }
 
     /**
@@ -443,6 +456,17 @@ public class ProfilingPlanBuilder implements Serializable {
         int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
         String operator = profilingConfig.getBinaryExecutionOperators().get(rnd);
         return new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,udfRnd));
+    }
+
+    /**
+     * Fills the toopology instance with binary profiling operator
+     * @return
+     */
+    private static Tuple2<String,OperatorProfiler> binaryNodeFill(DataSetType type, String plateform, String operator){
+        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        Tuple2<String,OperatorProfiler> returnNode = new Tuple2(operator, getProfilingOperator(operator, type, plateform,1,udfRnd));
+        returnNode.getField1().setUDFcomplexity(udfRnd);
+        return returnNode;
     }
 
     /**

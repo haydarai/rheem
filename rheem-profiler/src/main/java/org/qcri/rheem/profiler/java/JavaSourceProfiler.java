@@ -19,6 +19,12 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
 
     private JavaChannelInstance outputChannelInstance;
 
+    public String getFileUrl() {
+        return fileUrl;
+    }
+
+    private String fileUrl;
+
     public JavaSourceProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
     }
@@ -28,7 +34,9 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
         Validate.isTrue(inputCardinalities.length == 1);
 
         try {
-            this.setUpSourceData(inputCardinalities[0]);
+            //old setup
+            //this.setUpSourceData(inputCardinalities[0]);
+            this.prepareInput(0,dataQuantaSize,inputCardinalities[0]);
         } catch (Exception e) {
             LoggerFactory.getLogger(this.getClass()).error(
                     String.format("Failed to set up source data for input cardinality %d.", inputCardinalities[0]),
@@ -51,6 +59,9 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
         }
     }
 
+    public void setFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
+    }
 
     @Override
     protected long executeOperator() {

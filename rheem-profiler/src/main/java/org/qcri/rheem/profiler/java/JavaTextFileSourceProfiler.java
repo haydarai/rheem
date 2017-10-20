@@ -1,5 +1,6 @@
 package org.qcri.rheem.profiler.java;
 
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.profiler.core.api.OperatorProfiler;
@@ -7,6 +8,8 @@ import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -16,7 +19,9 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
 
     private File tempFile;
 
-    private String fileUrl;
+    //private final String fileUrl;
+
+    private static List<Tuple2> createdData = new ArrayList<>();
 
     public JavaTextFileSourceProfiler(Supplier<String> dataQuantumGenerator, String fileUrl) {
         //this.setFileUrl(fileUrl);
@@ -59,13 +64,13 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
 
         // write
         try {
-            File file = new File(this.fileUrl);
+            File file = new File(this.getFileUrl());
 
             // Try to delete existing file
             try{
                 file.delete();
             } catch (Exception e){
-                this.logger.error(String.format("Deleting %s failed.", this.fileUrl), e);
+                this.logger.error(String.format("Deleting %s failed.", this.getFileUrl()), e);
             }
 
             final File parentFile = file.getParentFile();
@@ -86,7 +91,7 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
         } catch (RheemException e) {
             throw e;
         } catch (Exception e) {
-            throw new RheemException(String.format("Cannot write to %s.", this.fileUrl), e);
+            throw new RheemException(String.format("Cannot write to %s.", this.getFileUrl()), e);
         }
     }
 
@@ -95,14 +100,44 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
 
     }
 
-    public void setFileUrl(String fileUrl) {
-        this.fileUrl = fileUrl;
-    }
-
     @Override
     protected long provideDiskBytes() {
         return this.tempFile.length();
     }
 
 
+    @Override
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+        assert inputIndex == 0;
+        File file = new File(this.getFileUrl()+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
+
+        Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
+        // check if input data is already created
+        if(createdData.contains(newData)||file.exists())
+            return;
+
+        // add new data
+        createdData.add(newData);
+        try {
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize log repository.");
+            }
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, false), "UTF-8"));
+
+            final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
+
+            for (long i = 0; i < inputCardinality; i++) {
+                String tmp= supplier.get().toString();
+                writer.write(tmp);
+                writer.write('\n');
+            }
+            writer.flush();
+            writer.close();
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.getFileUrl()), e);
+        }
+    }
 }

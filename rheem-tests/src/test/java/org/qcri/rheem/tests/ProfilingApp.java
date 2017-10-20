@@ -30,7 +30,7 @@ public class ProfilingApp {
 
         //RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
 
-        int maxNodeNumber = 5;
+        int maxNodeNumber = 6;
 
         if (args.length==2)
             maxNodeNumber = Integer.valueOf(args[1]);
@@ -43,7 +43,7 @@ public class ProfilingApp {
                 ProfilingRunner.SingleOperatorProfiling(operatorProfilers,profilingConfig);
                 break;
             case "exhaustive_profiling":
-                for(int nodeNumber=1;nodeNumber<=maxNodeNumber;nodeNumber++){
+                for(int nodeNumber=4;nodeNumber<=maxNodeNumber;nodeNumber++){
 
                     profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
 
@@ -68,7 +68,6 @@ public class ProfilingApp {
                     shapes.stream().forEach(s -> s.prepareVectorLogs());
                     ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
                     //System.out.println(result.toCsvString())
-                    break;
 
                 }
         }

@@ -15,6 +15,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.stream.Stream;
 
 /**
@@ -157,7 +159,7 @@ public class ExecutionLog implements AutoCloseable {
         IOUtils.closeQuietly(this.writer);
     }
 
-    public void storeVector(int[] logs, long executionTime) throws IOException {
+    public void storeVector(double[] logs, long executionTime) throws IOException {
 
         try {
             File file = new File(configuration.getStringProperty("rheem.core.log.planVector"));
@@ -172,8 +174,10 @@ public class ExecutionLog implements AutoCloseable {
             throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
         }
 
+        NumberFormat nf = new DecimalFormat("##.#");
+
         for(int i=0;i<logs.length;i++){
-            writer.write(Integer.toString(logs[i]) + " ");
+            writer.write( nf.format( logs[i]) + " ");
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");

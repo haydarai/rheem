@@ -124,10 +124,10 @@ public class InstantiateTopology {
         Stack<Tuple2<String, OperatorProfiler>> nodes = new Stack<>();
         // Check if the current pipeline topology need a source node
         if (pipelineTopology.getAllInputs().length==0)
-            nodes.push(new Tuple2<String, OperatorProfiler>("sourceNode", new OperatorProfiler(){}));
+            //nodes.push(new Tuple2<String, OperatorProfiler>("sourceNode", new OperatorProfiler(){}));
 
         for(int i=1;i<=pipelineTopology.getNodeNumber();i++)
-            nodes.push(new Tuple2<String, OperatorProfiler>("unaryNode", new OperatorProfiler(){}));
+            //nodes.push(new Tuple2<String, OperatorProfiler>("unaryNode", new OperatorProfiler(){}));
         pipelineTopology.setNodes(nodes);
         //Topology topology = new Topology();
         //topology.setNodeNumber(nodesNumber);

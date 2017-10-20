@@ -5,13 +5,12 @@ import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -19,6 +18,7 @@ import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.mathex.model.Constant;
 import org.qcri.rheem.java.Java;
+import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.data.UdfGenerators;
@@ -27,6 +27,7 @@ import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
 import org.qcri.rheem.spark.Spark;
+import org.qcri.rheem.spark.operators.SparkTextFileSource;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
@@ -101,12 +102,9 @@ public class ProfilingRunner{
     private static List<OperatorProfiler.Result> executeShapeProfiling(Shape shape) {
 
 
-        //RheemContext rheemContext1 = new RheemContext();
-        //rheemContext1.register(Spark.basicPlugin());
         switch (shape.getPlateform()) {
             case "java":
                 rheemContext = new RheemContext().with(Java.basicPlugin());
-               //rheemContext = new RheemContext().with(Java.basicPlugin());
             case "spark":
                 rheemContext = new RheemContext().with(Spark.basicPlugin());
         }
@@ -118,6 +116,20 @@ public class ProfilingRunner{
         // Loop through dataQuantas cardinality
 
         // Loop through dataQuanta size
+        for (Topology t:shape.getSourceTopologies()) {
+            OperatorProfiler sourceProfiler = t.getNodes().firstElement().getField1();
+        }
+
+        List<TextFileSource> textFileSources = new ArrayList<>();
+        List<OperatorProfiler> sourceProfilers = new ArrayList<>();
+
+        shape.getSourceTopologies().stream()
+                .forEach(t->{
+
+                    sourceProfilers.add(t.getNodes().firstElement().getField1());
+                    textFileSources.add((TextFileSource)t.getNodes().firstElement().getField1().getOperator());
+
+                });
 
         for (int dataQuantaSize:profilingConfig.getDataQuantaSize()){
             for (long inputCardinality:profilingConfig.getInputCardinality()){
@@ -128,44 +140,30 @@ public class ProfilingRunner{
                         inputCardinality,dataQuantaSize,
                         shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
                         shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
-                //shape.getAllTopologies().stream().forEach(t->t.getNodeNumber())
 
-                // Clear the garbage collector
-                //System.gc();
 
                 // Prepare input source operator
-                for (Topology t:shape.getSourceTopologies()){
-                    switch (shape.getPlateform()){
-                        case "java":
-                            JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
-
-                            // Update the dataQuantumGenerators with the appropriate dataQuanta size
-                            sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
-                                    sourceProfiler.getOperator().getOutput(0).getType()));
-                            try {
-                                System.out.printf("[PROFILING] Preparing input data! \n");
-                                // Prepare source operator
-                                //sourceProfiler.setUpSourceData(inputCardinality);
-                            } catch (Exception e) {
-                                LoggerFactory.getLogger(ProfilingRunner.class).error(
-                                        String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
-                                        e
-                                );
-                            }
-                            break;
-                        case "spark":
-                            SparkOperatorProfiler sparkSourceProfiler = (SparkOperatorProfiler) t.getNodes().firstElement().getField1();
-
-                            // Update the dataQuantumGenerators with the appropriate dataQuanta size
-                            sparkSourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
-                                    sparkSourceProfiler.getOperator().getOutput(0).getType()));
-
-                            // Prepare source operator
-                            //sparkSourceProfiler.prepare(dataQuantaSize,inputCardinality);
-                            break;
+                for(OperatorProfiler sourceProfiler:sourceProfilers) {
+                    // Update the dataQuantumGenerators with the appropriate dataQuanta size
+                    sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
+                            sourceProfiler.getOperator().getOutput(0).getType()));
+                    try {
+                        System.out.printf("[PROFILING] Preparing input data! \n");
+                        // Prepare source operator
+                        sourceProfiler.prepare(dataQuantaSize, inputCardinality);
+                    } catch (Exception e) {
+                        LoggerFactory.getLogger(ProfilingRunner.class).error(
+                                String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
+                                e
+                        );
                     }
-
                 }
+
+                // Update reading url location
+                for(TextFileSource textFileSource:textFileSources)
+                    // Update file url
+                    textFileSource.setInputUrl("file:/"+configuration.getStringProperty("rheem.core.log.syntheticData")+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
+
 
                 // save the starting execution time of current {@link RheemPlan}
                 final long startTime = System.currentTimeMillis();
@@ -185,8 +183,8 @@ public class ProfilingRunner{
                     }
                 }
 
-                            // Refresh the input cardinality and DAtaQuantaSize for logging
-                int[] vectorLogs = shape.getVectorLogs();
+                // Refresh the input cardinality and DataQuantaSize for logging
+                double[] vectorLogs = shape.getVectorLogs();
                 vectorLogs[103] = (int) inputCardinality;
                 vectorLogs[104] =  dataQuantaSize;
 
@@ -226,6 +224,11 @@ public class ProfilingRunner{
             e.getStackTrace();
             System.out.print("[ERROR] Job aborted! \n");
             System.out.print(e.getMessage()+"\n");
+        }finally {
+            System.out.println("Clean up...");
+            //final TimeMeasurement cleanUp = stopWatch.start("Clean up");
+            //operatorProfiler.cleanUp();
+            //cleanUp.stop();
         }
 
         job = null;

@@ -36,7 +36,7 @@ public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
     }
 
     @Override
-    protected void prepareInput(int inputIndex, long inputCardinality) {
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
         assert inputIndex == 0;
         this.inputRdd = this.prepareInputRdd(inputCardinality, inputIndex);
     }

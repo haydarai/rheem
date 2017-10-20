@@ -24,7 +24,7 @@ public class BinaryOperatorProfiler extends SparkOperatorProfiler {
     }
 
     @Override
-    protected void prepareInput(int inputIndex, long inputCardinality) {
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
         switch (inputIndex) {
             case 0:
                 this.inputRdd0 = this.prepareInputRdd(inputCardinality, inputIndex);

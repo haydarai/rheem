@@ -32,13 +32,13 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
 
     public int cpuMhz;
 
-    protected Supplier<JavaExecutionOperator> operatorGenerator;
+    //protected Supplier<JavaExecutionOperator> operatorGenerator;
 
     //protected JavaExecutionOperator operator;
 
     protected JavaExecutor executor;
 
-    protected List<Supplier<?>> dataQuantumGenerators;
+    //protected List<Supplier<?>> dataQuantumGenerators;
 
     private List<Long> inputCardinalities;
 
@@ -139,9 +139,7 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
 //        return this.JavaOperator;
 //    }
 
-    public void setDataQuantumGenerators(Supplier<?> dataQuantumGenerators) {
-        this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
-    }
+
 
     /**
      * Utility method to invoke

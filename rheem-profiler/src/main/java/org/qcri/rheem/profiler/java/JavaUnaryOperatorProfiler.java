@@ -59,6 +59,11 @@ public class JavaUnaryOperatorProfiler extends JavaOperatorProfiler {
         }
     }
 
+    @Override
+    protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+
+    }
+
     public void prepare(long dataQuantaSize ,long inputCardinalities) {
         //Validate.isTrue(inputCardinalities.length == 1);
 

@@ -132,7 +132,7 @@ public class RidgeRegressionLearner {
                 //}
                 double[] data = new double[columns.length-1];
                 for (i=0; i<columns.length-1; i++) {
-                    data[i] = Integer.parseInt(columns[i]);
+                    data[i] = Double.parseDouble(columns[i]);
                 }
 
                 int label = Integer.parseInt(columns[i]);
@@ -179,7 +179,7 @@ public class RidgeRegressionLearner {
         double[] trainy = Math.slice(y, loocv.train[1]);
 
         //RidgeRegression model = new RidgeRegression(trainx, trainy, 0.0);
-        LASSO model = new LASSO(longley, y, 100.0);
+        LASSO model = new LASSO(longley, y, 1000.0);
 
         for (int i = 0; i < n; i++) {
             double r =  y[i] - model.predict(longley[i]);
@@ -200,7 +200,7 @@ public class RidgeRegressionLearner {
         assertEquals(-1.856041e-01, model.coefficients()[3], 1E-7);
         assertEquals(7.218054e-01, model.coefficients()[4], 1E-7);
         assertEquals(5.884884e-01, model.coefficients()[5], 1E-7);
-*/
+
 
         rss = 0.0;
         for (int i = 0; i < n; i++) {
@@ -214,7 +214,7 @@ public class RidgeRegressionLearner {
             rss += r * r;
         }
         System.out.println("LOOCV MSE = " + rss/n);
-
+        */
     }
 
     /**

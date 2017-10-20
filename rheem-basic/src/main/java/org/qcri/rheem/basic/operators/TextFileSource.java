@@ -27,7 +27,7 @@ public class TextFileSource extends UnarySource<String> {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final String inputUrl;
+    private String inputUrl;
 
     private final String encoding;
 
@@ -52,6 +52,9 @@ public class TextFileSource extends UnarySource<String> {
         this.encoding = that.getEncoding();
     }
 
+    public void setInputUrl(String inputUrl) {
+        this.inputUrl = inputUrl;
+    }
     public String getInputUrl() {
         return this.inputUrl;
     }
