@@ -1,6 +1,8 @@
 package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 
 import java.util.*;
 
@@ -129,7 +131,7 @@ public class Shape {
                                                 //case "repeat":
                                                 //    fillLog(tuple,logs,t,start +77);
                                                 //    break;
-                                                case "collectionsource":
+                                                case "repeat":
                                                     fillLog(tuple,logs,t,start +77);
                                                     break;
                                                 case "textsource":
@@ -181,13 +183,20 @@ public class Shape {
 
         // average selectivity
         double  selectivity = 0;
-        if ((!tuple.getField1().getOperator().isSource())&&(!tuple.getField1().getOperator().isSink()))
+        if ((!tuple.getField1().getOperator().isSource())&&(!tuple.getField1().getOperator().isSink())&&(!tuple.getField1().getOperator().isLoopHead()))
+            // average selectivity of non source/sink/loop operators
             selectivity= tuple.getField1().getOperator().getOutput(0).getCardinalityEstimate().getAverageEstimate()/
                 tuple.getField1().getOperator().getInput(0).getCardinalityEstimate().getAverageEstimate();
         else if(tuple.getField1().getOperator().isSource())
+            // case of source operator we set the selectivity to 1
             selectivity = 1;
+        else if(tuple.getField1().getOperator().isLoopHead()){
+            // case of a loop head (e.g: repeat operator) we replace the selectivity with number of iterations
+            LoopHeadOperator loopOperator = (LoopHeadOperator)tuple.getField1().getOperator();
+            selectivity = loopOperator.getNumExpectedIterations();
+        }
         logs[start+6] += (int) selectivity;
-        //TODO: duplicate and selectivity to be added below
+        //TODO: duplicate and selectivity to be added
     }
     /**
      * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )

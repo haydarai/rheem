@@ -36,6 +36,9 @@ public class ProfilingConfigurer {
     private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
     //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
     private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000";
+    // onlu one values are currently supported
+    private static final String DEFAULT_ITERATIONS = "100";
+
     //private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
     private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000";
     // TODO: replace with actual read functions from a user input file
@@ -50,6 +53,7 @@ public class ProfilingConfigurer {
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
     private static final Integer MAX_JUNCTURE_TOPOLOGIES = 0;
     private static final Integer MAX_LOOP_TOPOLOGIES = 1;
+
 
     public static String getPlateform() {
         return plateform;
@@ -71,6 +75,7 @@ public class ProfilingConfigurer {
         List<Integer> dataQuantas = Arrays.stream(configuration.getStringProperty("rheem.profiler.quantaSizes",DEFAULT_DATA_QUATA_SIZES).split(",")).map(Integer::valueOf).collect(Collectors.toList());
         List<Integer> UdfsComplexity = Arrays.stream(configuration.getStringProperty("rheem.profiler.udfComplexities",DEFAULT_UDF_COMPLEXITIES).split(",")).map(Integer::valueOf).collect(Collectors.toList());
         List<Integer> inputRatio = Arrays.stream(DEFAULT_BINARY_INPUT_RATIOS.split(",")).map(Integer::valueOf).collect(Collectors.toList());
+        List<Integer> iterations = Arrays.stream(configuration.getStringProperty("rheem.profiler.iterations",DEFAULT_ITERATIONS).split(",")).map(Integer::valueOf).collect(Collectors.toList());
 
         // Set profiling configuration
         pc.setProfilingPlateform(platforms);
@@ -82,6 +87,7 @@ public class ProfilingConfigurer {
         pc.setDataQuantaSize(dataQuantas);
         pc.setUdfsComplexity(UdfsComplexity);
         pc.setInputRatio(inputRatio);
+        pc.setIterations(iterations);
         pc.setMaxJunctureTopologies(MAX_JUNCTURE_TOPOLOGIES);
         pc.setMaxLoopTopologies(MAX_LOOP_TOPOLOGIES);
 

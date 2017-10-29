@@ -28,6 +28,7 @@ public class ProfilingConfig {
     private List<Integer> dataQuantaSize = new ArrayList<>();
     private List<Integer> UdfsComplexity = new ArrayList<>();
     private List<Integer> inputRatio = new ArrayList<>();
+    private List<Integer> iterations = new ArrayList<>();
     private List<String> profilingPlateforms;
     private List<DataSetType> dataTypes;
 
@@ -168,4 +169,13 @@ public class ProfilingConfig {
     public List<Integer> getInputRatio() {
         return inputRatio;
     }
+
+    public void setIterations(List<Integer> iterations) {
+        this.iterations = iterations;
+    }
+
+    public List<Integer> getIterations() {
+        return iterations;
+    }
+
 }
