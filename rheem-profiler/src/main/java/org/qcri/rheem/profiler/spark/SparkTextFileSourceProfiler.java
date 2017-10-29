@@ -32,19 +32,22 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
     private SparkTextFileSourceProfiler(String fileUrl,
                                         Configuration configuration,
                                         Supplier<?> dataQuantumGenerator) {
-        super((Supplier<SparkExecutionOperator> & Serializable) () -> {SparkTextFileSource op= new SparkTextFileSource("file:/"+fileUrl); op.setName("SparkTextFileSource"); return op;},
+        super((Supplier<SparkExecutionOperator> & Serializable) () -> {SparkTextFileSource op= new SparkTextFileSource("file:///"+fileUrl); op.setName("SparkTextFileSource"); return op;},
                 configuration, dataQuantumGenerator);
         this.fileUrl = fileUrl;
     }
 
     @Override
     protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+
         assert inputIndex == 0;
         File file = new File(this.fileUrl+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
 
+        System.out.printf("[PROFILING] Input data already exist and read: %b \n",file.canRead());
+
         Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
         // check if input data is already created
-        if(createdData.contains(newData)||file.exists())
+        if(createdData.contains(newData)||file.exists()||true)
             return;
 
         // add new data

@@ -654,7 +654,7 @@ public class ProfilingPlanBuilder implements Serializable {
                     case "callbacksink":
                         return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
                     case "repeat":
-                        return (SparkPlanOperatorProfilers.createSparkRepeatProfiler(1, type,10 ));
+                        return (SparkPlanOperatorProfilers.createSparkRepeatProfiler(1, type,1000 ));
 
                     default:
                         System.out.println("Unknown operator: " + operator);
@@ -711,7 +711,7 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (JavaOperatorProfilers.createJavaCartesianProfiler(1,type));
 
                     case "repeat":
-                        return (JavaOperatorProfilers.createJavaRepeatProfiler(1,type,10));
+                        return (JavaOperatorProfilers.createJavaRepeatProfiler(1,type,1000));
 
                     case "callbacksink":
                         return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1,type));

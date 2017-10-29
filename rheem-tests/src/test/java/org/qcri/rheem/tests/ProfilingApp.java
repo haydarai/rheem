@@ -6,6 +6,7 @@ import org.qcri.rheem.profiler.core.api.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +18,9 @@ public class ProfilingApp {
     public static void main(String[] args) {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;
+        String platform="";
+        int maxNodeNumber = 1;
+
         if (args.length==1)
             profileTesting=args[0];
         else
@@ -30,10 +34,12 @@ public class ProfilingApp {
 
         //RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
 
-        int maxNodeNumber = 6;
 
-        if (args.length==2)
+        if (args.length>=2)
             maxNodeNumber = Integer.valueOf(args[1]);
+
+        if (args.length>=3)
+            platform = String.valueOf(args[2]);
 
         switch (profileTesting){
             case "single_operator_profiling":
@@ -41,12 +47,13 @@ public class ProfilingApp {
                 profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
                 operatorProfilers = ProfilingPlanBuilder.PlanBuilder(topologies.get(0),profilingConfig);
                 ProfilingRunner.SingleOperatorProfiling(operatorProfilers,profilingConfig);
-                break;
             case "exhaustive_profiling":
-                for(int nodeNumber=4;nodeNumber<=maxNodeNumber;nodeNumber++){
+                for(int nodeNumber=1;nodeNumber<=maxNodeNumber;nodeNumber++){
 
                     profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
 
+                    if (platform.length()!=0)
+                        profilingConfig.setProfilingPlateform(Arrays.asList(new String[]{platform}));
                     // Initialize the generator
                     TopologyGenerator topologyGenerator =new TopologyGenerator(nodeNumber,profilingConfig);
 
@@ -64,8 +71,8 @@ public class ProfilingApp {
                     // populate shapes
                     //profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
                     planProfilers = ProfilingPlanBuilder.exhaustiveProfilingPlanBuilder(shapes,profilingConfig);
-
                     shapes.stream().forEach(s -> s.prepareVectorLogs());
+
                     ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
                     //System.out.println(result.toCsvString())
 

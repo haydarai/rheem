@@ -159,10 +159,19 @@ public class ProfilingRunner{
                     }
                 }
 
-                // Update reading url location
-                for(TextFileSource textFileSource:textFileSources)
-                    // Update file url
-                    textFileSource.setInputUrl("file:/"+configuration.getStringProperty("rheem.core.log.syntheticData")+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
+                // Update source operator url location
+                for(TextFileSource textFileSource:textFileSources) {
+                    switch (shape.getPlateform()) {
+                        case "java":
+                            textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.core.log.syntheticData") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                            break;
+                        case "spark":
+                            textFileSource.setInputUrl( configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                            break;
+                    }
+                    System.out.printf("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
+                }
+
 
 
                 // save the starting execution time of current {@link RheemPlan}

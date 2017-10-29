@@ -25,7 +25,7 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
 
     public JavaTextFileSourceProfiler(Supplier<String> dataQuantumGenerator, String fileUrl) {
         //this.setFileUrl(fileUrl);
-        super(() -> new JavaTextFileSource("file:/"+fileUrl), dataQuantumGenerator);
+        super(() -> new JavaTextFileSource(fileUrl), dataQuantumGenerator);
         //this.fileUrl = fileUrl;
         this.setFileUrl(fileUrl);
     }
@@ -108,9 +108,11 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
 
     @Override
     protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
+
         assert inputIndex == 0;
         File file = new File(this.getFileUrl()+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
 
+        System.out.printf("[PROFILING] can read input url: %b \n",file.canRead());
         Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
         // check if input data is already created
         if(createdData.contains(newData)||file.exists())

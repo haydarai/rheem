@@ -178,8 +178,8 @@ public class RidgeRegressionLearner {
         double[][] trainx = Math.slice(longley, loocv.train[1]);
         double[] trainy = Math.slice(y, loocv.train[1]);
 
-        //RidgeRegression model = new RidgeRegression(trainx, trainy, 0.0);
-        LASSO model = new LASSO(longley, y, 1000.0);
+        RidgeRegression model = new RidgeRegression(trainx, trainy, 0.4);
+        //LASSO model = new LASSO(longley, y, 1000.0);
 
         for (int i = 0; i < n; i++) {
             double r =  y[i] - model.predict(longley[i]);
@@ -188,8 +188,13 @@ public class RidgeRegressionLearner {
         }
         System.out.println("Training MSE = " + rss/n);
 
+        for(int i=1;i<=12;i++) {
+            System.out.println(String.format("estimated time for %s-%s in %s : %s (real %f)", Double.toString(longley[i][103]), Double.toString(longley[i][104]),
+                    (i % 2 == 0 ? "java" : "spark"),Double.toString(model.predict(longley[i])),y[i]));
+        }
+
         //model = new RidgeRegression(trainx, trainy, 0.1);
-        model = new LASSO(longley, y, 1000.0);
+        //model = new LASSO(longley, y, 1000.0);
         System.out.println(Arrays.toString(model.coefficients()));
 
         /*

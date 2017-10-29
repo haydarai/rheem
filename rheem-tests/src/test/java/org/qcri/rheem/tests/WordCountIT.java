@@ -367,8 +367,8 @@ public class WordCountIT {
         // Assignment mode: none.
 
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
-        textFileSource.addTargetPlatform(Java.platform());
         textFileSource.addTargetPlatform(Spark.platform());
+        textFileSource.addTargetPlatform(Java.platform());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
@@ -416,11 +416,13 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(Java.basicPlugin());
         rheemContext.register(Spark.basicPlugin());
+        rheemContext.register(Java.basicPlugin());
+
         rheemContext.execute(rheemPlan);
 
         // Verify the plan result.
+        /*
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
         final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
@@ -431,7 +433,7 @@ public class WordCountIT {
 
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
-        }
+        }*/
         //Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
     }
 

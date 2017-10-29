@@ -7,6 +7,7 @@ import smile.math.Math;
 import smile.math.kernel.GaussianKernel;
 import smile.math.kernel.MercerKernel;
 import smile.regression.LASSO;
+import smile.regression.RandomForest;
 import smile.regression.RidgeRegression;
 import smile.regression.SVR;
 import smile.validation.CrossValidation;
@@ -116,7 +117,7 @@ public class SvmLearner {
                 //}
                 double[] data = new double[columns.length-1];
                 for (i=0; i<columns.length-1; i++) {
-                    data[i] = Integer.parseInt(columns[i]);
+                    data[i] = Double.parseDouble(columns[i]);
                 }
 
                 int label = Integer.parseInt(columns[i]);
@@ -154,8 +155,8 @@ public class SvmLearner {
         y=Y;
         longley = X;
         //RidgeRegression model = new RidgeRegression(longley, y, 0.0);
-        SVR model = new SVR(longley, y, new GaussianKernel(1), 1.0,1);
-
+        //SVR model = new SVR(longley, y,new GaussianKernel(0.1), 1.0,1);
+        RandomForest model = new RandomForest(X, Y, 1000);
         double rss = 0.0;
         int n = longley.length;
         for (int i = 0; i < n; i++) {
@@ -166,8 +167,14 @@ public class SvmLearner {
         System.out.println("Training MSE = " + rss/n);
 
         //model = new RidgeRegression(longley, y, 0.1);
-        model = new SVR(longley, y, new GaussianKernel(1), 1.0,1);
+        //model = new SVR(longley, y, new GaussianKernel(1), 1.0,1);
+        for(int i=1;i<=12;i++) {
+            System.out.println(String.format("estimated time for %s-%s in %s : %s (real %f)", Double.toString(longley[i][103]), Double.toString(longley[i][104]),
+                    (i % 2 == 0 ? "java" : "spark"),Double.toString(model.predict(longley[i])),y[i]));
+        }
         System.out.println(Double.toString(model.predict(longley[1])));
+        //System.out.println(Double.toString(model.predict(longley[3])));
+        //System.out.println(Double.toString(model.predict(longley[4])));
         /*
         assertEquals(-1.354007e+03, model.intercept(), 1E-3);
         assertEquals(5.457700e-02, model.coefficients()[0], 1E-7);
@@ -189,7 +196,7 @@ public class SvmLearner {
             rss += r * r;
         }
         */
-        System.out.println("LOOCV MSE = " + rss/n);
+        //System.out.println("LOOCV MSE = " + rss/n);
     }
 
     /**
