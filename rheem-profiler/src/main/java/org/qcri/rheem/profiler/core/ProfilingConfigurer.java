@@ -38,6 +38,8 @@ public class ProfilingConfigurer {
     private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000";
     // onlu one values are currently supported
     private static final String DEFAULT_ITERATIONS = "100";
+    private static final Integer DEFAULT_SAMPLESIZE = 3;
+
 
     //private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000,5000,10000";
     private static final String DEFAULT_DATA_QUATA_SIZES = "1,10,100,1000";
@@ -90,6 +92,7 @@ public class ProfilingConfigurer {
         pc.setIterations(iterations);
         pc.setMaxJunctureTopologies(MAX_JUNCTURE_TOPOLOGIES);
         pc.setMaxLoopTopologies(MAX_LOOP_TOPOLOGIES);
+        pc.setSampleSize(DEFAULT_SAMPLESIZE);
 
         // Set execution operators
         pc.setUnaryExecutionOperators(UNARY_EXECUTION_OPLERATORS);

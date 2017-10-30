@@ -134,12 +134,18 @@ public class ProfilingRunner{
         for (int dataQuantaSize:profilingConfig.getDataQuantaSize()){
             for (long inputCardinality:profilingConfig.getInputCardinality()){
 
-                System.out.printf("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
+                logger.info("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
                                 " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
                                 " %d Loop Topologies  \n",
                         inputCardinality,dataQuantaSize,
                         shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
                         shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
+//                System.out.printf("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
+//                                " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
+//                                " %d Loop Topologies  \n",
+//                        inputCardinality,dataQuantaSize,
+//                        shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
+//                        shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
 
 
                 // Prepare input source operator
@@ -148,7 +154,8 @@ public class ProfilingRunner{
                     sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
                             sourceProfiler.getOperator().getOutput(0).getType()));
                     try {
-                        System.out.printf("[PROFILING] Preparing input data! \n");
+                        //System.out.printf("[PROFILING] Preparing input data! \n");
+                        logger.info("[PROFILING] Preparing input data! \n");
                         // Prepare source operator
                         sourceProfiler.prepare(dataQuantaSize, inputCardinality);
                     } catch (Exception e) {
@@ -169,7 +176,9 @@ public class ProfilingRunner{
                             textFileSource.setInputUrl( configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                             break;
                     }
-                    System.out.printf("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
+                    logger.info("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
+
+                    //System.out.printf("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
                 }
 
 
@@ -193,9 +202,10 @@ public class ProfilingRunner{
                 }
 
                 // Refresh the input cardinality and DataQuantaSize for logging
-                double[] vectorLogs = shape.getVectorLogs();
-                vectorLogs[103] = (int) inputCardinality;
-                vectorLogs[104] =  dataQuantaSize;
+                shape.setcardinalities(inputCardinality,dataQuantaSize);
+                //double[] vectorLogs = shape.getVectorLogs();
+                //vectorLogs[103] = (int) inputCardinality;
+                //vectorLogs[104] =  dataQuantaSize;
 
                 logExecution(shape,endTime - startTime);
 
@@ -231,10 +241,10 @@ public class ProfilingRunner{
             job.execute();
         }catch (Exception e){
             e.getStackTrace();
-            System.out.print("[ERROR] Job aborted! \n");
-            System.out.print(e.getMessage()+"\n");
+            logger.info("[ERROR] Job aborted! \n");
+            logger.info(e.getMessage()+"\n");
         }finally {
-            System.out.println("Clean up...");
+            logger.info("Clean up...");
             //final TimeMeasurement cleanUp = stopWatch.start("Clean up");
             //operatorProfiler.cleanUp();
             //cleanUp.stop();

@@ -17,6 +17,7 @@ public class ProfilingConfig {
 
     private Integer maxJunctureTopologies;
     private Integer maxLoopTopologies;
+    private Integer sampleSize;
     private String profilingPlanGenerationEnumeration;
     private String profilingConfigurationEnumeration;
     private List<String> loopExecutionOperators = new ArrayList<>();
@@ -178,4 +179,11 @@ public class ProfilingConfig {
         return iterations;
     }
 
+    public int getSampleSize() {
+        return sampleSize;
+    }
+
+    public void setSampleSize(Integer sampleSize) {
+        this.sampleSize = sampleSize;
+    }
 }

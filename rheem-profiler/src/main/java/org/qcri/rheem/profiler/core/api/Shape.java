@@ -19,7 +19,9 @@ public class Shape {
     private List<PipelineTopology> pipelineTopologies = new ArrayList<>();
     private List<JunctureTopology> junctureTopologies = new ArrayList<>();
     private List<LoopTopology> loopTopologies = new ArrayList<>();
-    double[] vectorLogs= new double[104];
+    //private final int vectorSize = 105;
+    private final int vectorSize = 147;
+    double[] vectorLogs= new double[vectorSize-1];
     private int topologyNumber;
 
     // TODO: Currently only single sink topology generation is supported
@@ -79,7 +81,7 @@ public class Shape {
      */
 
     public void prepareVectorLogs(){
-        double[] logs = new double[105];
+        double[] logs = new double[vectorSize];
         // Loop through all subShapes
         this.subShapes.stream()
                 .forEach(s->{
@@ -128,17 +130,32 @@ public class Shape {
                                                 case "cartesian":
                                                     fillLog(tuple,logs,t,start +70);
                                                     break;
-                                                //case "repeat":
+                                                case "randomsample":
+                                                    fillLog(tuple,logs,t,start +77);
+                                                    break;
+                                                case "shufflesample":
+                                                    fillLog(tuple,logs,t,start +84);
+                                                    break;
+                                                case "bernoullisample":
+                                                    fillLog(tuple,logs,t,start +91);
+                                                    break;
+                                                case "dowhile":
+                                                    fillLog(tuple,logs,t,start +98);
+                                                    break;
+                                                //case "collectionsource":
                                                 //    fillLog(tuple,logs,t,start +77);
                                                 //    break;
                                                 case "repeat":
-                                                    fillLog(tuple,logs,t,start +77);
+                                                    fillLog(tuple,logs,t,start +105);
+                                                    break;
+                                                case "collectionsource":
+                                                    fillLog(tuple,logs,t,start +112);
                                                     break;
                                                 case "textsource":
-                                                    fillLog(tuple,logs,t,start +84);
+                                                    fillLog(tuple,logs,t,start +119);
                                                     break;
                                                 case "callbacksink":
-                                                    fillLog(tuple,logs,t,start +91);
+                                                    fillLog(tuple,logs,t,start +126);
                                                     break;
                                             }
                                         });
@@ -197,6 +214,11 @@ public class Shape {
         }
         logs[start+6] += (int) selectivity;
         //TODO: duplicate and selectivity to be added
+    }
+
+    public void setcardinalities(long inputCardinality, int dataQuantaSize) {
+        vectorLogs[vectorSize-2] = (int) inputCardinality;
+        vectorLogs[vectorSize-1] =  dataQuantaSize;
     }
     /**
      * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )
@@ -325,4 +347,6 @@ public class Shape {
     public int getTopologyNumber() {
         return topologyNumber;
     }
+
+
 }

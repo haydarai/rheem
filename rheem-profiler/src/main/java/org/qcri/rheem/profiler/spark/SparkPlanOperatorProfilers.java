@@ -430,6 +430,36 @@ public class SparkPlanOperatorProfilers implements Serializable{
 
     }
 
+    public static SparkUnaryOperatorProfiler createSparkRandomSampleProfiler(int dataQuantaSize,DataSetType type, int sampleSize) {
+        return new SparkUnaryOperatorProfiler(
+                () -> new SparkRandomPartitionSampleOperator(iteration->sampleSize,
+                        type,
+                        iteration -> 42L),
+                configuration,
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
+
+    public static SparkUnaryOperatorProfiler createSparkShuffleSampleProfiler(int dataQuantaSize,DataSetType type, int sampleSize) {
+        return new SparkUnaryOperatorProfiler(
+                () -> new SparkShufflePartitionSampleOperator<>(iteration->sampleSize,
+                        type,
+                        iteration -> 42L),
+                configuration,
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
+
+    public static SparkUnaryOperatorProfiler createSparkBernoulliSampleProfiler(int dataQuantaSize,DataSetType type, int sampleSize) {
+        return new SparkUnaryOperatorProfiler(
+                () -> new SparkBernoulliSampleOperator<>(iteration->sampleSize,
+                        type,
+                        iteration -> 42L),
+                configuration,
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
+
     /**
      * Creates a default {@link SparkLocalCallbackSink} profiler.
      */

@@ -112,7 +112,8 @@ public class JavaTextFileSourceProfiler extends JavaSourceProfiler {
         assert inputIndex == 0;
         File file = new File(this.getFileUrl()+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
 
-        System.out.printf("[PROFILING] can read input url: %b \n",file.canRead());
+        this.logger.info("[PROFILING] can read input url: %b \n",file.canRead());
+        //System.out.printf("[PROFILING] can read input url: %b \n",file.canRead());
         Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
         // check if input data is already created
         if(createdData.contains(newData)||file.exists())

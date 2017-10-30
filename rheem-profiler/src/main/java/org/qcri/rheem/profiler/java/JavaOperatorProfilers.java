@@ -501,6 +501,23 @@ public class JavaOperatorProfilers {
         );
     }
 
+    public static JavaUnaryOperatorProfiler createJavaRandomSampleProfiler(int dataQuantaSize,DataSetType type, int sampleSize) {
+        return new JavaUnaryOperatorProfiler(
+                () -> new JavaRandomSampleOperator(iteration->sampleSize,
+                        type,
+                        iteration -> 42L),
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
+
+    public static JavaUnaryOperatorProfiler createJavaReservoirSampleProfiler(int dataQuantaSize,DataSetType type, int sampleSize) {
+        return new JavaUnaryOperatorProfiler(
+                () -> new JavaReservoirSampleOperator<>(iteration->sampleSize,
+                        type,
+                        iteration -> 42L),
+                DataGenerators.generateGenerator(dataQuantaSize,type)
+        );
+    }
 
     /**
      * To remove

@@ -655,6 +655,12 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
                     case "repeat":
                         return (SparkPlanOperatorProfilers.createSparkRepeatProfiler(1, type,profilingConfig.getIterations().get(0) ));
+                    case "randomsample":
+                        return (SparkPlanOperatorProfilers.createSparkRandomSampleProfiler(1, type,profilingConfig.getSampleSize()));
+                    case "shufflesample":
+                        return (SparkPlanOperatorProfilers.createSparkShuffleSampleProfiler(1, type,profilingConfig.getSampleSize()));
+                    case "bernoullisample":
+                        return (SparkPlanOperatorProfilers.createSparkBernoulliSampleProfiler(1, type,profilingConfig.getSampleSize()));
 
                     default:
                         System.out.println("Unknown operator: " + operator);
@@ -709,7 +715,12 @@ public class ProfilingPlanBuilder implements Serializable {
 
                     case "cartesian":
                         return (JavaOperatorProfilers.createJavaCartesianProfiler(1,type));
-
+                    case "randomsample":
+                        return (JavaOperatorProfilers.createJavaRandomSampleProfiler(1, type,profilingConfig.getSampleSize()));
+                    case "shufflesample":
+                        return (JavaOperatorProfilers.createJavaReservoirSampleProfiler(1, type,profilingConfig.getSampleSize()));
+                    case "Bernoullisample":
+                        return (JavaOperatorProfilers.createJavaReservoirSampleProfiler(1, type,profilingConfig.getSampleSize()));
                     case "repeat":
                         return (JavaOperatorProfilers.createJavaRepeatProfiler(1,type,profilingConfig.getIterations().get(0)));
 
