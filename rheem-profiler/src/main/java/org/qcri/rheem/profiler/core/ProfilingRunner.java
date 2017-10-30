@@ -122,7 +122,9 @@ public class ProfilingRunner{
 
         List<TextFileSource> textFileSources = new ArrayList<>();
         List<OperatorProfiler> sourceProfilers = new ArrayList<>();
+        List<LoopHeadOperator> LoopheadOperators = new ArrayList<>();
 
+        // Store source profilers
         shape.getSourceTopologies().stream()
                 .forEach(t->{
 
@@ -131,9 +133,20 @@ public class ProfilingRunner{
 
                 });
 
+        // To be tested
+        // Store loop profilers
+        shape.getLoopTopologies().stream()
+                .forEach(t->{
+                    t.getNodes().stream()
+                            .forEach(node -> {
+                                if (node.getField1().getOperator().isLoopHead())
+                                    LoopheadOperators.add((LoopHeadOperator) node.getField1().getOperator());
+                            });
+                });
+
         for (int dataQuantaSize:profilingConfig.getDataQuantaSize()){
             for (long inputCardinality:profilingConfig.getInputCardinality()){
-
+                // TODO: Add iteration loop
                 logger.info("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
                                 " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
                                 " %d Loop Topologies  \n",
@@ -146,7 +159,6 @@ public class ProfilingRunner{
 //                        inputCardinality,dataQuantaSize,
 //                        shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
 //                        shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
-
 
                 // Prepare input source operator
                 for(OperatorProfiler sourceProfiler:sourceProfilers) {
@@ -181,7 +193,7 @@ public class ProfilingRunner{
                     //System.out.printf("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
                 }
 
-
+                // Prepare loop operators
 
                 // save the starting execution time of current {@link RheemPlan}
                 final long startTime = System.currentTimeMillis();
