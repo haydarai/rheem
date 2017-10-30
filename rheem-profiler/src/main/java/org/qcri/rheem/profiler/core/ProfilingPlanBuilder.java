@@ -11,6 +11,8 @@ import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
@@ -21,6 +23,11 @@ import static org.qcri.rheem.profiler.java.JavaOperatorProfilers.createJavaReduc
  * Generates rheem plans for profiling.
  */
 public class ProfilingPlanBuilder implements Serializable {
+
+    /**
+     * Logging for profiling plan building
+     */
+    private static final Logger logger =  LoggerFactory.getLogger(ProfilingRunner.class);
 
 
     /**
@@ -248,7 +255,11 @@ public class ProfilingPlanBuilder implements Serializable {
 
                 // TODO: check the dataType and correct it
                 // connect previous with current node
-                currentNode.getField1().getOperator().connectTo(0,previousNode.getField1().getOperator(),inputSlot);
+                try{
+                    currentNode.getField1().getOperator().connectTo(0,previousNode.getField1().getOperator(),inputSlot);
+                } catch (Exception e){
+                    logger.error(e.getMessage());
+                }
 
                 // Reset inputSlot to 0 after connecting the last pipeline node with the jucture topology's node
                 // so to avoid error when connecting the nodes of a pipeline topology
@@ -663,7 +674,7 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (SparkPlanOperatorProfilers.createSparkBernoulliSampleProfiler(1, type,profilingConfig.getSampleSize()));
 
                     default:
-                        System.out.println("Unknown operator: " + operator);
+                        logger.error("Unknown operator: " + operator);
                         return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
                 }
             case "java":
@@ -719,7 +730,7 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (JavaOperatorProfilers.createJavaRandomSampleProfiler(1, type,profilingConfig.getSampleSize()));
                     case "shufflesample":
                         return (JavaOperatorProfilers.createJavaReservoirSampleProfiler(1, type,profilingConfig.getSampleSize()));
-                    case "Bernoullisample":
+                    case "bernoullisample":
                         return (JavaOperatorProfilers.createJavaReservoirSampleProfiler(1, type,profilingConfig.getSampleSize()));
                     case "repeat":
                         return (JavaOperatorProfilers.createJavaRepeatProfiler(1,type,profilingConfig.getIterations().get(0)));
@@ -731,11 +742,11 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (JavaOperatorProfilers.createCollectingJavaLocalCallbackSinkProfiler(1,type));
 
                     default:
-                        System.out.println("Unknown operator: " + operator);
+                        logger.error("Unknown operator: " + operator);
                         return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
                 }
             default:
-                System.out.println("Unknown operator: " + operator);
+                logger.error("Unknown operator: " + operator);
                 return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
         }
     }

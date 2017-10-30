@@ -19,7 +19,7 @@ public class ProfilingConfigurer {
             "distinct-integer", "sort", "sort-string", "sort-integer", "count", "groupby", "join", "union", "cartesian", "callbacksink", "collect",
             "word-count-split", "word-count-canonicalize", "word-count-count"));
 
-    private static List<String> SOURCE_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("collectionsource","textsource"));
+    private static String SOURCE_EXECUTION_OPLERATORS = "collectionsource,textsource";
 
     private static List<String> Test_UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
             "groupby","sort"));
@@ -30,13 +30,13 @@ public class ProfilingConfigurer {
     private static List<String> Test_BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("join", "union", "cartesian"));
 
 
-    private static List<String> UNARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList("map", "reduce"));
-    private static List<String> BINARY_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "join"));
-    private static List<String> LOOP_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "repeat"));
-    private static List<String> SINK_EXECUTION_OPLERATORS = new ArrayList<String>(Arrays.asList( "callbacksink", "collect"));
+    private static String UNARY_EXECUTION_OPLERATORS = "map,reduce,randomsample,shufflesample,bernoullisample";
+    private static String BINARY_EXECUTION_OPLERATORS =  "join";
+    private static String LOOP_EXECUTION_OPLERATORS = "repeat";
+    private static String SINK_EXECUTION_OPLERATORS = "callbacksink,collect";
     //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
     private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000";
-    // onlu one values are currently supported
+    // only one values are currently supported
     private static final String DEFAULT_ITERATIONS = "100";
     private static final Integer DEFAULT_SAMPLESIZE = 3;
 
@@ -95,11 +95,11 @@ public class ProfilingConfigurer {
         pc.setSampleSize(DEFAULT_SAMPLESIZE);
 
         // Set execution operators
-        pc.setUnaryExecutionOperators(UNARY_EXECUTION_OPLERATORS);
-        pc.setBinaryExecutionOperators(BINARY_EXECUTION_OPLERATORS);
-        pc.setLoopExecutionOperators(LOOP_EXECUTION_OPLERATORS);
-        pc.setSourceExecutionOperators(SOURCE_EXECUTION_OPLERATORS);
-        pc.setSinkExecutionOperators(SINK_EXECUTION_OPLERATORS);
+        pc.setUnaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.unaryOperators",UNARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
+        pc.setBinaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.binaryOperators",BINARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
+        pc.setLoopExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.loopOperators",LOOP_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
+        pc.setSourceExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.sourceOperators",SOURCE_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
+        pc.setSinkExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.sinkOperators",SINK_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
 
         return pc;
     }

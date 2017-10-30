@@ -20,7 +20,7 @@ public class Shape {
     private List<JunctureTopology> junctureTopologies = new ArrayList<>();
     private List<LoopTopology> loopTopologies = new ArrayList<>();
     //private final int vectorSize = 105;
-    private final int vectorSize = 147;
+    private final int vectorSize = 146;
     double[] vectorLogs= new double[vectorSize-1];
     private int topologyNumber;
 
