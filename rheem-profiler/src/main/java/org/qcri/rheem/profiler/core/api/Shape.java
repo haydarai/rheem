@@ -79,7 +79,7 @@ public class Shape {
      TODO: to be added datamovement and Topology encoding
      * @return
      */
-
+/*
     public void prepareVectorLogs(){
         double[] logs = new double[vectorSize];
         // Loop through all subShapes
@@ -165,6 +165,92 @@ public class Shape {
                     // reinitialize log array every subShape
                     Arrays.fill(logs, 0);
                 });
+    }
+*/
+
+    public void prepareVectorLog(){
+        double[] logs = new double[vectorSize];
+        // Loop through all subShapes
+
+        logs[0]=this.getPipelineTopologies().size();
+        logs[1]=this.getJunctureTopologies().size();
+        logs[2]=this.getLoopTopologies().size();
+        logs[3]=0;
+        // Loop through all topologies
+        this.allTopologies.stream()
+            .forEach(t -> {
+                // Loop through all nodes
+                t.getNodes().stream()
+                        .forEach(tuple ->{
+                            int start = 4;
+                            switch (tuple.getField0()){
+                                case "map":
+                                    fillLog(tuple,logs,t,start);
+                                    break;
+                                case "filter":
+                                    fillLog(tuple,logs,t,start +7);
+                                    break;
+                                case "flatmap":
+                                    fillLog(tuple,logs,t,start +14);
+                                    break;
+                                case "reduce":
+                                    fillLog(tuple,logs,t,start +21);
+                                    break;
+                                case "globalreduce":
+                                    fillLog(tuple,logs,t,start +28);
+                                    break;
+                                case "distinct":
+                                    fillLog(tuple,logs,t,start +35);
+                                    break;
+                                case "groupby":
+                                    fillLog(tuple,logs,t,start +42);
+                                    break;
+                                case "sort":
+                                    fillLog(tuple,logs,t,start +49);
+                                    break;
+                                case "join":
+                                    fillLog(tuple,logs,t,start +56);
+                                    break;
+                                case "union":
+                                    fillLog(tuple,logs,t,start +63);
+                                    break;
+                                case "cartesian":
+                                    fillLog(tuple,logs,t,start +70);
+                                    break;
+                                case "randomsample":
+                                    fillLog(tuple,logs,t,start +77);
+                                    break;
+                                case "shufflesample":
+                                    fillLog(tuple,logs,t,start +84);
+                                    break;
+                                case "bernoullisample":
+                                    fillLog(tuple,logs,t,start +91);
+                                    break;
+                                case "dowhile":
+                                    fillLog(tuple,logs,t,start +98);
+                                    break;
+                                //case "collectionsource":
+                                //    fillLog(tuple,logs,t,start +77);
+                                //    break;
+                                case "repeat":
+                                    fillLog(tuple,logs,t,start +105);
+                                    break;
+                                case "collectionsource":
+                                    fillLog(tuple,logs,t,start +112);
+                                    break;
+                                case "textsource":
+                                    fillLog(tuple,logs,t,start +119);
+                                    break;
+                                case "callbacksink":
+                                    fillLog(tuple,logs,t,start +126);
+                                    break;
+                            }
+                        });
+            });
+        averageSelectivityComplexity(logs);
+        this.setVectorLogs(logs.clone());
+        // reinitialize log array every subShape
+        Arrays.fill(logs, 0);
     }
 
     void averageSelectivityComplexity(double[] logs){
@@ -349,4 +435,6 @@ public class Shape {
     }
 
 
+    public void updateIteration() {
+    }
 }

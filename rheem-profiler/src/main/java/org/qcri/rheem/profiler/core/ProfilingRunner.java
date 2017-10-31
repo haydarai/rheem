@@ -5,6 +5,7 @@ import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
@@ -37,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -122,15 +124,13 @@ public class ProfilingRunner{
 
         List<TextFileSource> textFileSources = new ArrayList<>();
         List<OperatorProfiler> sourceProfilers = new ArrayList<>();
-        List<LoopHeadOperator> LoopheadOperators = new ArrayList<>();
+        List<LoopHeadOperator> loopHeadOperators = new ArrayList<>();
 
         // Store source profilers
         shape.getSourceTopologies().stream()
                 .forEach(t->{
-
                     sourceProfilers.add(t.getNodes().firstElement().getField1());
                     textFileSources.add((TextFileSource)t.getNodes().firstElement().getField1().getOperator());
-
                 });
 
         // To be tested
@@ -140,102 +140,107 @@ public class ProfilingRunner{
                     t.getNodes().stream()
                             .forEach(node -> {
                                 if (node.getField1().getOperator().isLoopHead())
-                                    LoopheadOperators.add((LoopHeadOperator) node.getField1().getOperator());
+                                    loopHeadOperators.add((LoopHeadOperator) node.getField1().getOperator());
                             });
                 });
 
         for (int dataQuantaSize:profilingConfig.getDataQuantaSize()){
             for (long inputCardinality:profilingConfig.getInputCardinality()){
-                // TODO: Add iteration loop
-                logger.info("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
-                                " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
-                                " %d Loop Topologies  \n",
-                        inputCardinality,dataQuantaSize,
-                        shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
-                        shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
-//                System.out.printf("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
-//                                " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
-//                                " %d Loop Topologies  \n",
-//                        inputCardinality,dataQuantaSize,
-//                        shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
-//                        shape.getPlateform(),shape.getTopologyNumber(),shape.getPipelineTopologies().size(),shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
+                // enable iteration looping when a loop topology is present in current subshape
+                List<Integer> iterations;
+                if(shape.getLoopTopologies().size()!=0)
+                    iterations = profilingConfig.getIterations();
+                else
+                    iterations = Arrays.asList(profilingConfig.getIterations().get(0));
+                //iteration loop
+                for(int iteration:iterations) {
+                    logger.info("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
+                                    " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
+                                    " %d Loop Topologies  \n",
+                            inputCardinality, dataQuantaSize,
+                            shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
+                            shape.getPlateform(), shape.getTopologyNumber(), shape.getPipelineTopologies().size(), shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
 
-                // Prepare input source operator
-                for(OperatorProfiler sourceProfiler:sourceProfilers) {
-                    // Update the dataQuantumGenerators with the appropriate dataQuanta size
-                    sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
-                            sourceProfiler.getOperator().getOutput(0).getType()));
-                    try {
-                        //System.out.printf("[PROFILING] Preparing input data! \n");
-                        logger.info("[PROFILING] Preparing input data! \n");
-                        // Prepare source operator
-                        sourceProfiler.prepare(dataQuantaSize, inputCardinality);
-                    } catch (Exception e) {
-                        LoggerFactory.getLogger(ProfilingRunner.class).error(
-                                String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
-                                e
-                        );
+                    // Prepare input source operator
+                    for (OperatorProfiler sourceProfiler : sourceProfilers) {
+                        // Update the dataQuantumGenerators with the appropriate dataQuanta size
+                        sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
+                                sourceProfiler.getOperator().getOutput(0).getType()));
+                        try {
+                            //System.out.printf("[PROFILING] Preparing input data! \n");
+                            logger.info("[PROFILING] Preparing input data! \n");
+                            // Prepare source operator
+                            sourceProfiler.prepare(dataQuantaSize, inputCardinality);
+                        } catch (Exception e) {
+                            LoggerFactory.getLogger(ProfilingRunner.class).error(
+                                    String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
+                                    e
+                            );
+                        }
                     }
-                }
 
-                // Update source operator url location
-                for(TextFileSource textFileSource:textFileSources) {
-                    switch (shape.getPlateform()) {
-                        case "java":
-                            textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.core.log.syntheticData") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
-                            break;
-                        case "spark":
-                            textFileSource.setInputUrl( configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
-                            break;
+                    // Update source operator url location
+                    for (TextFileSource textFileSource : textFileSources) {
+                        switch (shape.getPlateform()) {
+                            case "java":
+                                textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.core.log.syntheticData") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                break;
+                            case "spark":
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                break;
+                        }
+                        logger.info("[PROFILING] input file url: %s \n", textFileSource.getInputUrl());
                     }
-                    logger.info("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
 
-                    //System.out.printf("[PROFILING] input file url: %s \n",textFileSource.getInputUrl());
-                }
-
-                // Prepare loop operators
-
-                // save the starting execution time of current {@link RheemPlan}
-                final long startTime = System.currentTimeMillis();
-
-                final Topology sinkTopology = shape.getSinkTopology();
-                ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size()-1).getField1().getOperator();
-
-                executePlan(sinkOperator);
-                final long endTime = System.currentTimeMillis();
-
-
-                for (Topology t:shape.getSourceTopologies()) {
-                    switch (shape.getPlateform()) {
-                        case "java":
-                            JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
-                            sourceProfiler.clearSourceData();
+                    // Prepare loop operators
+                    for (LoopHeadOperator loopHeadOperator : loopHeadOperators) {
+                        //loopHeadOperator.setNumExpectedIterations(iteration);
+                        //loopHeadOperator.
                     }
-                }
 
-                // Refresh the input cardinality and DataQuantaSize for logging
-                shape.setcardinalities(inputCardinality,dataQuantaSize);
-                //double[] vectorLogs = shape.getVectorLogs();
-                //vectorLogs[103] = (int) inputCardinality;
-                //vectorLogs[104] =  dataQuantaSize;
+                    shape.prepareVectorLog();
+                    // save the starting execution time of current {@link RheemPlan}
+                    final long startTime = System.currentTimeMillis();
 
-                logExecution(shape,endTime - startTime);
+                    final Topology sinkTopology = shape.getSinkTopology();
+                    ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size() - 1).getField1().getOperator();
 
-                List<Long> inputCardinalities = new ArrayList<>();
-                //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
-                // Gather and assemble all result metrics.
-                results.add( new OperatorProfiler.Result(
-                        inputCardinalities,
-                        1,
+                    executePlan(sinkOperator);
+                    final long endTime = System.currentTimeMillis();
+
+
+                    for (Topology t : shape.getSourceTopologies()) {
+                        switch (shape.getPlateform()) {
+                            case "java":
+                                JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
+                                sourceProfiler.clearSourceData();
+                        }
+                    }
+
+                    // Refresh the input cardinality and DataQuantaSize for logging
+                    shape.setcardinalities(inputCardinality, dataQuantaSize);
+                    //double[] vectorLogs = shape.getVectorLogs();
+                    //vectorLogs[103] = (int) inputCardinality;
+                    //vectorLogs[104] =  dataQuantaSize;
+
+                    logExecution(shape, endTime - startTime);
+
+                    List<Long> inputCardinalities = new ArrayList<>();
+                    //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
+                    // Gather and assemble all result metrics.
+                    results.add(new OperatorProfiler.Result(
+                                    inputCardinalities,
+                                    1,
 //                (long)  shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumInputs(),
-                        endTime - startTime,
-                        provideDiskBytes(startTime, endTime),
-                        provideNetworkBytes(startTime, endTime),
-                        provideCpuCycles(startTime, endTime),
-                        numMachines,
-                        numCoresPerMachine
-                    )
-                );
+                                    endTime - startTime,
+                                    provideDiskBytes(startTime, endTime),
+                                    provideNetworkBytes(startTime, endTime),
+                                    provideCpuCycles(startTime, endTime),
+                                    numMachines,
+                                    numCoresPerMachine
+                            )
+                    );
+                }
             }
         }
         return results;
