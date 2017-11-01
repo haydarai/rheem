@@ -6,10 +6,12 @@ import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.basic.operators.RepeatOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.profiling.ExecutionLog;
@@ -124,7 +126,7 @@ public class ProfilingRunner{
 
         List<TextFileSource> textFileSources = new ArrayList<>();
         List<OperatorProfiler> sourceProfilers = new ArrayList<>();
-        List<LoopHeadOperator> loopHeadOperators = new ArrayList<>();
+        List<RepeatOperator> loopHeadOperators = new ArrayList<>();
 
         // Store source profilers
         shape.getSourceTopologies().stream()
@@ -140,7 +142,7 @@ public class ProfilingRunner{
                     t.getNodes().stream()
                             .forEach(node -> {
                                 if (node.getField1().getOperator().isLoopHead())
-                                    loopHeadOperators.add((LoopHeadOperator) node.getField1().getOperator());
+                                    loopHeadOperators.add((RepeatOperator) node.getField1().getOperator());
                             });
                 });
 
@@ -193,8 +195,11 @@ public class ProfilingRunner{
                     }
 
                     // Prepare loop operators
-                    for (LoopHeadOperator loopHeadOperator : loopHeadOperators) {
-                        //loopHeadOperator.setNumExpectedIterations(iteration);
+                    for (RepeatOperator loopHeadOperator : loopHeadOperators) {
+                        // reset loop operator state
+                        loopHeadOperator.setState(LoopHeadOperator.State.NOT_STARTED);
+                        loopHeadOperator.setNumExpectedIterations(iteration);
+                        //loopHeadOperator.setState();
                         //loopHeadOperator.
                     }
 
@@ -257,7 +262,12 @@ public class ProfilingRunner{
         try {
             job.execute();
         }catch (Exception e){
-            e.getStackTrace();
+            new RheemException("[ERROR] Job execution failed.", e);
+            //throw e;
+        } catch (Throwable t) {
+            throw new RheemException("[ERROR] Job execution failed.", t);
+        }
+           /* e.getStackTrace();
             logger.info("[ERROR] Job aborted! \n");
             logger.info(e.getMessage()+"\n");
         }finally {
@@ -265,7 +275,7 @@ public class ProfilingRunner{
             //final TimeMeasurement cleanUp = stopWatch.start("Clean up");
             //operatorProfiler.cleanUp();
             //cleanUp.stop();
-        }
+        }*/
 
         job = null;
     }
