@@ -90,9 +90,9 @@ public class ProfilingPlanBuilder implements Serializable {
                 //Loop through all unary operators
                 for (String unaryOperator:profilingConfig.getUnaryExecutionOperators()){
                     //Loop through all binary operators
-                    for (String binaryOperator:profilingConfig.getUnaryExecutionOperators()){
+                    for (String binaryOperator:profilingConfig.getBinaryExecutionOperators()){
                         //Loop through all loop operators
-                        for (String loopOperator:profilingConfig.getUnaryExecutionOperators()) {
+                        for (String loopOperator:profilingConfig.getLoopExecutionOperators()) {
                             // Fill the sources
                             for (Topology t : shape.getSourceTopologies()) {
                                 //if (t.getNodes().isEmpty())
@@ -104,7 +104,7 @@ public class ProfilingPlanBuilder implements Serializable {
                                 // check if the nodes are not already filled in the source or sink
                                 if ((t.getNodes().isEmpty() || (!t.isSource())))
                                     for (int i = 1; i <= t.getNodeNumber(); i++)
-                                        t.getNodes().push(UnaryNodeFill(type, platform,unaryOperator));
+                                        t.getNodes().push(randomUnaryNodeFill(type, platform));
                             }
 
                             // Fill with binary operator profilers
