@@ -90,9 +90,9 @@ public class ProfilingConfigurer {
         pc.setUdfsComplexity(UdfsComplexity);
         pc.setInputRatio(inputRatio);
         pc.setIterations(iterations);
-        pc.setMaxJunctureTopologies(MAX_JUNCTURE_TOPOLOGIES);
-        pc.setMaxLoopTopologies(MAX_LOOP_TOPOLOGIES);
-        pc.setSampleSize(DEFAULT_SAMPLESIZE);
+        pc.setMaxJunctureTopologies((int) configuration.getLongProperty("maxJunctureTopologies", MAX_JUNCTURE_TOPOLOGIES));
+        pc.setMaxLoopTopologies((int) configuration.getLongProperty("maxLoopTopologies", MAX_LOOP_TOPOLOGIES));
+        pc.setSampleSize((int) configuration.getLongProperty("defaultSampleSize", DEFAULT_SAMPLESIZE));
 
         // Set execution operators
         pc.setUnaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.unaryOperators",UNARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
