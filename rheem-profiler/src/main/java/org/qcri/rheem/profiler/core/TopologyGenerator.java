@@ -268,6 +268,9 @@ public class TopologyGenerator {
                 else
                     sourceLeftNodeSuccessor = sourceLeftNode;
 
+                // set the sourceLeftNodeSuccessor as a loop body
+                sourceLeftNodeSuccessor.setBooleanBody(true);
+
                 //Reset the output slot of sourceTop and connect with initialize 0
                 sourceLeftNode.resetOutputSlots(0);
 

@@ -37,6 +37,10 @@ public interface Topology {
 
     int getTopologyNumber();
 
+    boolean getBooleanBody();
+
+    void setBooleanBody(Boolean bool);
+
     void setNodeNumber(int nodeNumber);
 
     Stack<Tuple2<String,OperatorProfiler>> getNodes();

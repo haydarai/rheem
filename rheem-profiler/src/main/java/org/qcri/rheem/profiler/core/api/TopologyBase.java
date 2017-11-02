@@ -91,6 +91,11 @@ public class TopologyBase implements Topology {
      */
     private String name;
 
+    /**
+     * is true when the topology is a part of a loop body
+     */
+    private Boolean isBooleanBody = true;
+
 
 
     /**
@@ -248,6 +253,14 @@ public class TopologyBase implements Topology {
         return copiedTopology;
     }
 
+
+    public boolean getBooleanBody() {
+        return isBooleanBody;
+    }
+
+    public void setBooleanBody(Boolean booleanBody) {
+        isBooleanBody = booleanBody;
+    }
 
     /*@Override
     public boolean isSink() {

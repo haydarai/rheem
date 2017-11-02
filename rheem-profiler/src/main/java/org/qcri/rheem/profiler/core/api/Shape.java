@@ -1,8 +1,13 @@
 package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
+import org.qcri.rheem.profiler.core.ProfilingPlanBuilder;
+import sun.security.provider.SHA;
 
 import java.util.*;
 
@@ -25,23 +30,19 @@ public class Shape {
     private int topologyNumber;
 
     // TODO: Currently only single sink topology generation is supported
-    private final Topology sinkTopology;
-
-    public double[] getVectorLogs() {
-        return vectorLogs;
-    }
-
-    public void setVectorLogs(double[] vectorLogs) {
-        this.vectorLogs = vectorLogs;
-    }
-
-
-    public Topology getSinkTopology() {
-        return sinkTopology;
-    }
+    private Topology sinkTopology;
 
     //private int nodeNumber = sinkTopologies.getNodeNumber()
 
+    /**
+     * Shape Constructor *empty
+     */
+    public Shape(){
+    }
+    /**
+     * Shape Constructor that creates a shape from a sink topology then filling the shape in down to up way
+     * @param topology
+     */
     public Shape(Topology topology){
         this.sinkTopology = topology;
 
@@ -273,12 +274,12 @@ public class Shape {
             default:
                 System.out.println("wrong plateform!");
         }
-
+        // TODO: if the operator is inside pipeline and the pipeline is ainside a loop body then the operator should be put as pipeline and loop
         if (t.isPipeline())
             logs[start+2]+=1;
         else if(t.isJuncture())
             logs[start+3]+=1;
-        else if(t.isLoop())
+        if((t.isLoop())||(t.getBooleanBody()))
             logs[start+4]+=1;
 
         // average complexity
@@ -388,7 +389,51 @@ public class Shape {
         return"";
     }
 
+    public static Shape createShape(LocalCallbackSink sinkOperator){
+        Shape newShape = new Shape();
 
+        // Initiate current and predecessor operator
+        Operator currentOperator = sinkOperator;
+        Operator predecessorOperator = sinkOperator.getInput(0).getOccupant().getOwner();
+
+        // Loop until the source
+        while(!predecessorOperator.isSource()){
+            // check if predecessor is unaryoperator
+            if (predecessorOperator instanceof UnaryToUnaryOperator){
+                PipelineTopology newPipelineTopology = new PipelineTopology();
+                // add predecessor and current operators
+                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.getName(), new OperatorProfilerBase(currentOperator)));
+                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.getName(), new OperatorProfilerBase(predecessorOperator)));
+
+                while (predecessorOperator instanceof UnaryToUnaryOperator){
+                    predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+                }
+            }
+        }
+
+        return newShape;
+    }
+
+    /**
+     * SETTERS & GETTERS
+     *
+     */
+    public double[] getVectorLogs() {
+        return vectorLogs;
+    }
+
+    public void setVectorLogs(double[] vectorLogs) {
+        this.vectorLogs = vectorLogs;
+    }
+
+
+    public void setSinkTopology(Topology sinkTopology) {
+        this.sinkTopology = sinkTopology;
+    }
+
+    public Topology getSinkTopology() {
+        return sinkTopology;
+    }
     public List<Shape> getSubShapes() {
         return subShapes;
     }
