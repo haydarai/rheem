@@ -11,13 +11,13 @@ import java.util.List;
  */
 public class OperatorProfilerBase extends OperatorProfiler {
 
-    Operator operator;
+    Operator rheemOperator;
     /**
      *
      * @param operator
      */
     public OperatorProfilerBase(Operator operator){
-        this.operator = operator;
+        this.rheemOperator = operator;
         //this.setOperator(executionOperator);
     }
     @Override

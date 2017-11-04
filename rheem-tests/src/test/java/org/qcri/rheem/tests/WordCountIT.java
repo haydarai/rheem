@@ -19,6 +19,7 @@ import org.qcri.rheem.core.util.Counter;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.operators.JavaReduceByOperator;
+import org.qcri.rheem.profiler.core.api.Shape;
 import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
@@ -113,6 +114,7 @@ public class WordCountIT {
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
 
+        Shape shape = Shape.createShape(sink);
         // Have Rheem execute the plan.
         rheemContext.execute(new RheemPlan(sink));
 

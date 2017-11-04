@@ -184,7 +184,8 @@ public class Shape {
                 t.getNodes().stream()
                         .forEach(tuple ->{
                             int start = 4;
-                            switch (tuple.getField0()){
+                            String[] strs = tuple.getField0().split("\\P{Alpha}+");
+                            switch (strs[0]){
                                 case "map":
                                     fillLog(tuple,logs,t,start);
                                     break;
@@ -242,6 +243,7 @@ public class Shape {
                                 case "textsource":
                                     fillLog(tuple,logs,t,start +119);
                                     break;
+                                case "LocalCallbackSink":
                                 case "callbacksink":
                                     fillLog(tuple,logs,t,start +126);
                                     break;
@@ -402,15 +404,19 @@ public class Shape {
             if (predecessorOperator instanceof UnaryToUnaryOperator){
                 PipelineTopology newPipelineTopology = new PipelineTopology();
                 // add predecessor and current operators
-                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.getName(), new OperatorProfilerBase(currentOperator)));
-                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.getName(), new OperatorProfilerBase(predecessorOperator)));
+                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
                 while (predecessorOperator instanceof UnaryToUnaryOperator){
                     predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+                    newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                 }
+                newShape.getPipelineTopologies().add(newPipelineTopology);
+                newShape.getAllTopologies().add(newPipelineTopology);
             }
         }
 
+        newShape.prepareVectorLog();
         return newShape;
     }
 
