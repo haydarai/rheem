@@ -55,6 +55,11 @@ public class ProfilingConfigurer {
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
     private static final Integer MAX_JUNCTURE_TOPOLOGIES = 0;
     private static final Integer MAX_LOOP_TOPOLOGIES = 1;
+    /*
+    Number of running plan (-1: no limitation)
+     */
+    private static final Integer NUMBER_RUNNING_PLANS = -1;
+
 
 
     public static String getPlateform() {
@@ -90,10 +95,10 @@ public class ProfilingConfigurer {
         pc.setUdfsComplexity(UdfsComplexity);
         pc.setInputRatio(inputRatio);
         pc.setIterations(iterations);
-        pc.setMaxJunctureTopologies((int) configuration.getLongProperty("maxJunctureTopologies", MAX_JUNCTURE_TOPOLOGIES));
-        pc.setMaxLoopTopologies((int) configuration.getLongProperty("maxLoopTopologies", MAX_LOOP_TOPOLOGIES));
-        pc.setSampleSize((int) configuration.getLongProperty("defaultSampleSize", DEFAULT_SAMPLESIZE));
-
+        pc.setMaxJunctureTopologies((int) configuration.getLongProperty("rheem.profiler.maxJunctureTopologies", MAX_JUNCTURE_TOPOLOGIES));
+        pc.setMaxLoopTopologies((int) configuration.getLongProperty("rheem.profiler.maxLoopTopologies", MAX_LOOP_TOPOLOGIES));
+        pc.setSampleSize((int) configuration.getLongProperty("rheem.profiler.defaultSampleSize", DEFAULT_SAMPLESIZE));
+        pc.setNumberRunningPlans((int) configuration.getLongProperty("rheem.profiler.numberRunningPlans",NUMBER_RUNNING_PLANS));
         // Set execution operators
         pc.setUnaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.unaryOperators",UNARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
         pc.setBinaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.binaryOperators",BINARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
