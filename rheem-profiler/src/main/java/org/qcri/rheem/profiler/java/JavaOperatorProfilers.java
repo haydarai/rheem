@@ -16,9 +16,10 @@ import java.util.stream.Collectors;
  */
 public class JavaOperatorProfilers {
 
+    private static Configuration configuration = new Configuration();
 
     public static JavaTextFileSourceProfiler createJavaTextFileSourceProfiler(int dataQuantaScale, DataSetType type) {
-        Configuration configuration = new Configuration();
+        //Configuration configuration = new Configuration();
         return new JavaTextFileSourceProfiler(
                 DataGenerators.generateGenerator(dataQuantaScale,type),
                 configuration.getStringProperty("rheem.core.log.syntheticData")
@@ -27,7 +28,7 @@ public class JavaOperatorProfilers {
 
     //**************************************************************** To remove
     public static JavaTextFileSourceProfiler createJavaTextFileSourceProfiler(int dataQuantaScale) {
-        Configuration configuration = new Configuration();
+        //Configuration configuration = new Configuration();
         return new JavaTextFileSourceProfiler(
                 DataGenerators.createRandomStringSupplier(dataQuantaScale+20, dataQuantaScale+40, new Random(42)),
                 configuration.getStringProperty("rheem.profiler.datagen.url")

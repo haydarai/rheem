@@ -54,11 +54,11 @@ public class ProfilingConfigurer {
 //DataSetType.createDefault(String.class),DataSetType.createDefault(List.class)
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
     private static final Integer MAX_JUNCTURE_TOPOLOGIES = 1;
-    private static final Integer MAX_LOOP_TOPOLOGIES = 1;
+    private static final Integer MAX_LOOP_TOPOLOGIES = 2;
     /*
     Number of running plan (-1: no limitation)
      */
-    private static final Integer NUMBER_RUNNING_PLANS = -1;
+    private static final Integer NUMBER_RUNNING_PLANS = 1;
 
 
 

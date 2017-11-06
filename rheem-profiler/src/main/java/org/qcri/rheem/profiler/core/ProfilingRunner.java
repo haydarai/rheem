@@ -57,6 +57,7 @@ public class ProfilingRunner{
     private static int cpuMhz, numMachines, numCoresPerMachine, numPartitions;
     private static String gangliaRrdsDir;
     private static Configuration configuration = new Configuration();
+    private static int runningCounter = 0;
 
     public void ProfilingRunner(ProfilingConfig profilingConfig, PlatformExecution profilingPlatformExecution,
                                  ProfilingPlan profilingPlan){
@@ -96,11 +97,15 @@ public class ProfilingRunner{
                                            ProfilingConfig profilingConfiguration) {
         profilingConfig = profilingConfiguration;
 
-        shapes.stream().forEach(s -> s.getSubShapes().stream().forEach(executionShape->{
-            executeShapeProfiling(executionShape);
-            })
+        shapes.stream().forEach(s -> {
+            s.getSubShapes().stream().forEach(executionShape->{
+                        if ((runningCounter==-1)||(runningCounter<profilingConfig.getNumberRunningPlans()))
+                            executeShapeProfiling(executionShape);
+                    });
+                    // reintiate running counter
+                    runningCounter=0;
+                }
         );
-
     }
 
     private static List<OperatorProfiler.Result> executeShapeProfiling(Shape shape) {
@@ -245,10 +250,16 @@ public class ProfilingRunner{
                                     numCoresPerMachine
                             )
                     );
+                    runningCounter++;
+                    // check number of running has exceeded the runningNumber specified in {@link Pro} for each
+                    if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlans()))
+                        break;
                 }
-
-                // check number of running
+                if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlans()))
+                    break;
             }
+            if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlans()))
+                break;
         }
         return results;
 

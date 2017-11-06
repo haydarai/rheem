@@ -567,12 +567,11 @@ public class Shape {
      * Logging {@link Shape}'s vector log
      */
     public void printLog() {
-        String outputVector="";
+        final String[] outputVector = {""};
         NumberFormat nf = new DecimalFormat("##.#");
-
-        for(int i=0;i<vectorLogs.length;i++){
-            outputVector=outputVector.concat( nf.format( vectorLogs[i]) + " ");
-        }
-        this.logger.info("Current rheem plan log vector: " + outputVector);
+        Arrays.stream(vectorLogs).forEach(d -> {
+            outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
+        });
+        this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
     }
 }
