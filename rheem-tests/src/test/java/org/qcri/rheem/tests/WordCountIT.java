@@ -115,6 +115,7 @@ public class WordCountIT {
         reduceByOperator.connectTo(0, sink, 0);
 
         Shape shape = Shape.createShape(sink);
+        shape.printLog();
         // Have Rheem execute the plan.
         rheemContext.execute(new RheemPlan(sink));
 

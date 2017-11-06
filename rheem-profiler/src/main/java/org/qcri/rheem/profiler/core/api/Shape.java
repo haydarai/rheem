@@ -7,8 +7,13 @@ import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.profiler.core.ProfilingPlanBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LoggerFactoryBinder;
 import sun.security.provider.SHA;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
@@ -16,6 +21,7 @@ import java.util.*;
  */
 public class Shape {
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
     // subshapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
     private List<Shape> subShapes = new ArrayList<>();
     private List<Topology> allTopologies = new ArrayList<>();
@@ -186,14 +192,23 @@ public class Shape {
                             int start = 4;
                             String[] strs = tuple.getField0().split("\\P{Alpha}+");
                             switch (strs[0]){
+                                case "Map":
+                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start);
+                                    break;
                                 case "map":
                                     fillLog(tuple,logs,t,start);
                                     break;
                                 case "filter":
                                     fillLog(tuple,logs,t,start +7);
                                     break;
+                                case "FlatMap":
+                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +14);
+                                    break;
                                 case "flatmap":
                                     fillLog(tuple,logs,t,start +14);
+                                    break;
+                                case "ReduceBy":
+                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +21);
                                     break;
                                 case "reduce":
                                     fillLog(tuple,logs,t,start +21);
@@ -240,10 +255,15 @@ public class Shape {
                                 case "collectionsource":
                                     fillLog(tuple,logs,t,start +112);
                                     break;
+                                case "TextFileSource":
+                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +119);
+                                    break;
                                 case "textsource":
                                     fillLog(tuple,logs,t,start +119);
                                     break;
                                 case "LocalCallbackSink":
+                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +126);
+                                    break;
                                 case "callbacksink":
                                     fillLog(tuple,logs,t,start +126);
                                     break;
@@ -256,6 +276,10 @@ public class Shape {
         Arrays.fill(logs, 0);
     }
 
+    /**
+     * Calculate average selectivity
+     * @param logs
+     */
     void averageSelectivityComplexity(double[] logs){
         for(int i=9; i<=97; i=i+7){
             if(logs[i-4]+logs[i-5]!=0){
@@ -265,6 +289,52 @@ public class Shape {
         }
     }
 
+    /**
+     * Fill {@var vectorLogs} with rheem operator parameters
+     * @param operatorProfilerBase
+     * @param logs
+     * @param t
+     * @param start
+     */
+    void preFillLog(OperatorProfilerBase operatorProfilerBase, double[] logs, Topology t, int start){
+
+        //Tuple2<String,OperatorProfilerBase> tuple2 = (Tuple2<String,OperatorProfilerBase>) tuple;
+        // TODO: if the operator is inside pipeline and the pipeline is ainside a loop body then the operator should be put as pipeline and loop
+        if (t.isPipeline())
+            logs[start+2]+=1;
+        else if(t.isJuncture())
+            logs[start+3]+=1;
+        if((t.isLoop())||(t.getBooleanBody()))
+            logs[start+4]+=1;
+
+        // average complexity
+        logs[start+5] += operatorProfilerBase.getUDFcomplexity();
+
+        // average selectivity
+        double  selectivity = 0;
+        if ((!operatorProfilerBase.getRheemOperator().isSource())&&(!operatorProfilerBase.getRheemOperator().isSink())&&(operatorProfilerBase.getRheemOperator().isLoopHead()))
+            // average selectivity of non source/sink/loop operators
+            selectivity= operatorProfilerBase.getRheemOperator().getOutput(0).getCardinalityEstimate().getAverageEstimate()/
+                    operatorProfilerBase.getRheemOperator().getInput(0).getCardinalityEstimate().getAverageEstimate();
+        else if(operatorProfilerBase.getRheemOperator().isSource())
+            // case of source operator we set the selectivity to 1
+            selectivity = 1;
+        else if(operatorProfilerBase.getRheemOperator().isLoopHead()){
+            // case of a loop head (e.g: repeat operator) we replace the selectivity with number of iterations
+            LoopHeadOperator loopOperator = (LoopHeadOperator)operatorProfilerBase.getRheemOperator();
+            selectivity = loopOperator.getNumExpectedIterations();
+        }
+        logs[start+6] += (int) selectivity;
+        //TODO: duplicate and selectivity to be added
+    }
+
+    /**
+     * Fill {@var vectorLogs} with execution operator parameters
+     * @param tuple
+     * @param logs
+     * @param t
+     * @param start
+     */
     void fillLog(Tuple2<String,OperatorProfiler> tuple, double[] logs, Topology t, int start){
         switch (tuple.getField1().getOperator().getPlatform().getName()){
             case "Java Streams":
@@ -400,6 +470,7 @@ public class Shape {
 
         // Loop until the source
         while(!predecessorOperator.isSource()){
+            // Handle pipeline cas
             // check if predecessor is unaryoperator
             if (predecessorOperator instanceof UnaryToUnaryOperator){
                 PipelineTopology newPipelineTopology = new PipelineTopology();
@@ -414,6 +485,9 @@ public class Shape {
                 newShape.getPipelineTopologies().add(newPipelineTopology);
                 newShape.getAllTopologies().add(newPipelineTopology);
             }
+            //TODO: add loop handling
+
+            //TODO: add juncture handling
         }
 
         newShape.prepareVectorLog();
@@ -487,5 +561,18 @@ public class Shape {
 
 
     public void updateIteration() {
+    }
+
+    /**
+     * Logging {@link Shape}'s vector log
+     */
+    public void printLog() {
+        String outputVector="";
+        NumberFormat nf = new DecimalFormat("##.#");
+
+        for(int i=0;i<vectorLogs.length;i++){
+            outputVector=outputVector.concat( nf.format( vectorLogs[i]) + " ");
+        }
+        this.logger.info("Current rheem plan log vector: " + outputVector);
     }
 }

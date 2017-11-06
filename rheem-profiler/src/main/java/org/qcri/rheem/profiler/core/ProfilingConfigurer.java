@@ -31,7 +31,7 @@ public class ProfilingConfigurer {
 
 
     private static String UNARY_EXECUTION_OPLERATORS = "map,reduce,randomsample,shufflesample,bernoullisample";
-    private static String BINARY_EXECUTION_OPLERATORS =  "join";
+    private static String BINARY_EXECUTION_OPLERATORS =  "union";
     private static String LOOP_EXECUTION_OPLERATORS = "repeat";
     private static String SINK_EXECUTION_OPLERATORS = "callbacksink,collect";
     //private static final String DEFAULT_INPUT_CARDINALITIES = "1,100,1000,10000,100000,1000000,10000000,20000000";
@@ -53,7 +53,7 @@ public class ProfilingConfigurer {
     private static final List<DataSetType> DEFAULT_DATATYPE = Arrays.asList(DataSetType.createDefault(String.class));
 //DataSetType.createDefault(String.class),DataSetType.createDefault(List.class)
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
-    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 0;
+    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 1;
     private static final Integer MAX_LOOP_TOPOLOGIES = 1;
     /*
     Number of running plan (-1: no limitation)

@@ -19,7 +19,7 @@ public class ProfilingApp {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;
         String platform="";
-        int maxNodeNumber = 1;
+        int maxNodeNumber = 3;
 
         if (args.length==1)
             profileTesting=args[0];
@@ -48,7 +48,7 @@ public class ProfilingApp {
                 operatorProfilers = ProfilingPlanBuilder.PlanBuilder(topologies.get(0),profilingConfig);
                 ProfilingRunner.SingleOperatorProfiling(operatorProfilers,profilingConfig);
             case "exhaustive_profiling":
-                for(int nodeNumber=1;nodeNumber<=maxNodeNumber;nodeNumber++){
+                for(int nodeNumber=3;nodeNumber<=maxNodeNumber;nodeNumber++){
 
                     profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
 

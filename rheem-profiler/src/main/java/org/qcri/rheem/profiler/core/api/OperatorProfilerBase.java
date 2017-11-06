@@ -11,6 +11,7 @@ import java.util.List;
  */
 public class OperatorProfilerBase extends OperatorProfiler {
 
+
     Operator rheemOperator;
     /**
      *
@@ -23,5 +24,13 @@ public class OperatorProfilerBase extends OperatorProfiler {
     @Override
     protected void prepareInput(int inputIndex, long dataQuantaSize, long inputCardinality) {
 
+    }
+
+    public Operator getRheemOperator() {
+        return rheemOperator;
+    }
+
+    public void setRheemOperator(Operator rheemOperator) {
+        this.rheemOperator = rheemOperator;
     }
 }
