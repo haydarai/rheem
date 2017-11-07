@@ -88,6 +88,7 @@ public class ProfilingPlanBuilder implements Serializable {
                 // Set the shape's platform
                 shape.setPlateform(platform);
                 //Loop through all unary operators
+                // TODO: we have to multiply by number of pipelines existing in current shape and number of nodes per pipeline
                 for (String unaryOperator:profilingConfig.getUnaryExecutionOperators()){
                     //Loop through all binary operators
                     for (String binaryOperator:profilingConfig.getBinaryExecutionOperators()){
@@ -99,11 +100,13 @@ public class ProfilingPlanBuilder implements Serializable {
                                 prepareSource(t, type, platform);
                             }
 
+                            // TODO: Fill pipeline topologies with exhaustive way (pass a list of operators (e.g:[map,map,map]) to be filled in the below loop)
                             // Fill with unary operator profilers
                             for (Topology t : shape.getPipelineTopologies()) {
                                 // check if the nodes are not already filled in the source or sink
                                 if ((t.getNodes().isEmpty() || (!t.isSource())))
                                     for (int i = 1; i <= t.getNodeNumber(); i++)
+                                        // TODO: fill the nodes with the operator list
                                         t.getNodes().push(randomUnaryNodeFill(type, platform));
                             }
 

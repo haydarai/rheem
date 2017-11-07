@@ -2,15 +2,11 @@ package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import org.qcri.rheem.profiler.core.ProfilingPlanBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.spi.LoggerFactoryBinder;
-import sun.security.provider.SHA;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -304,7 +300,7 @@ public class Shape {
             logs[start+2]+=1;
         else if(t.isJuncture())
             logs[start+3]+=1;
-        if((t.isLoop())||(t.getBooleanBody()))
+        if((t.isLoop())||(t.isLoopBody()))
             logs[start+4]+=1;
 
         // average complexity
@@ -351,7 +347,7 @@ public class Shape {
             logs[start+2]+=1;
         else if(t.isJuncture())
             logs[start+3]+=1;
-        if((t.isLoop())||(t.getBooleanBody()))
+        if((t.isLoop())||(t.isLoopBody()))
             logs[start+4]+=1;
 
         // average complexity
@@ -492,6 +488,10 @@ public class Shape {
 
         newShape.prepareVectorLog();
         return newShape;
+    }
+
+    public List<double[]> enumerateShape(){
+        return  Arrays.asList(this.vectorLogs);
     }
 
     /**

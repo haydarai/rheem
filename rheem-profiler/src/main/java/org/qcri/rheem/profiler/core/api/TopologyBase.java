@@ -1,11 +1,9 @@
 package org.qcri.rheem.profiler.core.api;
 
-import org.antlr.v4.codegen.model.Loop;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -94,7 +92,7 @@ public class TopologyBase implements Topology {
     /**
      * is true when the topology is a part of a loop body
      */
-    private Boolean isBooleanBody = true;
+    private Boolean isLoopBody = true;
 
 
 
@@ -254,12 +252,12 @@ public class TopologyBase implements Topology {
     }
 
 
-    public boolean getBooleanBody() {
-        return isBooleanBody;
+    public boolean isLoopBody() {
+        return isLoopBody;
     }
 
     public void setBooleanBody(Boolean booleanBody) {
-        isBooleanBody = booleanBody;
+        isLoopBody = booleanBody;
     }
 
     /*@Override

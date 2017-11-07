@@ -5,7 +5,6 @@ import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.basic.operators.RepeatOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Configuration;
@@ -15,22 +14,17 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.profiling.ExecutionLog;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.mathex.model.Constant;
 import org.qcri.rheem.java.Java;
-import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.profiler.java.JavaSourceProfiler;
-import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
 import org.qcri.rheem.spark.Spark;
-import org.qcri.rheem.spark.operators.SparkTextFileSource;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
@@ -41,7 +35,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -99,7 +92,7 @@ public class ProfilingRunner{
 
         shapes.stream().forEach(s -> {
             s.getSubShapes().stream().forEach(executionShape->{
-                        if ((runningCounter==-1)||(runningCounter<profilingConfig.getNumberRunningPlans()))
+                        if ((runningCounter==-1)||(runningCounter<profilingConfig.getNumberRunningPlansPerShape()))
                             executeShapeProfiling(executionShape);
                     });
                     // reintiate running counter
@@ -251,14 +244,14 @@ public class ProfilingRunner{
                             )
                     );
                     runningCounter++;
-                    // check number of running has exceeded the runningNumber specified in {@link Pro} for each
-                    if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlans()))
+                    // check number of running has exceeded the runningNumber specified in {@link ProfilingConfiguration} per each shape
+                    if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlansPerShape()))
                         break;
                 }
-                if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlans()))
+                if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlansPerShape()))
                     break;
             }
-            if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlans()))
+            if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlansPerShape()))
                 break;
         }
         return results;
@@ -274,9 +267,11 @@ public class ProfilingRunner{
 
         try {
             job.execute();
-        }catch (Exception e){
+        }catch (Exception e) {
             new RheemException("[ERROR] Job execution failed.", e);
             //throw e;
+        } catch (OutOfMemoryError outOfMemoryError){
+
         } catch (Throwable t) {
             throw new RheemException("[ERROR] Job execution failed.", t);
         }
@@ -361,7 +356,6 @@ public class ProfilingRunner{
                 numMachines,
                 numCoresPerMachine
         );
-
     }
 
     /**

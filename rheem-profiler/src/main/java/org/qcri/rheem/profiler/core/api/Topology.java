@@ -37,7 +37,7 @@ public interface Topology {
 
     int getTopologyNumber();
 
-    boolean getBooleanBody();
+    boolean isLoopBody();
 
     void setBooleanBody(Boolean bool);
 

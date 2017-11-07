@@ -1,12 +1,9 @@
 package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by migiwara on 07/06/17.
@@ -17,7 +14,7 @@ public class ProfilingConfig {
 
     private int maxJunctureTopologies;
     private int maxLoopTopologies;
-    private int numberRunningPlans;
+    private int numberRunningPlansPerShape;
     private int sampleSize;
     private String profilingPlanGenerationEnumeration;
     private String profilingConfigurationEnumeration;
@@ -188,12 +185,12 @@ public class ProfilingConfig {
         this.sampleSize = sampleSize;
     }
 
-    public void setNumberRunningPlans(int numberRunningPlans) {
-        this.numberRunningPlans = numberRunningPlans;
+    public void setNumberRunningPlansPerShape(int numberRunningPlansPerShape) {
+        this.numberRunningPlansPerShape = numberRunningPlansPerShape;
     }
 
-    public int getNumberRunningPlans() {
-        return numberRunningPlans;
+    public int getNumberRunningPlansPerShape() {
+        return numberRunningPlansPerShape;
     }
 
 }

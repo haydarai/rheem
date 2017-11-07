@@ -1,9 +1,7 @@
 package org.qcri.rheem.profiler.core;
 
-import org.apache.pig.builtin.SIN;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.profiler.core.api.ProfilingConfig;
 
 import java.util.*;
@@ -53,12 +51,12 @@ public class ProfilingConfigurer {
     private static final List<DataSetType> DEFAULT_DATATYPE = Arrays.asList(DataSetType.createDefault(String.class));
 //DataSetType.createDefault(String.class),DataSetType.createDefault(List.class)
     public static final boolean DEFAULT_BUSHY_GENERATION = true;
-    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 1;
-    private static final Integer MAX_LOOP_TOPOLOGIES = 2;
+    private static final Integer MAX_JUNCTURE_TOPOLOGIES = 0;
+    private static final Integer MAX_LOOP_TOPOLOGIES = 0;
     /*
     Number of running plan (-1: no limitation)
      */
-    private static final Integer NUMBER_RUNNING_PLANS = 1;
+    private static final Integer NUMBER_RUNNING_PLANS_PER_SHAPE = -1;
 
 
 
@@ -98,7 +96,7 @@ public class ProfilingConfigurer {
         pc.setMaxJunctureTopologies((int) configuration.getLongProperty("rheem.profiler.maxJunctureTopologies", MAX_JUNCTURE_TOPOLOGIES));
         pc.setMaxLoopTopologies((int) configuration.getLongProperty("rheem.profiler.maxLoopTopologies", MAX_LOOP_TOPOLOGIES));
         pc.setSampleSize((int) configuration.getLongProperty("rheem.profiler.defaultSampleSize", DEFAULT_SAMPLESIZE));
-        pc.setNumberRunningPlans((int) configuration.getLongProperty("rheem.profiler.numberRunningPlans",NUMBER_RUNNING_PLANS));
+        pc.setNumberRunningPlansPerShape((int) configuration.getLongProperty("rheem.profiler.numberRunningPlans",NUMBER_RUNNING_PLANS_PER_SHAPE));
         // Set execution operators
         pc.setUnaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.unaryOperators",UNARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
         pc.setBinaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.binaryOperators",BINARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
