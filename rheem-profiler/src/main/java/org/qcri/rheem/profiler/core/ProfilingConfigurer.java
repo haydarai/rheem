@@ -96,7 +96,7 @@ public class ProfilingConfigurer {
         pc.setMaxJunctureTopologies((int) configuration.getLongProperty("rheem.profiler.maxJunctureTopologies", MAX_JUNCTURE_TOPOLOGIES));
         pc.setMaxLoopTopologies((int) configuration.getLongProperty("rheem.profiler.maxLoopTopologies", MAX_LOOP_TOPOLOGIES));
         pc.setSampleSize((int) configuration.getLongProperty("rheem.profiler.defaultSampleSize", DEFAULT_SAMPLESIZE));
-        pc.setNumberRunningPlansPerShape((int) configuration.getLongProperty("rheem.profiler.numberRunningPlans",NUMBER_RUNNING_PLANS_PER_SHAPE));
+        pc.setNumberRunningPlansPerShape((int) configuration.getLongProperty("rheem.profiler.numberRunningPlansPerShape",NUMBER_RUNNING_PLANS_PER_SHAPE));
         // Set execution operators
         pc.setUnaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.unaryOperators",UNARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
         pc.setBinaryExecutionOperators(Arrays.stream(configuration.getStringProperty("rheem.profiler.binaryOperators",BINARY_EXECUTION_OPLERATORS).split(",")).map(String::valueOf).collect(Collectors.toList()));
