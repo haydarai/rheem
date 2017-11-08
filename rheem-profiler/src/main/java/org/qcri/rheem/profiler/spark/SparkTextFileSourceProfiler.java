@@ -44,7 +44,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
         File file = new File(this.fileUrl+"-"+dataQuantaSize+"-"+inputCardinality+".txt");
 
         //System.out.printf("[PROFILING] Input data already exist and read: %b \n",file.canRead());
-        this.logger.info("[PROFILING] can read input url: %b \n",file.canRead());
+        this.logger.info(String.format("[PROFILING] can read input url: %b \n",file.canRead()));
 
         Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
         // check if input data is already created

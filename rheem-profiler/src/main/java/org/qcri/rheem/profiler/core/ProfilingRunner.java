@@ -29,6 +29,7 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,6 +51,7 @@ public class ProfilingRunner{
     private static int cpuMhz, numMachines, numCoresPerMachine, numPartitions;
     private static String gangliaRrdsDir;
     private static Configuration configuration = new Configuration();
+    private static int runningPlanPerShape;
     private static int runningCounter = 0;
 
     public void ProfilingRunner(ProfilingConfig profilingConfig, PlatformExecution profilingPlatformExecution,
@@ -58,6 +60,7 @@ public class ProfilingRunner{
          this.profilingPlatformExecution = profilingPlatformExecution;
          this.profilingPlan = profilingPlan;
 
+        runningPlanPerShape = profilingConfig.getNumberRunningPlansPerShape();
         this.cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz", 2700);
         this.numMachines = (int) configuration.getLongProperty("rheem.spark.machines", 1);
         this.numCoresPerMachine = (int) configuration.getLongProperty("rheem.spark.cores-per-machine", 1);
@@ -89,10 +92,13 @@ public class ProfilingRunner{
     public static void exhaustiveProfiling(List<Shape> shapes,
                                            ProfilingConfig profilingConfiguration) {
         profilingConfig = profilingConfiguration;
+        runningPlanPerShape = profilingConfiguration.getNumberRunningPlansPerShape();
 
+        logger.info(String.format("[PROFILING] profiling contains %d shapes with total %d subshapes \n",shapes.size(),
+                shapes.stream().map(s->s.getSubShapes().size()).reduce((s1,s2)->s1+s2).get()));
         shapes.stream().forEach(s -> {
             s.getSubShapes().stream().forEach(executionShape->{
-                        if ((runningCounter==-1)||(runningCounter<profilingConfig.getNumberRunningPlansPerShape()))
+                        if ((runningPlanPerShape==-1)||(runningCounter<runningPlanPerShape))
                             executeShapeProfiling(executionShape);
                     });
                     // reintiate running counter
@@ -154,12 +160,12 @@ public class ProfilingRunner{
                     iterations = Arrays.asList(profilingConfig.getIterations().get(0));
                 //iteration loop
                 for(int iteration:iterations) {
-                    logger.info("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
+                    logger.info(String.format("[PROFILING] Running Synthetic Plan with %d data quanta cardinality, %d data quanta size of %s on %s platform ;" +
                                     " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
                                     " %d Loop Topologies  \n",
                             inputCardinality, dataQuantaSize,
                             shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
-                            shape.getPlateform(), shape.getTopologyNumber(), shape.getPipelineTopologies().size(), shape.getJunctureTopologies().size(), shape.getLoopTopologies().size());
+                            shape.getPlateform(), shape.getTopologyNumber(), shape.getPipelineTopologies().size(), shape.getJunctureTopologies().size(), shape.getLoopTopologies().size()));
 
                     // Prepare input source operator
                     for (OperatorProfiler sourceProfiler : sourceProfilers) {
@@ -173,7 +179,7 @@ public class ProfilingRunner{
                             sourceProfiler.prepare(dataQuantaSize, inputCardinality);
                         } catch (Exception e) {
                             LoggerFactory.getLogger(ProfilingRunner.class).error(
-                                    String.format("Failed to set up source data for input cardinality %d.", inputCardinality),
+                                    String.format(String.format("Failed to set up source data for input cardinality %d.", inputCardinality)),
                                     e
                             );
                         }
@@ -189,7 +195,7 @@ public class ProfilingRunner{
                                 textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                         }
-                        logger.info("[PROFILING] input file url: %s \n", textFileSource.getInputUrl());
+                        logger.info(String.format("[PROFILING] input file url: %s \n", textFileSource.getInputUrl()));
                     }
 
                     // Prepare loop operators
@@ -245,13 +251,13 @@ public class ProfilingRunner{
                     );
                     runningCounter++;
                     // check number of running has exceeded the runningNumber specified in {@link ProfilingConfiguration} per each shape
-                    if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlansPerShape()))
+                    if ((runningPlanPerShape!=-1)&&(runningCounter>=runningPlanPerShape))
                         break;
                 }
-                if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlansPerShape()))
+                if ((runningPlanPerShape!=-1)&&(runningCounter>=runningPlanPerShape))
                     break;
             }
-            if ((runningCounter!=-1)&&(runningCounter>=profilingConfig.getNumberRunningPlansPerShape()))
+            if ((runningPlanPerShape!=-1)&&(runningCounter>=runningPlanPerShape))
                 break;
         }
         return results;
