@@ -100,7 +100,7 @@ public class ProfilingPlanBuilder implements Serializable {
                                 prepareSource(t, type, platform);
                             }
 
-                            // TODO: Fill pipeline topologies with exhaustive way (pass a list of operators (e.g:[map,map,map]) to be filled in the below loop)
+                            // TODO: Fill pipeline topologies with exhaustive way (pass a list of operators (e.g:[map,map,map])   to be filled in the below loop)
                             // Fill with unary operator profilers
                             for (Topology t : shape.getPipelineTopologies()) {
                                 // check if the nodes are not already filled in the source or sink
