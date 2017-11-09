@@ -29,7 +29,6 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.io.IOException;
@@ -207,7 +206,7 @@ public class ProfilingRunner{
                         //loopHeadOperator.
                     }
 
-                    shape.prepareVectorLog();
+                    shape.prepareVectorLog(false);
                     // save the starting execution time of current {@link RheemPlan}
                     final long startTime = System.currentTimeMillis();
 

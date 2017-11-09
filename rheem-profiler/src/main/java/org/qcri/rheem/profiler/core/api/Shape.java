@@ -30,6 +30,16 @@ public class Shape {
     private final int vectorSize = 146;
     double[] vectorLogs= new double[vectorSize-1];
     private int topologyNumber;
+    private List<String> operators = new ArrayList<>();
+    private int start = 4;
+    HashMap<String,Integer> operatorVectorPosition = new HashMap<String,Integer>(){{
+        put("Map",start);put("map",start);
+        put("filter",start +7);put("FlatMap",start +14);put("flatmap",start +14);put("ReduceBy",start +21);put("reduce",start +21);put("globalreduce",start +28);
+        put("distinct",start +35);put("groupby",start +42);put("sort",start +49);put("join",start +56);put("union",start +63);put("cartesian",start +70);
+        put("randomsample",start +77);put("shufflesample",start +84);put("bernoullisample",start +91);put("dowhile",start +98);put("repeat",start +105);
+        put("collectionsource",start +112);put("TextFileSource",start +119);put("textsource",start + 119);put("callbacksink",start +126);
+        put("LocalCallbackSink",130);
+    }};
 
     // TODO: Currently only single sink topology generation is supported
     private Topology sinkTopology;
@@ -72,106 +82,7 @@ public class Shape {
             t.setNodes(new Stack<>());
     }
 
-    /**
-     * prepare vector logs to be used for learning the cost model
-     * Each below operators will be encoded into 7 variables so overall 98 for 14 operators: Plat1, Plat2, Top1, Top2, Top3, Top4, Select
-     * in this order "map", "filter", "flatmap", "reduce", "globalreduce", "distinct",
-     "groupby","sort","join", "union", "cartesian","repeat","collectionsource", "collect"
-
-     and added also: Input cardinality, DataQuantaSize at the end and numberPipeline; numberJunture; numberLoop; numberDuplicate at the beginning
-     TODO: to be added datamovement and Topology encoding
-     * @return
-     */
-/*
-    public void prepareVectorLogs(){
-        double[] logs = new double[vectorSize];
-        // Loop through all subShapes
-        this.subShapes.stream()
-                .forEach(s->{
-                    logs[0]=s.getPipelineTopologies().size();
-                    logs[1]=s.getJunctureTopologies().size();
-                    logs[2]=s.getLoopTopologies().size();
-                    logs[3]=0;
-                    // Loop through all topologies
-                    s.allTopologies.stream()
-                            .forEach(t -> {
-                                // Loop through all nodes
-                                t.getNodes().stream()
-                                        .forEach(tuple ->{
-                                            int start = 4;
-                                            switch (tuple.getField0()){
-                                                case "map":
-                                                    fillLog(tuple,logs,t,start);
-                                                    break;
-                                                case "filter":
-                                                    fillLog(tuple,logs,t,start +7);
-                                                    break;
-                                                case "flatmap":
-                                                    fillLog(tuple,logs,t,start +14);
-                                                    break;
-                                                case "reduce":
-                                                    fillLog(tuple,logs,t,start +21);
-                                                    break;
-                                                case "globalreduce":
-                                                    fillLog(tuple,logs,t,start +28);
-                                                    break;
-                                                case "distinct":
-                                                    fillLog(tuple,logs,t,start +35);
-                                                    break;
-                                                case "groupby":
-                                                    fillLog(tuple,logs,t,start +42);
-                                                    break;
-                                                case "sort":
-                                                    fillLog(tuple,logs,t,start +49);
-                                                    break;
-                                                case "join":
-                                                    fillLog(tuple,logs,t,start +56);
-                                                    break;
-                                                case "union":
-                                                    fillLog(tuple,logs,t,start +63);
-                                                    break;
-                                                case "cartesian":
-                                                    fillLog(tuple,logs,t,start +70);
-                                                    break;
-                                                case "randomsample":
-                                                    fillLog(tuple,logs,t,start +77);
-                                                    break;
-                                                case "shufflesample":
-                                                    fillLog(tuple,logs,t,start +84);
-                                                    break;
-                                                case "bernoullisample":
-                                                    fillLog(tuple,logs,t,start +91);
-                                                    break;
-                                                case "dowhile":
-                                                    fillLog(tuple,logs,t,start +98);
-                                                    break;
-                                                //case "collectionsource":
-                                                //    fillLog(tuple,logs,t,start +77);
-                                                //    break;
-                                                case "repeat":
-                                                    fillLog(tuple,logs,t,start +105);
-                                                    break;
-                                                case "collectionsource":
-                                                    fillLog(tuple,logs,t,start +112);
-                                                    break;
-                                                case "textsource":
-                                                    fillLog(tuple,logs,t,start +119);
-                                                    break;
-                                                case "callbacksink":
-                                                    fillLog(tuple,logs,t,start +126);
-                                                    break;
-                                            }
-                                        });
-                                });
-                    averageSelectivityComplexity(logs);
-                    s.setVectorLogs(logs.clone());
-                    // reinitialize log array every subShape
-                    Arrays.fill(logs, 0);
-                });
-    }
-*/
-
-    public void prepareVectorLog(){
+    public void prepareVectorLog(boolean ispreExecution){
         double[] logs = new double[vectorSize];
         // Loop through all subShapes
 
@@ -186,90 +97,99 @@ public class Shape {
                 t.getNodes().stream()
                         .forEach(tuple ->{
                             int start = 4;
-                            String[] strs = tuple.getField0().split("\\P{Alpha}+");
-                            switch (strs[0]){
-                                case "Map":
-                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start);
-                                    break;
-                                case "map":
-                                    fillLog(tuple,logs,t,start);
-                                    break;
-                                case "filter":
-                                    fillLog(tuple,logs,t,start +7);
-                                    break;
-                                case "FlatMap":
-                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +14);
-                                    break;
-                                case "flatmap":
-                                    fillLog(tuple,logs,t,start +14);
-                                    break;
-                                case "ReduceBy":
-                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +21);
-                                    break;
-                                case "reduce":
-                                    fillLog(tuple,logs,t,start +21);
-                                    break;
-                                case "globalreduce":
-                                    fillLog(tuple,logs,t,start +28);
-                                    break;
-                                case "distinct":
-                                    fillLog(tuple,logs,t,start +35);
-                                    break;
-                                case "groupby":
-                                    fillLog(tuple,logs,t,start +42);
-                                    break;
-                                case "sort":
-                                    fillLog(tuple,logs,t,start +49);
-                                    break;
-                                case "join":
-                                    fillLog(tuple,logs,t,start +56);
-                                    break;
-                                case "union":
-                                    fillLog(tuple,logs,t,start +63);
-                                    break;
-                                case "cartesian":
-                                    fillLog(tuple,logs,t,start +70);
-                                    break;
-                                case "randomsample":
-                                    fillLog(tuple,logs,t,start +77);
-                                    break;
-                                case "shufflesample":
-                                    fillLog(tuple,logs,t,start +84);
-                                    break;
-                                case "bernoullisample":
-                                    fillLog(tuple,logs,t,start +91);
-                                    break;
-                                case "dowhile":
-                                    fillLog(tuple,logs,t,start +98);
-                                    break;
-                                //case "collectionsource":
-                                //    fillLog(tuple,logs,t,start +77);
-                                //    break;
-                                case "repeat":
-                                    fillLog(tuple,logs,t,start +105);
-                                    break;
-                                case "collectionsource":
-                                    fillLog(tuple,logs,t,start +112);
-                                    break;
-                                case "TextFileSource":
-                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +119);
-                                    break;
-                                case "textsource":
-                                    fillLog(tuple,logs,t,start +119);
-                                    break;
-                                case "LocalCallbackSink":
-                                    preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +126);
-                                    break;
-                                case "callbacksink":
-                                    fillLog(tuple,logs,t,start +126);
-                                    break;
-                            }
+                            String[] operatorName = tuple.getField0().split("\\P{Alpha}+");
+                            operators.add(operatorName[0]);
+                            addOperatorLog(logs, t, tuple, start, operatorName[0],ispreExecution);
                         });
             });
         averageSelectivityComplexity(logs);
         this.setVectorLogs(logs.clone());
         // reinitialize log array every subShape
         Arrays.fill(logs, 0);
+    }
+
+    private void addOperatorLog(double[] logs, Topology t, Tuple2<String, OperatorProfiler> tuple, int start, String s, boolean ispreExecution) {
+        if (ispreExecution)
+            preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start);
+        else
+            fillLog(tuple,logs,t,operatorVectorPosition.get(s));
+        /*switch (s){
+            case "Map":
+                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start);
+                break;
+            case "map":
+                fillLog(tuple,logs,t,start);
+                break;
+            case "filter":
+                fillLog(tuple,logs,t,start +7);
+                break;
+            case "FlatMap":
+                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +14);
+                break;
+            case "flatmap":
+                fillLog(tuple,logs,t,start +14);
+                break;
+            case "ReduceBy":
+                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +21);
+                break;
+            case "reduce":
+                fillLog(tuple,logs,t,start +21);
+                break;
+            case "globalreduce":
+                fillLog(tuple,logs,t,start +28);
+                break;
+            case "distinct":
+                fillLog(tuple,logs,t,start +35);
+                break;
+            case "groupby":
+                fillLog(tuple,logs,t,start +42);
+                break;
+            case "sort":
+                fillLog(tuple,logs,t,start +49);
+                break;
+            case "join":
+                fillLog(tuple,logs,t,start +56);
+                break;
+            case "union":
+                fillLog(tuple,logs,t,start +63);
+                break;
+            case "cartesian":
+                fillLog(tuple,logs,t,start +70);
+                break;
+            case "randomsample":
+                fillLog(tuple,logs,t,start +77);
+                break;
+            case "shufflesample":
+                fillLog(tuple,logs,t,start +84);
+                break;
+            case "bernoullisample":
+                fillLog(tuple,logs,t,start +91);
+                break;
+            case "dowhile":
+                fillLog(tuple,logs,t,start +98);
+                break;
+            //case "collectionsource":
+            //    fillLog(tuple,logs,t,start +77);
+            //    break;
+            case "repeat":
+                fillLog(tuple,logs,t,start +105);
+                break;
+            case "collectionsource":
+                fillLog(tuple,logs,t,start +112);
+                break;
+            case "TextFileSource":
+                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +119);
+                break;
+            case "textsource":
+                fillLog(tuple,logs,t,start +119);
+                break;
+            case "LocalCallbackSink":
+                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +126);
+                break;
+            case "callbacksink":
+                fillLog(tuple,logs,t,start +126);
+                break;
+        }*/
     }
 
     /**
@@ -457,6 +377,22 @@ public class Shape {
         return"";
     }
 
+    private static List<double[]> exhaustiveVectors;
+    int tmpstart =0;
+
+    public void ExhaustivePlanFiller(double[] doubleList, double newNumber, int start){
+        // if no generated plan fill it with equal values (all oerators in first platform java)
+        if (exhaustiveVectors.isEmpty()){
+            for(String operator:operators){
+                //set first platform for all operators
+
+            }
+        }
+        for(int i=0;start<=doubleList.length;i++){
+
+        }
+    }
+
     public static Shape createShape(LocalCallbackSink sinkOperator){
         Shape newShape = new Shape();
 
@@ -486,7 +422,7 @@ public class Shape {
             //TODO: add juncture handling
         }
 
-        newShape.prepareVectorLog();
+        newShape.prepareVectorLog(true);
         return newShape;
     }
 
