@@ -47,7 +47,7 @@ public class ProfilingConfigurer {
     // The below can be applied only for unary operator profiling
     private static final String DEFAULT_BINARY_INPUT_RATIOS = "1,10,100";
     private static final String DEFAULT_LOOP_ITERATION_NUMBERS = "10,100";
-    private static final String DEFAULT_PLATEFORMS = "spark";
+    public static final String DEFAULT_PLATEFORMS = "java,spark";
     private static final List<DataSetType> DEFAULT_DATATYPE = Arrays.asList(DataSetType.createDefault(String.class));
 //DataSetType.createDefault(String.class),DataSetType.createDefault(List.class)
     public static final boolean DEFAULT_BUSHY_GENERATION = true;

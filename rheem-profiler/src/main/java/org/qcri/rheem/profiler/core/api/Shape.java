@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
@@ -17,6 +18,7 @@ import java.util.*;
  */
 public class Shape {
 
+    //TODO: Add a vectorlog nested class for more readablilty purposes
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     // subshapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
     private List<Shape> subShapes = new ArrayList<>();
@@ -31,16 +33,22 @@ public class Shape {
     double[] vectorLogs= new double[vectorSize-1];
     private int topologyNumber;
     private List<String> operators = new ArrayList<>();
-    private int start = 4;
+    private List<double[]> exhaustiveVectors = new ArrayList<>();
+    private int startOpPos = 4;
     HashMap<String,Integer> operatorVectorPosition = new HashMap<String,Integer>(){{
-        put("Map",start);put("map",start);
-        put("filter",start +7);put("FlatMap",start +14);put("flatmap",start +14);put("ReduceBy",start +21);put("reduce",start +21);put("globalreduce",start +28);
-        put("distinct",start +35);put("groupby",start +42);put("sort",start +49);put("join",start +56);put("union",start +63);put("cartesian",start +70);
-        put("randomsample",start +77);put("shufflesample",start +84);put("bernoullisample",start +91);put("dowhile",start +98);put("repeat",start +105);
-        put("collectionsource",start +112);put("TextFileSource",start +119);put("textsource",start + 119);put("callbacksink",start +126);
-        put("LocalCallbackSink",130);
+        put("Map", startOpPos);put("map", startOpPos);
+        put("filter", startOpPos +7);put("FlatMap", startOpPos +14);put("flatmap", startOpPos +14);put("ReduceBy", startOpPos +21);put("reduce", startOpPos +21);put("globalreduce", startOpPos +28);
+        put("distinct", startOpPos +35);put("groupby", startOpPos +42);put("sort", startOpPos +49);put("join", startOpPos +56);put("union", startOpPos +63);put("cartesian", startOpPos +70);
+        put("randomsample", startOpPos +77);put("shufflesample", startOpPos +84);put("bernoullisample", startOpPos +91);put("dowhile", startOpPos +98);put("repeat", startOpPos +105);
+        put("collectionsource", startOpPos +112);put("TextFileSource", startOpPos +119);put("textsource", startOpPos + 119);put("callbacksink", startOpPos +126);
+        put("LocalCallbackSink", startOpPos + 126);
     }};
+    public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
 
+    HashMap<String,Integer> plateformVectorPostion = new HashMap<String,Integer>(){{
+        put("Java Streams",0);
+        put("Apache Spark",1);
+    }};
     // TODO: Currently only single sink topology generation is supported
     private Topology sinkTopology;
 
@@ -99,7 +107,7 @@ public class Shape {
                             int start = 4;
                             String[] operatorName = tuple.getField0().split("\\P{Alpha}+");
                             operators.add(operatorName[0]);
-                            addOperatorLog(logs, t, tuple, start, operatorName[0],ispreExecution);
+                            addOperatorLog(logs, t, tuple, operatorName[0],ispreExecution);
                         });
             });
         averageSelectivityComplexity(logs);
@@ -108,88 +116,19 @@ public class Shape {
         Arrays.fill(logs, 0);
     }
 
-    private void addOperatorLog(double[] logs, Topology t, Tuple2<String, OperatorProfiler> tuple, int start, String s, boolean ispreExecution) {
+    /**
+     * Add log for only one operator
+     * @param logs
+     * @param t
+     * @param tuple
+     * @param s
+     * @param ispreExecution
+     */
+    private void addOperatorLog(double[] logs, Topology t, Tuple2<String, OperatorProfiler> tuple, String s, boolean ispreExecution) {
         if (ispreExecution)
-            preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start);
+            preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,operatorVectorPosition.get(s));
         else
             fillLog(tuple,logs,t,operatorVectorPosition.get(s));
-        /*switch (s){
-            case "Map":
-                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start);
-                break;
-            case "map":
-                fillLog(tuple,logs,t,start);
-                break;
-            case "filter":
-                fillLog(tuple,logs,t,start +7);
-                break;
-            case "FlatMap":
-                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +14);
-                break;
-            case "flatmap":
-                fillLog(tuple,logs,t,start +14);
-                break;
-            case "ReduceBy":
-                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +21);
-                break;
-            case "reduce":
-                fillLog(tuple,logs,t,start +21);
-                break;
-            case "globalreduce":
-                fillLog(tuple,logs,t,start +28);
-                break;
-            case "distinct":
-                fillLog(tuple,logs,t,start +35);
-                break;
-            case "groupby":
-                fillLog(tuple,logs,t,start +42);
-                break;
-            case "sort":
-                fillLog(tuple,logs,t,start +49);
-                break;
-            case "join":
-                fillLog(tuple,logs,t,start +56);
-                break;
-            case "union":
-                fillLog(tuple,logs,t,start +63);
-                break;
-            case "cartesian":
-                fillLog(tuple,logs,t,start +70);
-                break;
-            case "randomsample":
-                fillLog(tuple,logs,t,start +77);
-                break;
-            case "shufflesample":
-                fillLog(tuple,logs,t,start +84);
-                break;
-            case "bernoullisample":
-                fillLog(tuple,logs,t,start +91);
-                break;
-            case "dowhile":
-                fillLog(tuple,logs,t,start +98);
-                break;
-            //case "collectionsource":
-            //    fillLog(tuple,logs,t,start +77);
-            //    break;
-            case "repeat":
-                fillLog(tuple,logs,t,start +105);
-                break;
-            case "collectionsource":
-                fillLog(tuple,logs,t,start +112);
-                break;
-            case "TextFileSource":
-                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +119);
-                break;
-            case "textsource":
-                fillLog(tuple,logs,t,start +119);
-                break;
-            case "LocalCallbackSink":
-                preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,start +126);
-                break;
-            case "callbacksink":
-                fillLog(tuple,logs,t,start +126);
-                break;
-        }*/
     }
 
     /**
@@ -295,10 +234,41 @@ public class Shape {
         vectorLogs[vectorSize-2] = (int) inputCardinality;
         vectorLogs[vectorSize-1] =  dataQuantaSize;
     }
+
     /**
-     * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )
-     * @param topology
+     * Modify operator platform
+     * @param operator
+     * @param platform
+     * @param logVector
      */
+    private void modifyOperatorPlatform(String operator, String platform, double[] logVector) {
+        // get operator position
+        int opPos = operatorVectorPosition.get(operator);
+
+        // update platform
+        logVector[opPos + plateformVectorPostion.get(platform)] += 1;
+    }
+
+    /**
+     * get operator platform
+     * @param operator
+     * @param logVector
+     */
+    private String getOperatorPlatform(String operator, double[] logVector) {
+        // get operator position
+        int opPos = operatorVectorPosition.get(operator);
+        for(String platform:DEFAULT_PLATFORMS){
+            if(logVector[opPos + plateformVectorPostion.get(platform)]==1)
+                return platform;
+        }
+        new RheemException(String.format("couldn't find a plateform for operator %s",operator));
+        return null;
+    }
+
+        /**
+         * assign shape variables (i.e. number of pipelines; junctures; sinks;.. )
+         * @param topology
+         */
     public void populateShape(Topology topology){
 
         // Handle the case if the topology is pipeline Topology
@@ -316,7 +286,7 @@ public class Shape {
                 for(Topology t:predecessors)
                     // recurse for predecessor topologies
                     populateShape(t);
-            } else{
+            } else {
                 // This case means it's source topology
                 sourceTopologies.add(topology);
             }
@@ -364,7 +334,7 @@ public class Shape {
                     // recurse for predecessor topologies
                     populateShape(t);
             }
-            // chack if there's an output node connected to
+            // check if there's an output node connected to
 
         }
     }
@@ -377,21 +347,45 @@ public class Shape {
         return"";
     }
 
-    private static List<double[]> exhaustiveVectors;
-    int tmpstart =0;
+    //int tmpstart =0;
 
-    public void ExhaustivePlanFiller(double[] doubleList, double newNumber, int start){
+    /**
+     * Will exhaustively generate all platform filled logVectors from the input logVector
+     * @param vectorLog
+     * @param platform
+     * @param start
+     */
+    public void exhaustivePlanFiller(double[] vectorLog, String platform, int start){
         // if no generated plan fill it with equal values (all oerators in first platform java)
+
+        // clone input vectorLog
+        double[] newVectorLog = vectorLog.clone();
+
+        //for first filled vectorLog we set first platform for all operators
         if (exhaustiveVectors.isEmpty()){
             for(String operator:operators){
-                //set first platform for all operators
+                modifyOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),newVectorLog);
+            }
+            exhaustiveVectors.add(newVectorLog.clone());
+        }
 
+        // recursive exhaustive filling platforms for each operator
+        for(int i=start; i<operators.size(); i++){
+            String operator = operators.get(i);
+            if(!(getOperatorPlatform(operator,vectorLog)==platform)){
+                // re-clone vectorLog
+                newVectorLog = vectorLog.clone();
+                // update newVectorLog
+                modifyOperatorPlatform(operator,platform,newVectorLog);
+                // add current vector to exhaustiveVectors
+                exhaustiveVectors.add(newVectorLog);
+
+                // recurse over newVectorLog
+                exhaustivePlanFiller(newVectorLog,platform,i);
             }
         }
-        for(int i=0;start<=doubleList.length;i++){
-
-        }
     }
+
 
     public static Shape createShape(LocalCallbackSink sinkOperator){
         Shape newShape = new Shape();
