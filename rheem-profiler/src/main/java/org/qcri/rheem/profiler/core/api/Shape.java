@@ -245,8 +245,13 @@ public class Shape {
         // get operator position
         int opPos = operatorVectorPosition.get(operator);
 
+        // reset all platforms to zero
+        plateformVectorPostion.entrySet().stream().
+                forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
+
         // update platform
         logVector[opPos + plateformVectorPostion.get(platform)] += 1;
+
     }
 
     /**
@@ -361,15 +366,17 @@ public class Shape {
         // clone input vectorLog
         double[] newVectorLog = vectorLog.clone();
 
-        //for first filled vectorLog we set first platform for all operators
+        // Initial vectorLog filling: first platform is set for all operators
         if (exhaustiveVectors.isEmpty()){
             for(String operator:operators){
                 modifyOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),newVectorLog);
             }
             exhaustiveVectors.add(newVectorLog.clone());
+            exhaustivePlanFiller(newVectorLog,platform,start);
+            return;
         }
 
-        // recursive exhaustive filling platforms for each operator
+        // Recursive exhaustive filling platforms for each operator
         for(int i=start; i<operators.size(); i++){
             String operator = operators.get(i);
             if(!(getOperatorPlatform(operator,vectorLog)==platform)){
@@ -379,9 +386,8 @@ public class Shape {
                 modifyOperatorPlatform(operator,platform,newVectorLog);
                 // add current vector to exhaustiveVectors
                 exhaustiveVectors.add(newVectorLog);
-
                 // recurse over newVectorLog
-                exhaustivePlanFiller(newVectorLog,platform,i);
+                exhaustivePlanFiller(newVectorLog,platform,i+1);
             }
         }
     }
@@ -503,5 +509,20 @@ public class Shape {
             outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
         });
         this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
+    }
+
+    /**
+     * Logging {@link Shape}'s enumerated vector logs
+     */
+    public void printEnumeratedLogs() {
+        final String[] outputVector = {""};
+        NumberFormat nf = new DecimalFormat("##.#");
+        for(double[] vectorLog:exhaustiveVectors) {
+            outputVector[0] = "";
+            Arrays.stream(vectorLog).forEach(d -> {
+                outputVector[0] = outputVector[0].concat(nf.format(d) + " ");
+            });
+            this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
+        }
     }
 }
