@@ -32,13 +32,23 @@ public class LoopTopology extends TopologyBase implements Topology {
 
     private static Stack<Topology> loopsCopies = new Stack<>();
 
+    /**
+     * Basic class Construnctor
+     */
+    public LoopTopology(){
+        this.inputTopologySlots = new InputTopologySlot[2];
+        this.outputTopologySlots = new OutputTopologySlot[2];
+        this.inputTopologySlots[INITIAL_INPUT_INDEX] = new InputTopologySlot("initIn", this);
+        this.inputTopologySlots[ITERATION_INPUT_INDEX] = new InputTopologySlot("iterIn", this);
 
+        this.outputTopologySlots[ITERATION_OUTPUT_INDEX] = new OutputTopologySlot("iterOut", this);
+        this.outputTopologySlots[FINAL_OUTPUT_INDEX] = new OutputTopologySlot("finOut", this);
+    }
 
-
-    // 3 inputs ()
-
-    // 2 outputs
-
+    /**
+     * Constructor with defining topology number
+     * @param topologyNumber
+     */
     public LoopTopology(int topologyNumber){
         this.inputTopologySlots = new InputTopologySlot[2];
         this.outputTopologySlots = new OutputTopologySlot[2];
@@ -51,6 +61,11 @@ public class LoopTopology extends TopologyBase implements Topology {
         this.topologyNumber=topologyNumber;
     }
 
+    /**
+     * Constructor with defining iteration number and topology number
+     * @param topologyNumber
+     * @param numIterations
+     */
     public LoopTopology(int topologyNumber, int numIterations){
         this.inputTopologySlots = new InputTopologySlot[2];
         this.outputTopologySlots = new OutputTopologySlot[2];
@@ -64,24 +79,45 @@ public class LoopTopology extends TopologyBase implements Topology {
         this.topologyNumber=topologyNumber;
     }
 
+    /**
+     * Initialize topology
+     * @param initTopology
+     * @param initOpOutputIndex
+     */
     public void initialize(Topology initTopology, int initOpOutputIndex) {
         initTopology.connectTo(initOpOutputIndex, this, INITIAL_INPUT_INDEX);
     }
 
+    /**
+     * Configure begin iteration
+     * @param beginTopology
+     * @param beginInputIndex
+     */
     public void beginIteration(Topology beginTopology, int beginInputIndex) {
         this.connectTo(ITERATION_OUTPUT_INDEX, beginTopology, beginInputIndex);
     }
 
+    /**
+     * Configure end iteration
+     * @param endTopology
+     * @param endOpOutputIndex
+     */
     public void endIteration(Topology endTopology, int endOpOutputIndex) {
         endTopology.connectTo(endOpOutputIndex, this, ITERATION_INPUT_INDEX);
     }
 
+    /**
+     * Configure output iteration
+     * @param outputTopology
+     * @param thatInputIndex
+     */
     public void outputConnectTo(Topology outputTopology, int thatInputIndex) {
         this.connectTo(FINAL_OUTPUT_INDEX, outputTopology, thatInputIndex);
     }
 
     /**
      * create a copy of current topology
+     * @param topologyNumber
      * @return
      */
     public Topology createCopy(int topologyNumber){
@@ -93,12 +129,7 @@ public class LoopTopology extends TopologyBase implements Topology {
                 // exit the loop
                 return loopsCopies.pop();
             }
-
-
-
         LoopTopology newTopology = new LoopTopology(topologyNumber);
-
-
         // push the current loop
         loops.push(this);
 

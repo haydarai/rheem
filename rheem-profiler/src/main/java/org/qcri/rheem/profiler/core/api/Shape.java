@@ -3,6 +3,7 @@ package org.qcri.rheem.profiler.core.api;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.plan.rheemplan.BinaryToUnaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
@@ -93,7 +94,6 @@ public class Shape {
     public void prepareVectorLog(boolean ispreExecution){
         double[] logs = new double[vectorSize];
         // Loop through all subShapes
-
         logs[0]=this.getPipelineTopologies().size();
         logs[1]=this.getJunctureTopologies().size();
         logs[2]=this.getLoopTopologies().size();
@@ -410,24 +410,47 @@ public class Shape {
                 newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
                 newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
+                // update current and predecessor operators
+                currentOperator = predecessorOperator;
+                predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+
                 while (predecessorOperator instanceof UnaryToUnaryOperator){
-                    predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
                     newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                 }
                 newShape.getPipelineTopologies().add(newPipelineTopology);
                 newShape.getAllTopologies().add(newPipelineTopology);
             }
-            //TODO: add loop handling
 
-            //TODO: add juncture handling
+            //DONE: add juncture handling
+            if(predecessorOperator instanceof BinaryToUnaryOperator){
+                JunctureTopology newJunctureTopology = new JunctureTopology();
+                if(currentOperator.isSink())
+                    newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                newShape.getJunctureTopologies().add(newJunctureTopology);
+                newShape.getAllTopologies().add(newJunctureTopology);
+
+                // update current and predecessor operators
+                currentOperator = predecessorOperator;
+                predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+            }
+            //DONE: add loop handling
+            if(predecessorOperator instanceof LoopHeadOperator){
+                LoopTopology newLoopTopology = new LoopTopology();
+                if(currentOperator.isSink())
+                    newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                newShape.getLoopTopologies().add(newLoopTopology);
+                newShape.getAllTopologies().add(newLoopTopology);
+
+                // update current and predecessor operators
+                currentOperator = predecessorOperator;
+                predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+            }
         }
 
         newShape.prepareVectorLog(true);
         return newShape;
-    }
-
-    public List<double[]> enumerateShape(){
-        return  Arrays.asList(this.vectorLogs);
     }
 
     /**
