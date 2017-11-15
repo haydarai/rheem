@@ -424,8 +424,11 @@ public class Shape {
             //DONE: add juncture handling
             if(predecessorOperator instanceof BinaryToUnaryOperator){
                 JunctureTopology newJunctureTopology = new JunctureTopology();
-                if(currentOperator.isSink())
-                    newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                if(currentOperator.isSink()) {
+                    newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                    // add current topology as a sink topology
+                    newShape.setSinkTopology(newJunctureTopology);
+                }
                 newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                 newShape.getJunctureTopologies().add(newJunctureTopology);
                 newShape.getAllTopologies().add(newJunctureTopology);
@@ -437,8 +440,11 @@ public class Shape {
             //DONE: add loop handling
             if(predecessorOperator instanceof LoopHeadOperator){
                 LoopTopology newLoopTopology = new LoopTopology();
-                if(currentOperator.isSink())
-                    newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                if(currentOperator.isSink()) {
+                    newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                    // add current topology as a sink topology
+                    newShape.setSinkTopology(newLoopTopology);
+                }
                 newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                 newShape.getLoopTopologies().add(newLoopTopology);
                 newShape.getAllTopologies().add(newLoopTopology);
