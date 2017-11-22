@@ -393,6 +393,8 @@ public class Shape {
     }
 
 
+    private static Stack<LoopHeadOperator> loopHeads = new Stack();
+
     public static Shape createShape(LocalCallbackSink sinkOperator){
         Shape newShape = new Shape();
 
@@ -406,19 +408,35 @@ public class Shape {
             // check if predecessor is unaryoperator
             if (predecessorOperator instanceof UnaryToUnaryOperator){
                 PipelineTopology newPipelineTopology = new PipelineTopology();
+
+                if(currentOperator.isSink()) {
+                    newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                    // add current topology as a sink topology
+                    newShape.setSinkTopology(newPipelineTopology);
+                }
+
                 // add predecessor and current operators
-                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                //newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
                 newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
-                // update current and predecessor operators
-                currentOperator = predecessorOperator;
-                predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
 
                 while (predecessorOperator instanceof UnaryToUnaryOperator){
+                    // add operator to new topology
                     newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    // update current and predecessor operators
+                    currentOperator = predecessorOperator;
+                    predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+
                 }
                 newShape.getPipelineTopologies().add(newPipelineTopology);
                 newShape.getAllTopologies().add(newPipelineTopology);
+
+                // check if the current node has source node
+                if(predecessorOperator.isSource()) {
+                    newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    newShape.getSourceTopologies().add(newPipelineTopology);
+                    //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                }
             }
 
             //DONE: add juncture handling
@@ -433,9 +451,18 @@ public class Shape {
                 newShape.getJunctureTopologies().add(newJunctureTopology);
                 newShape.getAllTopologies().add(newJunctureTopology);
 
+                // add operator to new topology
+                newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+
                 // update current and predecessor operators
                 currentOperator = predecessorOperator;
                 predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+
+                if(predecessorOperator.isSource()) {
+                    newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    newShape.getSourceTopologies().add(newJunctureTopology);
+                    //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                }
             }
             //DONE: add loop handling
             if(predecessorOperator instanceof LoopHeadOperator){
@@ -444,14 +471,37 @@ public class Shape {
                     newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
                     // add current topology as a sink topology
                     newShape.setSinkTopology(newLoopTopology);
+
                 }
                 newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                 newShape.getLoopTopologies().add(newLoopTopology);
                 newShape.getAllTopologies().add(newLoopTopology);
 
+                // add operator to new topology
+                newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+
                 // update current and predecessor operators
                 currentOperator = predecessorOperator;
-                predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+
+                // check if the predecessor loop has been visited before (if no we visit iterIn"1" otherwise
+                // we visit InitIn"0")
+                if ((loopHeads.isEmpty())||(loopHeads.peek()!=predecessorOperator)) {
+                    // Add current loopHead
+                    loopHeads.add((LoopHeadOperator) predecessorOperator);
+                    // Get the IterIn
+                    predecessorOperator = predecessorOperator.getInput(1).getOccupant().getOwner();
+                } else {
+                    // remove current loopHead
+                    loopHeads.pop();
+                    // Get the InitIn
+                    predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+                }
+
+                if(predecessorOperator.isSource()) {
+                    newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    newShape.getSourceTopologies().add(newLoopTopology);
+                    //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                }
             }
         }
 
