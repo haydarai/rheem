@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.api;
 
+import com.sun.javafx.geom.Shape;
 import org.json.JSONObject;
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
@@ -371,7 +372,12 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
+        // pick best execution plan
         this.pickBestExecutionPlan(executionPlans, null, null, null);
+
+        // update the shape channels
+        Shape.updateChannels(this.planImplementation);
+
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");

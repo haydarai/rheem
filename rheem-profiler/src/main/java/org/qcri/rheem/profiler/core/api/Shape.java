@@ -340,7 +340,6 @@ public class Shape {
                     populateShape(t);
             }
             // check if there's an output node connected to
-
         }
     }
 
