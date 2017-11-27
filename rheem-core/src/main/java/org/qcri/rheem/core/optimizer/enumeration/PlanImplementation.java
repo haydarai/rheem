@@ -1066,4 +1066,10 @@ public class PlanImplementation {
             return Objects.hash(execOutput, execInputs);
         }
     }
+
+    /**
+     * @return {@link Junction}'s and associate {@link OutputSlot}
+     */
+    public Map<OutputSlot<?>, Junction> getJunctions() { return junctions; }
+
 }

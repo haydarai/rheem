@@ -130,7 +130,7 @@ public class Job extends OneTimeExecutable {
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
             (producerTask, channel, consumerTask) -> false;
 
-    /**
+       /**
      * The {@link PlanImplementation} that is being executed.
      */
     private PlanImplementation planImplementation;
@@ -246,9 +246,10 @@ public class Job extends OneTimeExecutable {
 
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+
             this.optimizationRound.stop();
 
-            // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
+            // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in monitoring nor execution.
             String runId = "1";
             try {
                 monitor.initialize(this.configuration, runId, executionPlan.toJsonList());
@@ -374,10 +375,6 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
         // pick best execution plan
         this.pickBestExecutionPlan(executionPlans, null, null, null);
-
-        // update the shape channels
-        Shape.updateChannels(this.planImplementation);
-
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
@@ -842,4 +839,10 @@ public class Job extends OneTimeExecutable {
     public Map<String, Object> getCache() {
         return this.cache;
     }
+
+    /**
+     * Provide the executed plan
+     * @return
+     */
+    public PlanImplementation getPlanImplementation() { return planImplementation; }
 }

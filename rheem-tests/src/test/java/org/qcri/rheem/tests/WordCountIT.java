@@ -119,8 +119,15 @@ public class WordCountIT {
         shape.printLog();
         shape.printEnumeratedLogs();
         // Have Rheem execute the plan.
-        rheemContext.execute(new RheemPlan(sink));
+        RheemPlan rheemPlan = new RheemPlan(sink);
+        Job job = rheemContext.createJob(null,rheemPlan);
 
+        job.execute();
+
+        // update the shape channels
+        shape.updateChannels(job.getPlanImplementation().getJunctions());
+
+        shape.clone();
         /*
         System.out.println(results.toString());
         // Verify the plan result.
@@ -268,10 +275,24 @@ public class WordCountIT {
         flatMapOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        //RheemPlan rheemPlan = new RheemPlan(sink);
 
         // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        //rheemContext.execute(rheemPlan);
+        Shape shape = Shape.createShape(sink);
+        //shape.exhaustivePlanFiller(shape.getVectorLogs(),Shape.DEFAULT_PLATFORMS.get(1),0);
+        shape.printLog();
+        //shape.printEnumeratedLogs();
+        // Have Rheem execute the plan.
+        RheemPlan rheemPlan = new RheemPlan(sink);
+        Job job = rheemContext.createJob(null,rheemPlan);
+
+        job.execute();
+
+        // update the shape channels
+        shape.updateChannels(job.getPlanImplementation().getJunctions());
+
+        shape.clone();
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
