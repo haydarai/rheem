@@ -3,10 +3,13 @@ package org.qcri.rheem.profiler.core.api;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
+import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,25 +34,31 @@ public class Shape {
     private List<LoopTopology> loopTopologies = new ArrayList<>();
     //private final int vectorSize = 105;
     //private final int vectorSize = 146;
-    private final int vectorSize = 190;
+    //private final int vectorSize = 194;
+    private final int vectorSize = 213;
     double[] logs = new double[vectorSize];
     double[] vectorLogs= new double[vectorSize-1];
     private int topologyNumber;
     private List<String> operatorNames = new ArrayList<>();
     private static List<Junction> junctions = new ArrayList<>();
+    private static List<ExecutionTask> executionTasks = new ArrayList<>();
     private List<double[]> exhaustiveVectors = new ArrayList<>();
     private static int startOpPos = 4;
+    private static int opPosStep = 8;
+
     HashMap<String,Integer> operatorVectorPosition = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
-        put("filter", startOpPos +7);put("FlatMap", startOpPos +14);put("flatmap", startOpPos +14);put("ReduceBy", startOpPos +21);put("reduce", startOpPos +21);put("globalreduce", startOpPos +28);
-        put("distinct", startOpPos +35);put("groupby", startOpPos +42);put("sort", startOpPos +49);put("join", startOpPos +56);put("union", startOpPos +63);put("cartesian", startOpPos +70);
-        put("randomsample", startOpPos +77);put("shufflesample", startOpPos +84);put("bernoullisample", startOpPos +91);put("dowhile", startOpPos +98);put("repeat", startOpPos +105);
-        put("collectionsource", startOpPos +112);put("TextFileSource", startOpPos +119);put("textsource", startOpPos + 119);put("callbacksink", startOpPos +126);
-        put("LocalCallbackSink", startOpPos + 126);put("empty", startOpPos + 133);
+        put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("ReduceBy", startOpPos +3*opPosStep);
+        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);
+        put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
+        put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
+        put("collectionsource", startOpPos +16*opPosStep);put("TextFileSource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
+        put("LocalCallbackSink", startOpPos + 18*opPosStep);put("emptySlot", startOpPos + 19*opPosStep);
     }};
 
     static HashMap<String,Integer> channelVectorPosition = new HashMap<String,Integer>(){{
         put("CollectionChannel", startOpPos + 140);put("StreamChannel", startOpPos + 144);put("RddChannel", startOpPos + 148);
+        put("FileChannel", startOpPos + 184);
     }};
 
     static HashMap<String,Integer> conversionOperatorVectorPosition = new HashMap<String,Integer>(){{
@@ -179,7 +188,7 @@ public class Shape {
     void preFillLog(OperatorProfilerBase operatorProfilerBase, double[] logs, Topology t, int start){
 
         //Tuple2<String,OperatorProfilerBase> tuple2 = (Tuple2<String,OperatorProfilerBase>) tuple;
-        // TODO: if the operator is inside pipeline and the pipeline is ainside a loop body then the operator should be put as pipeline and loop
+        // TODO: if the operator is inside pipeline and the pipeline is inside a loop body then the operator should be put as pipeline and loop
         if (t.isPipeline())
             logs[start+2]+=1;
         else if(t.isJuncture())
@@ -261,12 +270,26 @@ public class Shape {
     }
 
     /**
+     * Modify operator cost
+     * @param operator
+     * @param cost
+     * @param logVector
+     */
+    private void updateOperatorCost(String operator, double cost, double[] logVector) {
+        // get operator position
+        int opPos = getOperatorVectorPosition(operator);
+
+        // update cost
+        logVector[opPos + 7] += cost;
+    }
+
+    /**
      * Modify operator platform
      * @param operator
      * @param platform
      * @param logVector
      */
-    private void modifyOperatorPlatform(String operator, String platform, double[] logVector) {
+    private void updateOperatorPlatform(String operator, String platform, double[] logVector) {
     // get operator position
         int opPos = getOperatorVectorPosition(operator);
         // reset all platforms to zero
@@ -391,7 +414,7 @@ public class Shape {
         // Initial vectorLog filling: first platform is set for all operatorNames
         if (exhaustiveVectors.isEmpty()){
             for(String operator: operatorNames){
-                modifyOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),newVectorLog);
+                updateOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),newVectorLog);
             }
             exhaustiveVectors.add(newVectorLog.clone());
             exhaustivePlanFiller(newVectorLog,platform,start);
@@ -405,7 +428,7 @@ public class Shape {
                 // re-clone vectorLog
                 newVectorLog = vectorLog.clone();
                 // update newVectorLog
-                modifyOperatorPlatform(operator,platform,newVectorLog);
+                updateOperatorPlatform(operator,platform,newVectorLog);
                 // add current vector to exhaustiveVectors
                 exhaustiveVectors.add(newVectorLog);
                 // recurse over newVectorLog
@@ -422,7 +445,7 @@ public class Shape {
      * @return
      */
     public static Shape createShape(LocalCallbackSink sinkOperator) {
-        return createShape(sinkOperator,true, false);
+        return createShape(sinkOperator,true, true);
     }
 
     /**
@@ -620,7 +643,7 @@ public class Shape {
     public void printLog() {
         final String[] outputVector = {""};
         NumberFormat nf = new DecimalFormat("##.#");
-        Arrays.stream(logs).forEach(d -> {
+        Arrays.stream(vectorLogs).forEach(d -> {
             outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
         });
         this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
@@ -641,7 +664,6 @@ public class Shape {
         }
     }
 
-    private static List<ExecutionTask> executionTasks = new ArrayList<>();
 
     public void updateChannels(Map<OutputSlot<?>, Junction> nodes) {
         nodes.values().stream()
@@ -669,7 +691,7 @@ public class Shape {
         String[] channelName = conversionOperator.toString().split("\\P{Alpha}+");
         // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
         int channelStartPosition = getconversionOperatorVectorPosition(channelName[1]);
-        logs[channelStartPosition]+=1;
+        vectorLogs[channelStartPosition]+=1;
     }
 
     private int getconversionOperatorVectorPosition(String conversionOperator) {
@@ -684,7 +706,7 @@ public class Shape {
         String[] channelName = outChannel.toString().split("\\P{Alpha}+");
         // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
         int channelStartPosition = getJunctureVectorPosition(channelName[0]);
-        logs[channelStartPosition]+=1;
+        vectorLogs[channelStartPosition]+=1;
     }
 
     private int getJunctureVectorPosition(String channelName) {
@@ -711,5 +733,24 @@ public class Shape {
         } catch (Exception e){
             throw new RheemException(String.format("couldn't find a plateform for operator %s",platform));
         }
+    }
+
+    public void updateExecutionOperators(Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts) {
+        localOperatorContexts.keySet().stream()
+            .forEach(operator -> {
+                // We discard composite operators
+                if(operator.isElementary()&&(!operator.isExecutionOperator())) {
+                    Set<Platform> platform = operator.getTargetPlatforms();
+                    double average = 0;
+                    String[] operatorName = operator.toString().split("\\P{Alpha}+");
+
+                    if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){
+                        average = localOperatorContexts.get(operator).getOutputCardinality(0).getAverageEstimate();
+                        // update shape's vector log
+                        updateOperatorCost(operatorName[0],average,vectorLogs);
+                    }
+
+                }
+            });
     }
 }

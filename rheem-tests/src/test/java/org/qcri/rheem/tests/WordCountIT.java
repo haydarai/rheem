@@ -367,11 +367,25 @@ public class WordCountIT {
         reduceByOperator.connectTo(0, sink, 0);
         RheemPlan rheemPlan = new RheemPlan(sink);
 
+        Shape shape = Shape.createShape(sink,true,true);
+
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(Java.basicPlugin());
         rheemContext.register(Spark.basicPlugin());
-        rheemContext.execute(rheemPlan);
+
+        //rheemContext.execute(rheemPlan);
+
+        Job job = rheemContext.createJob(null,rheemPlan);
+
+        job.execute();
+
+
+        // update the shape channels
+        shape.updateChannels(job.getPlanImplementation().getJunctions());
+        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
+        shape.printLog();
+        shape.clone();
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
