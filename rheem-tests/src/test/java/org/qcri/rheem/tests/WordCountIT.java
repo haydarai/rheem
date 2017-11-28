@@ -281,7 +281,6 @@ public class WordCountIT {
         //rheemContext.execute(rheemPlan);
         Shape shape = Shape.createShape(sink);
         //shape.exhaustivePlanFiller(shape.getVectorLogs(),Shape.DEFAULT_PLATFORMS.get(1),0);
-        shape.printLog();
         //shape.printEnumeratedLogs();
         // Have Rheem execute the plan.
         RheemPlan rheemPlan = new RheemPlan(sink);
@@ -292,6 +291,7 @@ public class WordCountIT {
         // update the shape channels
         shape.updateChannels(job.getPlanImplementation().getJunctions());
 
+        shape.printLog();
         shape.clone();
 
         // Verify the plan result.

@@ -620,7 +620,7 @@ public class Shape {
     public void printLog() {
         final String[] outputVector = {""};
         NumberFormat nf = new DecimalFormat("##.#");
-        Arrays.stream(vectorLogs).forEach(d -> {
+        Arrays.stream(logs).forEach(d -> {
             outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
         });
         this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
@@ -651,9 +651,10 @@ public class Shape {
 
                     // handle conversion tastks
                     junction.getConversionTasks().stream()
-                            .forEach( et-> {
-                                executionTasks.add(et);
-                                addChannelLog(et.getOutputChannel(0));
+                            .forEach( conversionOperator-> {
+                                executionTasks.add(conversionOperator);
+                                addConversionOperator(conversionOperator);
+                                addChannelLog(conversionOperator.getOutputChannel(0));
                             });
 
                     // add output channels
@@ -662,6 +663,21 @@ public class Shape {
 
                 });
 
+    }
+
+    private void addConversionOperator(ExecutionTask conversionOperator) {
+        String[] channelName = conversionOperator.toString().split("\\P{Alpha}+");
+        // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
+        int channelStartPosition = getconversionOperatorVectorPosition(channelName[1]);
+        logs[channelStartPosition]+=1;
+    }
+
+    private int getconversionOperatorVectorPosition(String conversionOperator) {
+        try{
+            return conversionOperatorVectorPosition.get(conversionOperator);
+        } catch (Exception e){
+            throw new RheemException(String.format("couldn't find channel log vector offset %s",conversionOperator));
+        }
     }
 
     private void addChannelLog(Channel outChannel) {
