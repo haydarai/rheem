@@ -213,7 +213,7 @@ public class ProfilingRunner{
                     final Topology sinkTopology = shape.getSinkTopology();
                     ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size() - 1).getField1().getOperator();
 
-                    executePlan(sinkOperator);
+                    executePlan(sinkOperator,shape);
                     final long endTime = System.currentTimeMillis();
 
 
@@ -263,7 +263,7 @@ public class ProfilingRunner{
 
     }
 
-    private static void executePlan(ExecutionOperator sinkOperator) {
+    private static void executePlan(ExecutionOperator sinkOperator, Shape shape) {
         // Have Rheem execute the plan.
         Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
 
@@ -273,7 +273,7 @@ public class ProfilingRunner{
         try {
             job.execute();
         }catch (Exception e) {
-            new RheemException("[ERROR] Job execution failed.", e);
+            throw new RheemException("[ERROR] Job execution failed.", e);
             //throw e;
         } catch (OutOfMemoryError outOfMemoryError){
 
@@ -289,7 +289,9 @@ public class ProfilingRunner{
             //operatorProfiler.cleanUp();
             //cleanUp.stop();
         }*/
-
+        shape.updateChannels(job.getPlanImplementation().getJunctions());
+        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
+        shape.printLog();
         job = null;
     }
 

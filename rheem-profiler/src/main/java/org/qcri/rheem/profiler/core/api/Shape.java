@@ -45,6 +45,8 @@ public class Shape {
     private List<double[]> exhaustiveVectors = new ArrayList<>();
     private static int startOpPos = 4;
     private static int opPosStep = 8;
+    private static int channelPosStep = 4;
+    private static int maxOperatorNumber = 19;
 
     HashMap<String,Integer> operatorVectorPosition = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
@@ -56,7 +58,7 @@ public class Shape {
         put("LocalCallbackSink", startOpPos + 18*opPosStep);put("emptySlot", startOpPos + 19*opPosStep);
     }};
 
-    static HashMap<String,Integer> channelVectorPosition = new HashMap<String,Integer>(){{
+    /*static HashMap<String,Integer> channelVectorPosition = new HashMap<String,Integer>(){{
         put("CollectionChannel", startOpPos + 140);put("StreamChannel", startOpPos + 144);put("RddChannel", startOpPos + 148);
         put("FileChannel", startOpPos + 184);
     }};
@@ -64,6 +66,20 @@ public class Shape {
     static HashMap<String,Integer> conversionOperatorVectorPosition = new HashMap<String,Integer>(){{
         put("JavaCollect", startOpPos + 152);put("JavaCollectionSource", startOpPos + 156);put("JavaObjectFileSink", startOpPos + 160);put("JavaObjectFileSource", startOpPos + 164);
         put("SparkCollect", startOpPos + 168);put("SparkCollectionSource", startOpPos + 172);put("SparkObjectFileSink", startOpPos + 176);put("SparkObjectFileSource", startOpPos + 180);
+    }};
+    */
+
+    static HashMap<String,Integer> channelVectorPosition = new HashMap<String,Integer>(){{
+        put("CollectionChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 0*channelPosStep);
+        put("StreamChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 1*channelPosStep);
+        put("RddChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 2*channelPosStep);
+        put("FileChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 3*channelPosStep);
+    }};
+
+    static HashMap<String,Integer> conversionOperatorVectorPosition = new HashMap<String,Integer>(){{
+        put("JavaCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);put("JavaCollectionSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("JavaObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
+        put("JavaObjectFileSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);put("SparkCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("SparkCollectionSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
+        put("SparkObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);put("SparkObjectFileSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
     }};
 
     public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
@@ -275,12 +291,26 @@ public class Shape {
      * @param cost
      * @param logVector
      */
-    private void updateOperatorCost(String operator, double cost, double[] logVector) {
+    private void updateOperatorOutputCardinality(String operator, double cost, double[] logVector) {
         // get operator position
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
         logVector[opPos + 7] += cost;
+    }
+
+    /**
+     * Modify operator cost
+     * @param operator
+     * @param cost
+     * @param logVector
+     */
+    private void updateOperatorInputCardinality(String operator, double cost, double[] logVector) {
+        // get operator position
+        int opPos = getOperatorVectorPosition(operator);
+
+        // update cost
+        logVector[opPos + 6] += cost;
     }
 
     /**
@@ -735,19 +765,34 @@ public class Shape {
         }
     }
 
+    /**
+     * update with execution operator informations (plateform, output cardinality)
+     * @param localOperatorContexts
+     */
     public void updateExecutionOperators(Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts) {
         localOperatorContexts.keySet().stream()
             .forEach(operator -> {
                 // We discard composite operators
                 if(operator.isElementary()&&(!operator.isExecutionOperator())) {
                     Set<Platform> platform = operator.getTargetPlatforms();
-                    double average = 0;
+                    double averageOutputCardinality,averageInputCardinality = 0;
                     String[] operatorName = operator.toString().split("\\P{Alpha}+");
 
                     if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){
-                        average = localOperatorContexts.get(operator).getOutputCardinality(0).getAverageEstimate();
-                        // update shape's vector log
-                        updateOperatorCost(operatorName[0],average,vectorLogs);
+                        averageOutputCardinality = localOperatorContexts.get(operator).getOutputCardinality(0).getAverageEstimate();
+                        averageInputCardinality = Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities())
+                                .map(incard->(double)incard.getAverageEstimate())
+                                .reduce(0.0,(av1,av2)->av1+av2);
+
+                        Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities()).forEach(incard1->incard1.getAverageEstimate());
+                        // update shape's vector log with output cardinality
+                        updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                        // update shape's vector log with output cardinality
+                        updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                        // update shape's vector log with target platform
+                        updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
+                        platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),vectorLogs) );
+                        //localOperatorContexts.get
                     }
 
                 }
