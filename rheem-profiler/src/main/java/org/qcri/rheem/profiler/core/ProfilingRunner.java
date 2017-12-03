@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -263,6 +264,7 @@ public class ProfilingRunner{
 
     }
 
+
     private static void executePlan(ExecutionOperator sinkOperator, Shape shape) {
         // Have Rheem execute the plan.
         Job job = rheemContext.createJob(null, new RheemPlan(sinkOperator));
@@ -293,6 +295,63 @@ public class ProfilingRunner{
         shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
         shape.printLog();
         job = null;
+    }
+
+    List<Double> platformVector = new ArrayList;
+
+    private List<double[]> exhaustivePlatformVectors = new ArrayList<>();
+
+    public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
+
+    HashMap<String,Integer> plateformVectorPostion = new HashMap<String,Integer>(){{
+        put("Java Streams",0);
+        put("Apache Spark",1);
+    }};
+
+    private void updateOperatorPlatform(int operatorPos, String platform, double[] platformVector) {
+        // get operator position
+        //int opPos = getOperatorVectorPosition(operator);
+
+        // update platform
+        platformVector[operatorPos] = 1;
+    }
+
+    /**
+     * Will exhaustively generate all platform filled logVectors from the input logVector
+     * @param platformVector
+     * @param platform
+     * @param start
+     */
+    public void exhaustivePlatformPlanExecution(double[] platformVector, String platform, int start){
+        // if no generated plan fill it with equal values (all oerators in first platform java)
+
+        // clone input vectorLog
+        double[] newPlatformVector = platformVector.clone();
+
+        // Initial vectorLog filling: first platform is set for all operatorNames
+        if (exhaustivePlatformVectors.isEmpty()){
+            for(String operator: operatorNames){
+                updateOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),newPlatformVector);
+            }
+            exhaustiveVectors.add(newVectorLog.clone());
+            exhaustivePlanFiller(newVectorLog,platform,start);
+            return;
+        }
+
+        // Recursive exhaustive filling platforms for each operator
+        for(int i = start; i< operatorNames.size(); i++){
+            String operator = operatorNames.get(i);
+            if(!(getOperatorPlatform(operator,vectorLog)==platform)){
+                // re-clone vectorLog
+                newVectorLog = vectorLog.clone();
+                // update newVectorLog
+                updateOperatorPlatform(operator,platform,newVectorLog);
+                // add current vector to exhaustiveVectors
+                exhaustiveVectors.add(newVectorLog);
+                // recurse over newVectorLog
+                exhaustivePlanFiller(newVectorLog,platform,i+1);
+            }
+        }
     }
 
 
