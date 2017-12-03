@@ -297,7 +297,7 @@ public class ProfilingRunner{
         job = null;
     }
 
-    String[] platformVector;
+    /*String[] platformVector;
 
     private List<String[]> exhaustivePlatformVectors = new ArrayList<>();
 
@@ -316,12 +316,12 @@ public class ProfilingRunner{
         platformVector[operatorPos] = platform;
     }
 
-    /**
+    *//**
      * Will exhaustively generate all platform filled logVectors from the input logVector
      * @param platformVector
      * @param platform
      * @param start
-     */
+     *//*
     public void exhaustivePlatformPlanExecution(String[] platformVector, String platform, int start){
         // if no generated plan fill it with equal values (all oerators in first platform java)
 
@@ -353,7 +353,7 @@ public class ProfilingRunner{
             }
         }
     }
-
+*/
 
     /**
      * Generate the log for training the ML for learning Topology models

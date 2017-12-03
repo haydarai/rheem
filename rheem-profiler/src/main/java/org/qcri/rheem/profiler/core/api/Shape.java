@@ -629,7 +629,7 @@ public class Shape {
         return null;
     }
 
-    String[] platformVector;
+    public String[] platformVector = new String[100];
 
     private List<String[]> exhaustivePlatformVectors = new ArrayList<>();
 
@@ -825,6 +825,8 @@ public class Shape {
     public double[] getVectorLogs() {
         return vectorLogs;
     }
+
+
 
     public void setVectorLogs(double[] vectorLogs) {
         this.vectorLogs = vectorLogs;
