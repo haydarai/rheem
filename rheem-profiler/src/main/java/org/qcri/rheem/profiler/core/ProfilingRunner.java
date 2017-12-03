@@ -297,9 +297,9 @@ public class ProfilingRunner{
         job = null;
     }
 
-    List<Double> platformVector = new ArrayList;
+    String[] platformVector;
 
-    private List<double[]> exhaustivePlatformVectors = new ArrayList<>();
+    private List<String[]> exhaustivePlatformVectors = new ArrayList<>();
 
     public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
 
@@ -308,12 +308,12 @@ public class ProfilingRunner{
         put("Apache Spark",1);
     }};
 
-    private void updateOperatorPlatform(int operatorPos, String platform, double[] platformVector) {
+    private void updateOperatorPlatform(int operatorPos, String platform, String[] platformVector) {
         // get operator position
         //int opPos = getOperatorVectorPosition(operator);
 
         // update platform
-        platformVector[operatorPos] = 1;
+        platformVector[operatorPos] = platform;
     }
 
     /**
@@ -322,11 +322,11 @@ public class ProfilingRunner{
      * @param platform
      * @param start
      */
-    public void exhaustivePlatformPlanExecution(double[] platformVector, String platform, int start){
+    public void exhaustivePlatformPlanExecution(String[] platformVector, String platform, int start){
         // if no generated plan fill it with equal values (all oerators in first platform java)
 
         // clone input vectorLog
-        double[] newPlatformVector = platformVector.clone();
+        String[] newPlatformVector = platformVector.clone();
 
         // Initial vectorLog filling: first platform is set for all operatorNames
         if (exhaustivePlatformVectors.isEmpty()){
