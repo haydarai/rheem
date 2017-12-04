@@ -1,15 +1,11 @@
 package org.qcri.rheem.profiler.core.api;
 
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.java.Java;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.profiler.core.*;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -84,7 +80,7 @@ public class ProfilingApp {
                     InstantiateTopology.instantiateTopology(topologies, nodeNumber);
 
                     // create shapes
-                    shapes = topologies.stream().map(t -> new Shape(t)).collect(Collectors.toList());
+                    shapes = topologies.stream().map(t -> new Shape(t, new Configuration())).collect(Collectors.toList());
                     shapes.stream().forEach(s -> s.populateShape(s.getSinkTopology()));
 
                     // populate shapes

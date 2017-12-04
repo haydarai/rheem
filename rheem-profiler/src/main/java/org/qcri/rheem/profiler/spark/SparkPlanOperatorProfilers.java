@@ -3,6 +3,7 @@ package org.qcri.rheem.profiler.spark;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.spark.operators.*;
@@ -153,14 +154,30 @@ public class SparkPlanOperatorProfilers implements Serializable{
      */
     public static SparkUnaryOperatorProfiler createSparkFilterProfiler(int dataQuataSize, int UdfComplexity, DataSetType type) {
 
-            return new SparkUnaryOperatorProfiler(
-                    () -> new SparkFilterOperator<>(
-                            type,
-                            new PredicateDescriptor<>(DataGenerators.generatefilterUDF(UdfComplexity,dataQuataSize,type,"filter"), type.getDataUnitType().getTypeClass())
-                    ),
-                    configuration,
-                    DataGenerators.generateGenerator(dataQuataSize,type)
-            );
+        return new SparkUnaryOperatorProfiler(
+                () -> new SparkFilterOperator<>(
+                        type,
+                        new PredicateDescriptor<>(DataGenerators.generatefilterUDF(UdfComplexity,dataQuataSize,type,"filter"), type.getDataUnitType().getTypeClass())
+                ),
+                configuration,
+                DataGenerators.generateGenerator(dataQuataSize,type)
+        );
+
+    }
+
+    /**
+     * Creates a default {@link SparkFilterOperator} profiler.
+     */
+    public static OperatorProfiler createFilterProfiler(int dataQuataSize, int UdfComplexity, DataSetType type) {
+
+        return new SparkUnaryOperatorProfiler(
+                () -> new SparkFilterOperator<>(
+                        type,
+                        new PredicateDescriptor<>(DataGenerators.generatefilterUDF(UdfComplexity,dataQuataSize,type,"filter"), type.getDataUnitType().getTypeClass())
+                ),
+                configuration,
+                DataGenerators.generateGenerator(dataQuataSize,type)
+        );
 
     }
 

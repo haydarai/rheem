@@ -116,18 +116,20 @@ public class WordCountIT {
 
         Shape shape = Shape.createShape(sink);
         shape.exhaustivePlanFiller(shape.getVectorLogs(),shape.platformVector, Shape.DEFAULT_PLATFORMS.get(1),0);
-        shape.printLog();
-        shape.printEnumeratedLogs();
         // Have Rheem execute the plan.
         RheemPlan rheemPlan = new RheemPlan(sink);
         Job job = rheemContext.createJob(null,rheemPlan);
 
         job.execute();
 
+
         // update the shape channels
         shape.updateChannels(job.getPlanImplementation().getJunctions());
+        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
+        shape.printLog();
 
-        shape.clone();
+        shape.printEnumeratedLogs();
+
         /*
         System.out.println(results.toString());
         // Verify the plan result.

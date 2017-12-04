@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by migiwara on 16/07/17.
@@ -23,6 +25,7 @@ public class Shape {
 
     //TODO: Add a vectorlog nested class for more readablilty purposes
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Configuration config;
     // subshapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
     private List<Shape> subShapes = new ArrayList<>();
     private List<Topology> allTopologies = new ArrayList<>();
@@ -37,10 +40,12 @@ public class Shape {
     private final int VECTOR_SIZE = 213;
     double[] logs = new double[VECTOR_SIZE];
     double[] vectorLogs= new double[VECTOR_SIZE -1];
+    double[][] vectorLogs2D= new double[VECTOR_SIZE -1][10];
+
     private int topologyNumber;
     private List<String> operatorNames = new ArrayList<>();
-    private static List<Junction> junctions = new ArrayList<>();
-    private static List<ExecutionTask> executionTasks = new ArrayList<>();
+    private List<Junction> junctions = new ArrayList<>();
+    private List<ExecutionTask> executionTasks = new ArrayList<>();
     private List<double[]> exhaustiveVectors = new ArrayList<>();
     private static int startOpPos = 4;
     private static int opPosStep = 8;
@@ -94,14 +99,18 @@ public class Shape {
 
     /**
      * Shape Constructor *empty
+     * @param configuration
      */
-    public Shape(){
+    public Shape(Configuration configuration){
+        this.config = configuration;
     }
     /**
      * Shape Constructor that creates a shape from a sink topology then filling the shape in down to up way
      * @param topology
+     * @param configuration
      */
-    public Shape(Topology topology){
+    public Shape(Topology topology, Configuration configuration){
+        this.config = configuration;
         this.sinkTopology = topology;
 
         // set the shape nodenumber
@@ -113,7 +122,7 @@ public class Shape {
 
     // TODO: is not well optimized
     public Shape clone(){
-        Shape newShape = new Shape(this.sinkTopology.createCopy(this.getSinkTopology().getTopologyNumber()));
+        Shape newShape = new Shape(this.sinkTopology.createCopy(this.getSinkTopology().getTopologyNumber()), new Configuration());
         newShape.populateShape(newShape.getSinkTopology());
         newShape.setPlateform(this.plateform);
         return newShape;
@@ -234,7 +243,7 @@ public class Shape {
      * @return
      */
     public static Shape createShape(LocalCallbackSink sinkOperator, boolean ispreExecution, boolean prepareVectorLog){
-        Shape newShape = new Shape();
+        Shape newShape = new Shape(new Configuration());
 
         // Initiate current and predecessor operator
         Operator currentOperator = sinkOperator;
@@ -413,14 +422,16 @@ public class Shape {
      * LOG subclass: will contains all feature information fr the containing shape
      ********************************************/
 
-
+    List<List<String>> operatorNames2d = new ArrayList<>(10);
     public void prepareVectorLog(boolean ispreExecution){
 
+        double[][] tmpVectorLogs2D= new double[VECTOR_SIZE -1][10];
         // Loop through all subShapes
         logs[0]=this.getPipelineTopologies().size();
         logs[1]=this.getJunctureTopologies().size();
         logs[2]=this.getLoopTopologies().size();
         logs[3]=0;
+
         // Loop through all topologies
         this.allTopologies.stream()
                 .forEach(t -> {
@@ -429,12 +440,39 @@ public class Shape {
                             .forEach(tuple ->{
                                 int start = 4;
                                 String[] operatorName = tuple.getField0().split("\\P{Alpha}+");
-                                operatorNames.add(operatorName[0]);
-                                addOperatorLog(logs, t, tuple, operatorName[0],ispreExecution);
+                                if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+                                    // Handle the case of 2D generated logs
+
+                                    // Initialize the 2d Operator names\
+                                    for (int i = 0; i < 10; i++) {
+                                        operatorNames2d.add(new ArrayList<String>());
+                                    }
+                                    // check if there's a duplicate operator
+                                    operatorNames2d.stream()
+                                            .filter(list-> !list.contains(operatorName[0]))
+                                            .findFirst()
+                                            .map(list -> {
+                                                    list.add(operatorName[0]);
+                                                    addOperatorLog(logs, t, tuple, operatorName[0],ispreExecution);
+                                                    return list;
+                                            });
+                                    //if (!operatorNames2d.get(0).contains(operatorName[0]))
+                                } else{
+                                    // Handle the case of 1D generated logs
+                                    operatorNames.add(operatorName[0]);
+                                    addOperatorLog(logs, t, tuple, operatorName[0],ispreExecution);
+                                }
                             });
                 });
         averageSelectivityComplexity(logs);
+
+        // set shapes 1D vector log
         this.setVectorLogs(logs.clone());
+
+        // Update 2D vector log with the first row (1D vector log without duplicates)
+        tmpVectorLogs2D[0]=logs;
+
+        this.setVectorLogs2D(tmpVectorLogs2D);
         // reinitialize log array every subShape
         Arrays.fill(logs, 0);
     }
@@ -671,7 +709,7 @@ public class Shape {
 
                 // update newVectorLog
                 updateOperatorPlatform(operator,platform,newVectorLog);
-                updatePlatformVector(i,DEFAULT_PLATFORMS.get(0),newPlatformLog);
+                updatePlatformVector(i,platform,newPlatformLog);
 
                 // add current vector to exhaustiveVectors
                 exhaustiveVectors.add(newVectorLog);
@@ -830,6 +868,10 @@ public class Shape {
 
     public void setVectorLogs(double[] vectorLogs) {
         this.vectorLogs = vectorLogs;
+    }
+
+    public void setVectorLogs2D(double[][] vectorLogs2D) {
+        this.vectorLogs2D = vectorLogs2D;
     }
 
 }
