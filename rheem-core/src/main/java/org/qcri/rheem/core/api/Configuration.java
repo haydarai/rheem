@@ -58,6 +58,7 @@ public class Configuration {
         Actions.doSafe(() -> bootstrapPruningProviders(defaultConfiguration));
         Actions.doSafe(() -> bootstrapProperties(defaultConfiguration));
         Actions.doSafe(() -> bootstrapPlugins(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapProfilingProperties(defaultConfiguration));
     }
 
     private static final String BASIC_PLUGIN = "org.qcri.rheem.basic.RheemBasics.defaultPlugin()";
@@ -549,6 +550,15 @@ public class Configuration {
                 File.separator
         ));
 
+        // Supplement with a customizable layer.
+        final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
+        configuration.setProperties(customizableProperties);
+
+
+    }
+
+    private static void bootstrapProfilingProperties(Configuration configuration) {
+
         configuration.setProperty("rheem.core.log.planVector", StringUtils.join(
                 Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector.txt"),
                 File.separator
@@ -559,10 +569,10 @@ public class Configuration {
                 File.separator
         ));
 
-        // Supplement with a customizable layer.
-        final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
-        configuration.setProperties(customizableProperties);
-
+        configuration.setProperty("rheem.core.log.2Dlogs", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "2Dlogs", "logExecutionPlan"),
+                File.separator
+        ));
 
     }
 

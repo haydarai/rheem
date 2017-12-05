@@ -38,9 +38,8 @@ public class Shape {
     //private final int VECTOR_SIZE = 146;
     //private final int VECTOR_SIZE = 194;
     private final int VECTOR_SIZE = 213;
-    double[] logs = new double[VECTOR_SIZE];
-    double[] vectorLogs= new double[VECTOR_SIZE -1];
-    double[][] vectorLogs2D= new double[VECTOR_SIZE -1][10];
+    double[] vectorLogs= new double[VECTOR_SIZE];
+    double[][] vectorLogs2D= new double[10][VECTOR_SIZE];
 
     private int topologyNumber;
     private List<String> operatorNames = new ArrayList<>();
@@ -425,12 +424,10 @@ public class Shape {
     List<List<String>> operatorNames2d = new ArrayList<>(10);
     public void prepareVectorLog(boolean ispreExecution){
 
-        double[][] tmpVectorLogs2D= new double[VECTOR_SIZE -1][10];
-        // Loop through all subShapes
-        logs[0]=this.getPipelineTopologies().size();
-        logs[1]=this.getJunctureTopologies().size();
-        logs[2]=this.getLoopTopologies().size();
-        logs[3]=0;
+        double[] tmpVectorLogs1D = new double[VECTOR_SIZE];
+        double[][] tmpVectorLogs2D= new double[10][VECTOR_SIZE];
+
+
 
         // Loop through all topologies
         this.allTopologies.stream()
@@ -443,6 +440,13 @@ public class Shape {
                                 if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
                                     // Handle the case of 2D generated logs
 
+                                    // add topoliges to 2d vector log
+                                    //tmpVectorLogs2D[0]=tmpVectorLogs1D;
+                                    // Loop through all subShapes
+                                    tmpVectorLogs2D[0][0]=this.getPipelineTopologies().size();
+                                    tmpVectorLogs2D[0][1]=this.getJunctureTopologies().size();
+                                    tmpVectorLogs2D[0][2]=this.getLoopTopologies().size();
+                                    tmpVectorLogs2D[0][3]=0;
                                     // Initialize the 2d Operator names\
                                     for (int i = 0; i < 10; i++) {
                                         operatorNames2d.add(new ArrayList<String>());
@@ -453,28 +457,38 @@ public class Shape {
                                             .findFirst()
                                             .map(list -> {
                                                     list.add(operatorName[0]);
-                                                    addOperatorLog(logs, t, tuple, operatorName[0],ispreExecution);
+                                                    int index = operatorNames2d.indexOf(list);
+                                                    addOperatorLog(tmpVectorLogs2D[index], t, tuple, operatorName[0],ispreExecution);
                                                     return list;
                                             });
                                     //if (!operatorNames2d.get(0).contains(operatorName[0]))
-                                } else{
+                                } else {
+                                    // Loop through all subShapes
+                                    tmpVectorLogs1D[0]=this.getPipelineTopologies().size();
+                                    tmpVectorLogs1D[1]=this.getJunctureTopologies().size();
+                                    tmpVectorLogs1D[2]=this.getLoopTopologies().size();
+                                    tmpVectorLogs1D[3]=0;
                                     // Handle the case of 1D generated logs
                                     operatorNames.add(operatorName[0]);
-                                    addOperatorLog(logs, t, tuple, operatorName[0],ispreExecution);
+                                    addOperatorLog(tmpVectorLogs1D, t, tuple, operatorName[0],ispreExecution);
                                 }
                             });
                 });
-        averageSelectivityComplexity(logs);
+        averageSelectivityComplexity(tmpVectorLogs1D);
 
-        // set shapes 1D vector log
-        this.setVectorLogs(logs.clone());
+        if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+            // set shape's 2D vector log
+            this.setVectorLogs2D(tmpVectorLogs2D.clone());
+            // set shapes 1D vector log as the first row of the 2D vector log; as we will update the channels only for the first row
+            this.setVectorLogs(tmpVectorLogs2D[0].clone());
+        } else {
+            // set shapes 1D vector log
+            this.setVectorLogs(tmpVectorLogs1D.clone());
+        }
 
-        // Update 2D vector log with the first row (1D vector log without duplicates)
-        tmpVectorLogs2D[0]=logs;
 
-        this.setVectorLogs2D(tmpVectorLogs2D);
         // reinitialize log array every subShape
-        Arrays.fill(logs, 0);
+        Arrays.fill(tmpVectorLogs1D, 0);
     }
 
     /**
@@ -795,7 +809,12 @@ public class Shape {
         String[] channelName = outChannel.toString().split("\\P{Alpha}+");
         // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
         int channelStartPosition = getJunctureVectorPosition(channelName[0]);
-        vectorLogs[channelStartPosition]+=1;
+        if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+            // add the channel log to the first row
+            vectorLogs2D[0][channelStartPosition]+=1;
+        }else {
+            vectorLogs[channelStartPosition]+=1;
+        }
     }
 
     private int getJunctureVectorPosition(String channelName) {
@@ -844,7 +863,7 @@ public class Shape {
 
                         Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities()).forEach(incard1->incard1.getAverageEstimate());
                         // update shape's vector log with output cardinality
-                        updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                        //updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
                         // update shape's vector log with output cardinality
                         updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
                         // update shape's vector log with target platform
@@ -864,7 +883,9 @@ public class Shape {
         return vectorLogs;
     }
 
-
+    public double[][] getVectorLogs2D() {
+        return vectorLogs2D;
+    }
 
     public void setVectorLogs(double[] vectorLogs) {
         this.vectorLogs = vectorLogs;

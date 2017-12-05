@@ -168,12 +168,20 @@ public class ExecutionLog implements AutoCloseable {
                 throw new RheemException("Could not initialize cardinality repository.");
             }
             this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+
+            // create 2Dlog file directory
+            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
+            //file2dLog.mkdir();
+            if (!parentFile.exists() && !file2dLog.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize 2d log repository.");
+            }
         } catch (RheemException e) {
             throw e;
         } catch (Exception e) {
             throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
         }
 
+        // Handle 1D log generation
         NumberFormat nf = new DecimalFormat("##.#");
 
         for(int i=0;i<logs.length;i++){
@@ -181,5 +189,38 @@ public class ExecutionLog implements AutoCloseable {
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");
+
+        // Handle 2D log generation
+    }
+
+    public void store2DVector(double[][] logs, long executionTime) throws IOException {
+
+        try {
+
+            // create 2Dlog file directory
+            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
+            //file2dLog.mkdir();
+            final File parentFile = file2dLog.getParentFile();
+
+            if (!parentFile.exists() && !file2dLog.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize 2d log repository.");
+            }
+            this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file2dLog, true), "UTF-8"));
+
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
+        }
+
+        // Handle 2D log generation
+        NumberFormat nf = new DecimalFormat("##.#");
+
+        for(int i=0;i<logs.length;i++){
+            writer.write( nf.format( logs[i]) + " ");
+        }
+        writer.write(Long.toString(executionTime));
+        writer.write("\n");
+
     }
 }

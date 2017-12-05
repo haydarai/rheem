@@ -308,7 +308,11 @@ public class ProfilingRunner{
      */
     private static void logExecution(Shape shape, long executionTime){
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
-            executionLog.storeVector(shape.getVectorLogs(),executionTime);
+            if(configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+                executionLog.store2DVector(shape.getVectorLogs2D(),executionTime);
+            } else {
+                executionLog.storeVector(shape.getVectorLogs(),executionTime);
+            }
         } catch (Exception e) {
             logger.error("Storing partial executions failed.", e);
         }
