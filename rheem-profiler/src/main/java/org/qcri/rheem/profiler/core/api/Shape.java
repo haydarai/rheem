@@ -43,6 +43,8 @@ public class Shape {
 
     private int topologyNumber;
     private List<String> operatorNames = new ArrayList<>();
+    List<List<String>> operatorNames2d = new ArrayList<>();
+    List<List<String>> operatorNamesPostExecution2d = new ArrayList<>();
     private List<Junction> junctions = new ArrayList<>();
     private List<ExecutionTask> executionTasks = new ArrayList<>();
     private List<double[]> exhaustiveVectors = new ArrayList<>();
@@ -135,9 +137,6 @@ public class Shape {
         for(Topology t:allTopologies)
             t.setNodes(new Stack<>());
     }
-
-
-
 
 
     /**
@@ -421,13 +420,17 @@ public class Shape {
      * LOG subclass: will contains all feature information fr the containing shape
      ********************************************/
 
-    List<List<String>> operatorNames2d = new ArrayList<>(10);
+
     public void prepareVectorLog(boolean ispreExecution){
 
         double[] tmpVectorLogs1D = new double[VECTOR_SIZE];
         double[][] tmpVectorLogs2D= new double[10][VECTOR_SIZE];
 
-
+        // Initialize the 2d Operator names\
+        for (int i = 0; i < 10; i++) {
+            operatorNames2d.add(new ArrayList<String>());
+            operatorNamesPostExecution2d.add(new ArrayList<String>());
+        }
 
         // Loop through all topologies
         this.allTopologies.stream()
@@ -447,19 +450,16 @@ public class Shape {
                                     tmpVectorLogs2D[0][1]=this.getJunctureTopologies().size();
                                     tmpVectorLogs2D[0][2]=this.getLoopTopologies().size();
                                     tmpVectorLogs2D[0][3]=0;
-                                    // Initialize the 2d Operator names\
-                                    for (int i = 0; i < 10; i++) {
-                                        operatorNames2d.add(new ArrayList<String>());
-                                    }
                                     // check if there's a duplicate operator
                                     operatorNames2d.stream()
                                             .filter(list-> !list.contains(operatorName[0]))
                                             .findFirst()
                                             .map(list -> {
-                                                    list.add(operatorName[0]);
-                                                    int index = operatorNames2d.indexOf(list);
-                                                    addOperatorLog(tmpVectorLogs2D[index], t, tuple, operatorName[0],ispreExecution);
-                                                    return list;
+                                                int index = operatorNames2d.indexOf(list);
+
+                                                list.add(operatorName[0]);
+                                                addOperatorLog(tmpVectorLogs2D[index], t, tuple, operatorName[0],ispreExecution);
+                                                return list;
                                             });
                                     //if (!operatorNames2d.get(0).contains(operatorName[0]))
                                 } else {
@@ -637,7 +637,7 @@ public class Shape {
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
-        logVector[opPos + 7] += cost;
+        logVector[opPos + 7] = cost;
     }
 
     /**
@@ -651,7 +651,7 @@ public class Shape {
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
-        logVector[opPos + 6] += cost;
+        logVector[opPos + 6] = cost;
     }
 
     /**
@@ -857,8 +857,8 @@ public class Shape {
                 // We discard composite operators
                 if(operator.isElementary()) {
                     String[] operatorName = new String[1];
-                    double averageOutputCardinality,averageInputCardinality = 0;
-
+                    double averageOutputCardinality = 0;
+                    double averageInputCardinality = 0;
                     if(operator.isExecutionOperator()){
                         operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
                                 .toLowerCase().replace("java","").replace("spark","");
@@ -877,11 +877,30 @@ public class Shape {
                         Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities()).forEach(incard1->incard1.getAverageEstimate());
                         // update shape's vector log with output cardinality
                         //updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
-                        // update shape's vector log with output cardinality
-                        updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
-                        // update shape's vector log with target platform
-                        updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
-                        //localOperatorContexts.get
+                        if(config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+                            double finalAverageOutputCardinality = averageOutputCardinality;
+                            double finalAverageInputCardinality = averageInputCardinality;
+                            operatorNamesPostExecution2d.stream()
+                                    .filter(list-> !list.contains(operatorName[0]))
+                                    .findFirst()
+                                    .map(list -> {
+                                        int index = operatorNamesPostExecution2d.indexOf(list);
+                                        list.add(operatorName[0]);
+                                        // update shape's vector log with output cardinality
+                                        updateOperatorOutputCardinality(operatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
+                                        // update shape's vector log with target platform
+                                        updateOperatorInputCardinality(operatorName[0], finalAverageInputCardinality,vectorLogs2D[index]);
+                                        return list;
+                                    });
+
+                            //localOperatorContexts.get
+                        } else {
+                            updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                            // update shape's vector log with target platform
+                            updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
+                            //localOperatorContexts.get
+                        }
+
                     }
 
                 }
