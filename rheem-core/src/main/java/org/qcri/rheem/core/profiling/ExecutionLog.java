@@ -216,8 +216,12 @@ public class ExecutionLog implements AutoCloseable {
         // Handle 2D log generation
         NumberFormat nf = new DecimalFormat("##.#");
 
-        for(int i=0;i<logs.length;i++){
-            writer.write( nf.format( logs[i]) + " ");
+        for(int i=0;i<logs.length;i++) {
+
+            for (int j = 0; j < logs[0].length; j++) {
+                writer.write(nf.format(logs[i][j]) + " ");
+            }
+            writer.write("\n");
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");

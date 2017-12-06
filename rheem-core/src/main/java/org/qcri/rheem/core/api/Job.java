@@ -171,8 +171,8 @@ public class Job extends OneTimeExecutable {
         // Prepare instrumentation.
         this.experiment = experiment;
         this.stopWatch = new StopWatch(experiment);
-        this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization");
-        this.executionRound = this.stopWatch.getOrCreateRound("Execution");
+        this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization", new String[0]);
+        this.executionRound = this.stopWatch.getOrCreateRound("Execution", new String[0]);
 
         // Configure job monitor.
         if (Monitor.isEnabled(this.configuration)) {

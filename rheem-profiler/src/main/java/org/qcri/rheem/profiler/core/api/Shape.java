@@ -53,11 +53,11 @@ public class Shape {
 
     HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
-        put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("ReduceBy", startOpPos +3*opPosStep);
+        put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
         put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);
-        put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
+        put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
-        put("collectionsource", startOpPos +16*opPosStep);put("TextFileSource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
+        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
         put("LocalCallbackSink", startOpPos + 18*opPosStep);put("emptySlot", startOpPos + 19*opPosStep);
     }};
 
@@ -617,8 +617,13 @@ public class Shape {
     }
 
     public void setcardinalities(long inputCardinality, int dataQuantaSize) {
-        vectorLogs[VECTOR_SIZE -2] = (int) inputCardinality;
-        vectorLogs[VECTOR_SIZE -1] =  dataQuantaSize;
+        if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+            vectorLogs2D[0][VECTOR_SIZE - 2] = (int) inputCardinality;
+            vectorLogs2D[0][VECTOR_SIZE - 1] = dataQuantaSize;
+        } else {
+            vectorLogs[VECTOR_SIZE - 2] = (int) inputCardinality;
+            vectorLogs[VECTOR_SIZE - 1] = dataQuantaSize;
+        }
     }
 
     /**
@@ -850,10 +855,18 @@ public class Shape {
         localOperatorContexts.keySet().stream()
             .forEach(operator -> {
                 // We discard composite operators
-                if(operator.isElementary()&&(!operator.isExecutionOperator())) {
-                    Set<Platform> platform = operator.getTargetPlatforms();
+                if(operator.isElementary()) {
+                    String[] operatorName = new String[1];
                     double averageOutputCardinality,averageInputCardinality = 0;
-                    String[] operatorName = operator.toString().split("\\P{Alpha}+");
+
+                    if(operator.isExecutionOperator()){
+                        operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
+                                .toLowerCase().replace("java","").replace("spark","");
+                    } else {
+                        Set<Platform> platform = operator.getTargetPlatforms();
+                        operatorName[0] = operator.toString().split("\\P{Alpha}+")[0];
+                        platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),vectorLogs) );
+                    }
 
                     if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){
                         averageOutputCardinality = localOperatorContexts.get(operator).getOutputCardinality(0).getAverageEstimate();
@@ -868,7 +881,6 @@ public class Shape {
                         updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
                         // update shape's vector log with target platform
                         updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
-                        platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),vectorLogs) );
                         //localOperatorContexts.get
                     }
 
