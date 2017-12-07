@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -215,10 +214,14 @@ public class ProfilingRunner{
                     final Topology sinkTopology = shape.getSinkTopology();
                     ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size() - 1).getField1().getOperator();
 
+                    // Execute Plan
                     executePlan(sinkOperator,shape);
+
+                    // Save ending execution time
                     final long endTime = System.currentTimeMillis();
 
 
+                    // clear source operator data
                     for (Topology t : shape.getSourceTopologies()) {
                         switch (shape.getPlateform()) {
                             case "java":
@@ -229,11 +232,9 @@ public class ProfilingRunner{
 
                     // Refresh the input cardinality and DataQuantaSize for logging
                     shape.setcardinalities(inputCardinality, dataQuantaSize);
-                    //double[] vectorLogs = shape.getVectorLogs();
-                    //vectorLogs[103] = (int) inputCardinality;
-                    //vectorLogs[104] =  dataQuantaSize;
 
-                    logExecution(shape, endTime - startTime);
+                    // Store execution log onDisk
+                    storeExecutionLog(shape, endTime - startTime);
 
                     List<Long> inputCardinalities = new ArrayList<>();
                     //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
@@ -250,7 +251,12 @@ public class ProfilingRunner{
                                     numCoresPerMachine
                             )
                     );
+
+                    // Reinitialize shapes logs
+                    shape.reinitializeLog();
+                    // Increment running counter per shape
                     runningCounter++;
+
                     // check number of running has exceeded the runningNumber specified in {@link ProfilingConfiguration} per each shape
                     if ((runningPlanPerShape!=-1)&&(runningCounter>=runningPlanPerShape))
                         break;
@@ -304,9 +310,9 @@ public class ProfilingRunner{
 
 
     /**
-     * Generate the log for training the ML for learning Topology models
+     * Generate onDisk the log for training the ML for learning Topology models
      */
-    private static void logExecution(Shape shape, long executionTime){
+    private static void storeExecutionLog(Shape shape, long executionTime){
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
             if(configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
                 executionLog.store2DVector(shape.getVectorLogs2D(),executionTime);

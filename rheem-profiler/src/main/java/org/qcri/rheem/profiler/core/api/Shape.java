@@ -926,4 +926,12 @@ public class Shape {
         this.vectorLogs2D = vectorLogs2D;
     }
 
+    public void reinitializeLog() {
+        operatorNames = new ArrayList<>();
+        operatorNames2d = new ArrayList<>();
+        operatorNamesPostExecution2d = new ArrayList<>();
+
+        vectorLogs2D = new double[10][VECTOR_SIZE];
+        vectorLogs = new double[VECTOR_SIZE];
+    }
 }
