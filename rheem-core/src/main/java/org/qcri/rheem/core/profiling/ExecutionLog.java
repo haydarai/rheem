@@ -218,10 +218,11 @@ public class ExecutionLog implements AutoCloseable {
 
         for(int i=0;i<logs.length;i++) {
 
-            for (int j = 0; j < logs[0].length; j++) {
+            for (int j = 0; j < logs[0].length-1; j++) {
                 writer.write(nf.format(logs[i][j]) + " ");
             }
-            writer.write("\n");
+            // remove last space
+            writer.write(nf.format(logs[i][logs[0].length-1])+"\n");
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");

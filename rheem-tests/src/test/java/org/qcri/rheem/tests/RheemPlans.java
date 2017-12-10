@@ -387,6 +387,11 @@ public class RheemPlans {
         source.connectTo(0,preprocessing,0);
         // End of New added part below
 
+        MapOperator<Integer, Integer> FIRSTincrement = new MapOperator<>(
+                i -> i + 1, Integer.class, Integer.class
+        );
+        FIRSTincrement.setName("FIRSTincrement");
+
         MapOperator<Integer, Integer> increment = new MapOperator<>(
                 i -> i + 1, Integer.class, Integer.class
         );
@@ -398,7 +403,8 @@ public class RheemPlans {
         );
         sink.setName("sink");
 
-        repeat.initialize(source, 0);
+        source.connectTo(0,FIRSTincrement,0);
+        repeat.initialize(FIRSTincrement, 0);
         repeat.beginIteration(increment, 0);
         repeat.endIteration(increment, 0);
         repeat.connectFinalOutputTo(sink, 0);

@@ -49,7 +49,6 @@ public class ProfilingPlanBuilder implements Serializable {
         if (topology.getNodeNumber()==1){
             return singleOperatorProfilingPlanBuilder(profilingConfig);
         } else {
-            // TODO: add other topologies: pipeline, star,...
             return singleOperatorProfilingPlanBuilder(profilingConfig);
         }
     }
@@ -235,7 +234,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * The below method will connect nodes inside of a topology and returns the head node so to connect it with the previous topology
+     * The below method will connect nodes inside a topology and returns the head node so to connect it with the previous topology
      * @param topology
      * @return
      */
@@ -287,7 +286,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * Connects a loop topology what's inside a loop then returns the previous node (source )
+     * Connects a loop topology what's inside a loop then returns the source node (previous node to a loop head )
      * @param loopTopology
      * @param currentnode
      * @param inputSlot
@@ -619,18 +618,6 @@ public class ProfilingPlanBuilder implements Serializable {
                         return SparkPlanOperatorProfilers.createSparkCollectionSourceProfiler(1000, type);
                     case "map":
                         return SparkPlanOperatorProfilers.createSparkMapProfiler(1, UdfComplexity,type);
-                        /*return new SparkUnaryOperatorProfiler(
-                                () -> new SparkMapOperator<>(
-                                        type,
-                                        type,
-                                        new TransformationDescriptor<>((FunctionDescriptor.SerializableFunction<Integer,Integer>) i -> {
-                                            return i;
-                                            }
-                                            , Integer.class, Integer.class)
-                                ),
-                                new Configuration(),
-                                DataGenerators.createReservoirBasedIntegerListSupplier(new ArrayList<List<Integer>>(), 0.0, new Random(), dataQuantaScale)
-                        );*/
 
                     case "filter":
                         return (SparkPlanOperatorProfilers.createSparkFilterProfiler(1, UdfComplexity, type));
