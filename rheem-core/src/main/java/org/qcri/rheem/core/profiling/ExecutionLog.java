@@ -189,7 +189,7 @@ public class ExecutionLog implements AutoCloseable {
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");
-
+        writer.close();
         // Handle 2D log generation
     }
 
@@ -226,6 +226,7 @@ public class ExecutionLog implements AutoCloseable {
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");
+        writer.close();
 
     }
 }

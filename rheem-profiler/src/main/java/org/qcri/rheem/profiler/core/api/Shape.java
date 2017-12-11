@@ -462,16 +462,18 @@ public class Shape {
                                                 return list;
                                             });
                                     //if (!operatorNames2d.get(0).contains(operatorName[0]))
-                                } else {
-                                    // Loop through all subShapes
-                                    tmpVectorLogs1D[0]=this.getPipelineTopologies().size();
-                                    tmpVectorLogs1D[1]=this.getJunctureTopologies().size();
-                                    tmpVectorLogs1D[2]=this.getLoopTopologies().size();
-                                    tmpVectorLogs1D[3]=0;
-                                    // Handle the case of 1D generated logs
-                                    operatorNames.add(operatorName[0]);
-                                    addOperatorLog(tmpVectorLogs1D, t, tuple, operatorName[0],ispreExecution);
                                 }
+                                //else {
+
+                                // prepare 1D log vector in all cases
+                                tmpVectorLogs1D[0]=this.getPipelineTopologies().size();
+                                tmpVectorLogs1D[1]=this.getJunctureTopologies().size();
+                                tmpVectorLogs1D[2]=this.getLoopTopologies().size();
+                                tmpVectorLogs1D[3]=0;
+                                // Handle the case of 1D generated logs
+                                operatorNames.add(operatorName[0]);
+                                addOperatorLog(tmpVectorLogs1D, t, tuple, operatorName[0],ispreExecution);
+                                //}
                             });
                 });
         averageSelectivityComplexity(tmpVectorLogs1D);
@@ -481,11 +483,9 @@ public class Shape {
             this.setVectorLogs2D(tmpVectorLogs2D.clone());
             // set shapes 1D vector log as the first row of the 2D vector log; as we will update the channels only for the first row
             this.setVectorLogs(tmpVectorLogs2D[0].clone());
-        } else {
-            // set shapes 1D vector log
-            this.setVectorLogs(tmpVectorLogs1D.clone());
         }
-
+        // set shapes 1D vector log
+        this.setVectorLogs(tmpVectorLogs1D.clone());
 
         // reinitialize log array every subShape
         Arrays.fill(tmpVectorLogs1D, 0);
@@ -620,10 +620,10 @@ public class Shape {
         if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
             vectorLogs2D[0][VECTOR_SIZE - 2] = (int) inputCardinality;
             vectorLogs2D[0][VECTOR_SIZE - 1] = dataQuantaSize;
-        } else {
-            vectorLogs[VECTOR_SIZE - 2] = (int) inputCardinality;
-            vectorLogs[VECTOR_SIZE - 1] = dataQuantaSize;
         }
+
+        vectorLogs[VECTOR_SIZE - 2] = (int) inputCardinality;
+        vectorLogs[VECTOR_SIZE - 1] = dataQuantaSize;
     }
 
     /**
@@ -817,9 +817,8 @@ public class Shape {
         if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
             // add the channel log to the first row
             vectorLogs2D[0][channelStartPosition]+=1;
-        }else {
-            vectorLogs[channelStartPosition]+=1;
         }
+        vectorLogs[channelStartPosition]+=1;
     }
 
     private int getJunctureVectorPosition(String channelName) {
@@ -894,12 +893,14 @@ public class Shape {
                                     });
 
                             //localOperatorContexts.get
-                        } else {
-                            updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
-                            // update shape's vector log with target platform
-                            updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
-                            //localOperatorContexts.get
                         }
+                        //else {
+                        // Update 1d vector log
+                        updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                        // update shape's vector log with target platform
+                        updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
+                        //localOperatorContexts.get
+                        //}
 
                     }
 

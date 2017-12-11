@@ -121,7 +121,6 @@ public class ProfilingPlanBuilder implements Serializable {
                                 t.getNodes().push(loopNodeFill(type, platform));
                             }
 
-
                             // Fill the sinks
                             //for(Topology t:shape.getSinkTopology()){
                             //if (shape.getSinkTopology().getNodes().isEmpty())
