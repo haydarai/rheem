@@ -60,7 +60,7 @@ public class Shape {
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
-        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);
+        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);
     }};
 
     /*static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -270,11 +270,11 @@ public class Shape {
                     newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                     // update current and predecessor operatorNames
                     currentOperator = predecessorOperator;
+
+                    // Handle broadcast case
                     predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
 
                 }
-                newShape.getPipelineTopologies().add(newPipelineTopology);
-                newShape.getAllTopologies().add(newPipelineTopology);
 
                 // check if the current node has source node
                 if(predecessorOperator.isSource()) {
@@ -282,6 +282,9 @@ public class Shape {
                     newShape.getSourceTopologies().add(newPipelineTopology);
                     //addSourceTopology(predecessorOp erator, newPipelineTopology);
                 }
+
+                newShape.getPipelineTopologies().add(newPipelineTopology);
+                newShape.getAllTopologies().add(newPipelineTopology);
             }
 
             //DONE: add juncture handling
