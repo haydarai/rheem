@@ -56,11 +56,11 @@ public class Shape {
     HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
-        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);
+        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
-        put("LocalCallbackSink", startOpPos + 18*opPosStep);put("emptySlot", startOpPos + 19*opPosStep);
+        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);
     }};
 
     /*static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -511,9 +511,9 @@ public class Shape {
 
     private int getOperatorVectorPosition(String operator) {
         try {
-            return OPERATOR_VECTOR_POSITION.get(operator);
+            return OPERATOR_VECTOR_POSITION.get(operator.toLowerCase());
         } catch (Exception e){
-            throw new RheemException(String.format("couldn't find position log for operator %s",operator));
+            throw new RheemException(String.format("couldn't find position log for operator %s",operator.toLowerCase()));
         }
     }
 
@@ -748,13 +748,14 @@ public class Shape {
     /**
      * Logging {@link Shape}'s vector log
      */
-    public void printLog() {
+    public String printLog() {
         final String[] outputVector = {""};
         NumberFormat nf = new DecimalFormat("##.#");
         Arrays.stream(vectorLogs).forEach(d -> {
             outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
         });
         this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
+        return "Current rheem plan feature vector: " + outputVector[0];
     }
 
     /**

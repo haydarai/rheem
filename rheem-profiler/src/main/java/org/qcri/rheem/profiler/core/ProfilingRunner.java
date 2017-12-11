@@ -302,6 +302,7 @@ public class ProfilingRunner{
             //operatorProfiler.cleanUp();
             //cleanUp.stop();
         }*/
+        job.getOptimizationContext().getLocalOperatorContexts();
         shape.updateChannels(job.getPlanImplementation().getJunctions());
         shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
         shape.printLog();
