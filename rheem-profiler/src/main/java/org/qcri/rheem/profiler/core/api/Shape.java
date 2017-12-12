@@ -245,110 +245,160 @@ public class Shape {
 
         // Initiate current and predecessor operator
         Operator currentOperator = sinkOperator;
-        Operator predecessorOperator = sinkOperator.getInput(0).getOccupant().getOwner();
+        final List<Operator> predecessorOperators = Arrays.stream(sinkOperator.getAllInputs())
+                .map(inputSlot -> inputSlot.getOccupant().getOwner())
+                .collect(Collectors.toList());
+        //Operator predecessorOperator = sinkOperator.getInput(0).getOccupant().getOwner();
 
-        // Loop until the source
-        while(!predecessorOperator.isSource()){
-            // Handle pipeline cas
-            // check if predecessor is unaryoperator
-            if (predecessorOperator instanceof UnaryToUnaryOperator){
-                PipelineTopology newPipelineTopology = new PipelineTopology();
+        for (Operator predecessorOperator:predecessorOperators){
+            // Loop until the source
+            while (!predecessorOperator.isSource()) {
+                // Handle pipeline cas
+                // check if predecessor is unary operator
+                if (predecessorOperator instanceof UnaryToUnaryOperator) {
+                    PipelineTopology newPipelineTopology = new PipelineTopology();
 
-                if(currentOperator.isSink()) {
-                    newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
-                    // add current topology as a sink topology
-                    newShape.setSinkTopology(newPipelineTopology);
-                }
+                    if (currentOperator.isSink()) {
+                        newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                        // add current topology as a sink topology
+                        newShape.setSinkTopology(newPipelineTopology);
+                    }
 
-                // add predecessor and current operatorNames
-                //newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
-                newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    // add predecessor and current operatorNames
+                    //newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                    newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
-
-                while (predecessorOperator instanceof UnaryToUnaryOperator){
-                    // add operator to new topology
-                    newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                    // update current and predecessor operatorNames
+                    // update current operatorNames
                     currentOperator = predecessorOperator;
 
                     // Handle broadcast case
+                    // update predecessorOperators in case of multiple inputs
+                    List<Operator> tmpPredecessorOperators = Arrays.stream(predecessorOperator.getAllInputs())
+                            .map(inputSlot -> inputSlot.getOccupant().getOwner())
+                            .collect(Collectors.toList());
+
+                    // update predecessorOperators in case of multiple inputs
+                    tmpPredecessorOperators.stream()
+                            .forEach(operator -> {
+                                if(tmpPredecessorOperators.indexOf(operator)>=1)
+                                    predecessorOperators.add(operator);
+                            });
+
+                    // update predecessor with the first input operator
                     predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
 
+
+                    //for(Operator tmpPredecessorOperator:tmpPredecessorOperators) {
+                    while (predecessorOperator instanceof UnaryToUnaryOperator) {
+                        // add operator to new topology
+                        newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                        // update current and predecessor operatorNames
+                        currentOperator = predecessorOperator;
+
+                        // get all predecessors
+                        List<Operator> tmpPredecessorOperators2 = Arrays.stream(predecessorOperator.getAllInputs())
+                                .map(inputSlot -> inputSlot.getOccupant().getOwner())
+                                .collect(Collectors.toList());
+
+                        // update predecessorOperators in case of multiple inputs
+                        tmpPredecessorOperators2.stream()
+                                .forEach(operator -> {
+                                    if(tmpPredecessorOperators2.indexOf(operator)>=1)
+                                        predecessorOperators.add(operator);
+                                });
+                        // Handle broadcast case
+                        predecessorOperator = tmpPredecessorOperators2.get(0);
+                    }
+                    //}
+                    // check if the current node has source node
+                    if (predecessorOperator.isSource()) {
+                        newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                        newShape.getSourceTopologies().add(newPipelineTopology);
+                        //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                    }
+
+                    newShape.getPipelineTopologies().add(newPipelineTopology);
+                    newShape.getAllTopologies().add(newPipelineTopology);
                 }
 
-                // check if the current node has source node
-                if(predecessorOperator.isSource()) {
-                    newPipelineTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                    newShape.getSourceTopologies().add(newPipelineTopology);
-                    //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                //DONE: add juncture handling
+                if (predecessorOperator instanceof BinaryToUnaryOperator) {
+                    JunctureTopology newJunctureTopology = new JunctureTopology();
+                    if (currentOperator.isSink()) {
+                        newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                        // add current topology as a sink topology
+                        newShape.setSinkTopology(newJunctureTopology);
+                    }
+                    newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    newShape.getJunctureTopologies().add(newJunctureTopology);
+                    newShape.getAllTopologies().add(newJunctureTopology);
+
+                    // add operator to new topology
+                    newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+
+                    // update current and predecessor operatorNames
+                    currentOperator = predecessorOperator;
+
+                    // update predecessorOperators in case of multiple inputs
+                    List<Operator> tmpPredecessorOperators = Arrays.stream(predecessorOperator.getAllInputs())
+                            .map(inputSlot -> inputSlot.getOccupant().getOwner())
+                            .collect(Collectors.toList());
+
+                    // update predecessorOperators in case of multiple inputs
+                    tmpPredecessorOperators.stream()
+                            .forEach(operator -> {
+                                if(tmpPredecessorOperators.indexOf(operator)>=1)
+                                    predecessorOperators.add(operator);
+                            });
+
+                    // update predecessor with the first input operator
+                    predecessorOperator = tmpPredecessorOperators.get(0);
+
+                    if (predecessorOperator.isSource()) {
+                        newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                        newShape.getSourceTopologies().add(newJunctureTopology);
+                        //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                    }
                 }
 
-                newShape.getPipelineTopologies().add(newPipelineTopology);
-                newShape.getAllTopologies().add(newPipelineTopology);
-            }
+                //DONE: add loop handling
+                if (predecessorOperator instanceof LoopHeadOperator) {
+                    LoopTopology newLoopTopology = new LoopTopology();
+                    if (currentOperator.isSink()) {
+                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                        // add current topology as a sink topology
+                        newShape.setSinkTopology(newLoopTopology);
 
-            //DONE: add juncture handling
-            if(predecessorOperator instanceof BinaryToUnaryOperator){
-                JunctureTopology newJunctureTopology = new JunctureTopology();
-                if(currentOperator.isSink()) {
-                    newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
-                    // add current topology as a sink topology
-                    newShape.setSinkTopology(newJunctureTopology);
-                }
-                newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                newShape.getJunctureTopologies().add(newJunctureTopology);
-                newShape.getAllTopologies().add(newJunctureTopology);
+                    }
+                    newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    newShape.getLoopTopologies().add(newLoopTopology);
+                    newShape.getAllTopologies().add(newLoopTopology);
 
-                // add operator to new topology
-                newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                    // add operator to new topology
+                    newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
-                // update current and predecessor operatorNames
-                currentOperator = predecessorOperator;
-                predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+                    // update current and predecessor operatorNames
+                    currentOperator = predecessorOperator;
 
-                if(predecessorOperator.isSource()) {
-                    newJunctureTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                    newShape.getSourceTopologies().add(newJunctureTopology);
-                    //addSourceTopology(predecessorOp erator, newPipelineTopology);
-                }
-            }
-            //DONE: add loop handling
-            if(predecessorOperator instanceof LoopHeadOperator){
-                LoopTopology newLoopTopology = new LoopTopology();
-                if(currentOperator.isSink()) {
-                    newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
-                    // add current topology as a sink topology
-                    newShape.setSinkTopology(newLoopTopology);
+                    // check if the predecessor loop has been visited before (if no we visit iterIn"1" otherwise
+                    // we visit InitIn"0")
+                    if ((loopHeads.isEmpty()) || (loopHeads.peek() != predecessorOperator)) {
+                        // Add current loopHead
+                        loopHeads.add((LoopHeadOperator) predecessorOperator);
+                        // Get the IterIn
+                        predecessorOperator = predecessorOperator.getInput(1).getOccupant().getOwner();
+                    } else {
+                        // remove current loopHead
+                        loopHeads.pop();
+                        // Get the InitIn
+                        predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
+                    }
 
-                }
-                newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                newShape.getLoopTopologies().add(newLoopTopology);
-                newShape.getAllTopologies().add(newLoopTopology);
-
-                // add operator to new topology
-                newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-
-                // update current and predecessor operatorNames
-                currentOperator = predecessorOperator;
-
-                // check if the predecessor loop has been visited before (if no we visit iterIn"1" otherwise
-                // we visit InitIn"0")
-                if ((loopHeads.isEmpty())||(loopHeads.peek()!=predecessorOperator)) {
-                    // Add current loopHead
-                    loopHeads.add((LoopHeadOperator) predecessorOperator);
-                    // Get the IterIn
-                    predecessorOperator = predecessorOperator.getInput(1).getOccupant().getOwner();
-                } else {
-                    // remove current loopHead
-                    loopHeads.pop();
-                    // Get the InitIn
-                    predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
-                }
-
-                if(predecessorOperator.isSource()) {
-                    newLoopTopology.getNodes().add(new Tuple2<String,OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                    newShape.getSourceTopologies().add(newLoopTopology);
-                    //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                    if (predecessorOperator.isSource()) {
+                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                        newShape.getSourceTopologies().add(newLoopTopology);
+                        //addSourceTopology(predecessorOp erator, newPipelineTopology);
+                    }
                 }
             }
         }
@@ -508,7 +558,7 @@ public class Shape {
         if (ispreExecution)
             preFillLog((OperatorProfilerBase) tuple.getField1(),logs,t,getOperatorVectorPosition(operator));
         else
-            fillLog(tuple,logs,t, OPERATOR_VECTOR_POSITION.get(operator));
+            fillLog(tuple,logs,t, getOperatorVectorPosition(operator));
 
     }
 
