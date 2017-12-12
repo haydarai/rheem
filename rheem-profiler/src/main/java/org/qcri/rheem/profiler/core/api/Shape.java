@@ -53,6 +53,10 @@ public class Shape {
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
 
+    private int estimatedInputCardinality;
+    private int estimatedDataQuataSize;
+
+
     HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
@@ -249,8 +253,13 @@ public class Shape {
                 .map(inputSlot -> inputSlot.getOccupant().getOwner())
                 .collect(Collectors.toList());
         //Operator predecessorOperator = sinkOperator.getInput(0).getOccupant().getOwner();
-
-        for (Operator predecessorOperator:predecessorOperators){
+        // DEclare and initialize predecessor operator
+        Operator predecessorOperator = predecessorOperators.get(0);
+        ListIterator iterpredecessorOperators = predecessorOperators.listIterator();
+        //for (Operator predecessorOperator:predecessorOperators){
+        iterpredecessorOperators.next();
+        while (iterpredecessorOperators.hasPrevious()){
+            predecessorOperator = (Operator) iterpredecessorOperators.previous();
             // Loop until the source
             while (!predecessorOperator.isSource()) {
                 // Handle pipeline cas
@@ -281,7 +290,7 @@ public class Shape {
                     tmpPredecessorOperators.stream()
                             .forEach(operator -> {
                                 if(tmpPredecessorOperators.indexOf(operator)>=1)
-                                    predecessorOperators.add(operator);
+                                    iterpredecessorOperators.add(operator);
                             });
 
                     // update predecessor with the first input operator
@@ -304,7 +313,7 @@ public class Shape {
                         tmpPredecessorOperators2.stream()
                                 .forEach(operator -> {
                                     if(tmpPredecessorOperators2.indexOf(operator)>=1)
-                                        predecessorOperators.add(operator);
+                                        iterpredecessorOperators.add(operator);
                                 });
                         // Handle broadcast case
                         predecessorOperator = tmpPredecessorOperators2.get(0);
@@ -348,7 +357,7 @@ public class Shape {
                     tmpPredecessorOperators.stream()
                             .forEach(operator -> {
                                 if(tmpPredecessorOperators.indexOf(operator)>=1)
-                                    predecessorOperators.add(operator);
+                                    iterpredecessorOperators.add(operator);
                             });
 
                     // update predecessor with the first input operator
@@ -731,7 +740,7 @@ public class Shape {
      */
     private String getOperatorPlatform(String operator, double[] logVector) {
         // get operator position
-        int opPos = OPERATOR_VECTOR_POSITION.get(operator);
+        int opPos = getOperatorVectorPosition(operator);
         for (String platform : DEFAULT_PLATFORMS) {
             if (logVector[opPos + getPlatformVectorPosition(platform)] == 1)
                 return platform;
