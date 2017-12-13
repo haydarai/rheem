@@ -113,6 +113,7 @@ public class TextFileSource extends UnarySource<String> {
                 return new CardinalityEstimate(0L, 0L, 1d);
             }
 
+            // bytesPerLine is saved as use DataQuanta size in profiling
             OptionalDouble bytesPerLine = this.estimateBytesPerLine();
             if (!bytesPerLine.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",

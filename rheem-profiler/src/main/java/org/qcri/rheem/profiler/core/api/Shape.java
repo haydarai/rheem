@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.core.api;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -10,6 +11,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +55,24 @@ public class Shape {
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
 
-    private int estimatedInputCardinality;
-    private int estimatedDataQuataSize;
+    public double getEstimatedInputCardinality() {
+        return estimatedInputCardinality;
+    }
+
+    public void setEstimatedInputCardinality(double estimatedInputCardinality) {
+        this.estimatedInputCardinality = estimatedInputCardinality;
+    }
+
+    public double getEstimatedDataQuataSize() {
+        return estimatedDataQuataSize;
+    }
+
+    public void setEstimatedDataQuataSize(double estimatedDataQuataSize) {
+        this.estimatedDataQuataSize = estimatedDataQuataSize;
+    }
+
+    private double estimatedInputCardinality;
+    private double estimatedDataQuataSize;
 
 
     HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -323,6 +341,8 @@ public class Shape {
                     if (predecessorOperator.isSource()) {
                         newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                         newShape.getSourceTopologies().add(newPipelineTopology);
+
+
                         //addSourceTopology(predecessorOp erator, newPipelineTopology);
                     }
 
@@ -678,9 +698,9 @@ public class Shape {
         //TODO: duplicate and selectivity to be added
     }
 
-    public void setcardinalities(long inputCardinality, int dataQuantaSize) {
+    public void setcardinalities(double inputCardinality, double dataQuantaSize) {
         if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
-            vectorLogs2D[0][VECTOR_SIZE - 2] = (int) inputCardinality;
+            vectorLogs2D[0][VECTOR_SIZE - 2] = inputCardinality;
             vectorLogs2D[0][VECTOR_SIZE - 1] = dataQuantaSize;
         }
 
@@ -823,7 +843,7 @@ public class Shape {
     /**
      * Logging {@link Shape}'s enumerated vector logs
      */
-    public void printEnumeratedLogs() {
+    public String printEnumeratedLogs() {
         final String[] outputVector = {""};
         NumberFormat nf = new DecimalFormat("##.#");
         for(double[] vectorLog:exhaustiveVectors) {
@@ -833,6 +853,7 @@ public class Shape {
             });
             this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
         }
+        return "Current rhee plan feature vector: " + outputVector[0];
     }
 
 
@@ -921,16 +942,20 @@ public class Shape {
                     String[] operatorName = new String[1];
                     double averageOutputCardinality = 0;
                     double averageInputCardinality = 0;
+
+                    // Update operator name
                     if(operator.isExecutionOperator()){
                         operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
                                 .toLowerCase().replace("java","").replace("spark","");
                     } else {
                         Set<Platform> platform = operator.getTargetPlatforms();
                         operatorName[0] = operator.toString().split("\\P{Alpha}+")[0];
+                        // update platform
                         platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),vectorLogs) );
                     }
 
                     if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){
+                        // get average input/output cardinalities
                         averageOutputCardinality = localOperatorContexts.get(operator).getOutputCardinality(0).getAverageEstimate();
                         averageInputCardinality = Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities())
                                 .map(incard->(double)incard.getAverageEstimate())
@@ -954,17 +979,20 @@ public class Shape {
                                         updateOperatorInputCardinality(operatorName[0], finalAverageInputCardinality,vectorLogs2D[index]);
                                         return list;
                                     });
-
-                            //localOperatorContexts.get
                         }
-                        //else {
                         // Update 1d vector log
                         updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
                         // update shape's vector log with target platform
                         updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
-                        //localOperatorContexts.get
-                        //}
 
+                        // update the estimate inputcardinality/dataQuantasize
+                        if(localOperatorContexts.get(operator).getOperator().isSource()){
+                            this.setEstimatedInputCardinality(averageOutputCardinality);
+                            TextFileSource textFileSource = (TextFileSource) localOperatorContexts.get(operator).getOperator();
+                            double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+                            this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                            this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
+                        }
                     }
 
                 }
