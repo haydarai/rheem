@@ -205,8 +205,6 @@ public class ProfilingRunner{
                         //loopHeadOperator.setState();
                         //loopHeadOperator.
                     }
-
-
                     shape.prepareVectorLog(false);
                     // save the starting execution time of current {@link RheemPlan}
                     final long startTime = System.currentTimeMillis();
@@ -219,7 +217,6 @@ public class ProfilingRunner{
 
                     // Save ending execution time
                     final long endTime = System.currentTimeMillis();
-
 
                     // clear source operator data
                     for (Topology t : shape.getSourceTopologies()) {
@@ -235,8 +232,10 @@ public class ProfilingRunner{
 
                     // Store execution log onDisk
                     storeExecutionLog(shape, endTime - startTime);
+                    shape.resetAllOperatorPlatforms(shape.getVectorLogs());
 
                     shape.exhaustivePlanFiller(shape.getVectorLogs(),shape.platformVector, Shape.DEFAULT_PLATFORMS.get(1),0);
+
                     //shape.printEnumeratedLogs();
                     System.out.print(shape.printEnumeratedLogs());
                     List<Long> inputCardinalities = new ArrayList<>();

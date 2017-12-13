@@ -14,6 +14,7 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -746,11 +747,21 @@ public class Shape {
         // get operator position
         int opPos = getOperatorVectorPosition(operator);
         // reset all platforms to zero
-        plateformVectorPostion.entrySet().stream().
-                forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
+        //plateformVectorPostion.entrySet().stream().
+        //        forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
 
         // update platform
         logVector[opPos + plateformVectorPostion.get(platform)] += 1;
+    }
+
+    public void resetAllOperatorPlatforms(double[] logVector) {
+        for(String operator:operatorNames){
+            // get operator position
+            int opPos = getOperatorVectorPosition(operator);
+            // reset all platforms to zero
+            plateformVectorPostion.entrySet().stream().
+                    forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
+        }
     }
 
     /**
