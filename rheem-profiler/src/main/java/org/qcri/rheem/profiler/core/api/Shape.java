@@ -844,6 +844,7 @@ public class Shape {
      * Logging {@link Shape}'s enumerated vector logs
      */
     public String printEnumeratedLogs() {
+        final String[] finaloutputVector = {""};
         final String[] outputVector = {""};
         NumberFormat nf = new DecimalFormat("##.#");
         for(double[] vectorLog:exhaustiveVectors) {
@@ -851,9 +852,10 @@ public class Shape {
             Arrays.stream(vectorLog).forEach(d -> {
                 outputVector[0] = outputVector[0].concat(nf.format(d) + " ");
             });
-            this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
+            //this.logger.info("Enumerated rheem plan feature vector: " + outputVector[0]);
+            finaloutputVector[0] = finaloutputVector[0] + outputVector[0] + "\n";
         }
-        return "Current rhee plan feature vector: " + outputVector[0];
+        return "Enumerated rheem plan feature vector: " + finaloutputVector[0];
     }
 
 

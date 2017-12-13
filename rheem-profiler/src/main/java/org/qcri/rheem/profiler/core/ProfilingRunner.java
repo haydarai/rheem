@@ -236,6 +236,9 @@ public class ProfilingRunner{
                     // Store execution log onDisk
                     storeExecutionLog(shape, endTime - startTime);
 
+                    shape.exhaustivePlanFiller(shape.getVectorLogs(),shape.platformVector, Shape.DEFAULT_PLATFORMS.get(1),0);
+                    //shape.printEnumeratedLogs();
+                    System.out.print(shape.printEnumeratedLogs());
                     List<Long> inputCardinalities = new ArrayList<>();
                     //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
                     // Gather and assemble all result metrics.
