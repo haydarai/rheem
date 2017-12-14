@@ -44,6 +44,7 @@ public class Shape {
     double[] vectorLogs= new double[VECTOR_SIZE];
     double[][] vectorLogs2D= new double[10][VECTOR_SIZE];
 
+    double[] vectorLogsWithResetPlatforms= new double[VECTOR_SIZE];
     private int topologyNumber;
     private List<String> operatorNames = new ArrayList<>();
     List<List<String>> operatorNames2d = new ArrayList<>();
@@ -85,17 +86,6 @@ public class Shape {
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
         put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);
     }};
-
-    /*static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
-        put("CollectionChannel", startOpPos + 140);put("StreamChannel", startOpPos + 144);put("RddChannel", startOpPos + 148);
-        put("FileChannel", startOpPos + 184);
-    }};
-
-    static HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
-        put("JavaCollect", startOpPos + 152);put("JavaCollectionSource", startOpPos + 156);put("JavaObjectFileSink", startOpPos + 160);put("JavaObjectFileSource", startOpPos + 164);
-        put("SparkCollect", startOpPos + 168);put("SparkCollectionSource", startOpPos + 172);put("SparkObjectFileSink", startOpPos + 176);put("SparkObjectFileSource", startOpPos + 180);
-    }};
-    */
 
     static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("CollectionChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 0*channelPosStep);
@@ -743,24 +733,26 @@ public class Shape {
      * @param platform
      * @param logVector
      */
-    private void updateOperatorPlatform(String operator, String platform, double[] logVector) {
+    private void updateOperatorPlatform(String operator, String platform, String replacePlatform, double[] logVector) {
         // get operator position
         int opPos = getOperatorVectorPosition(operator);
         // reset all platforms to zero
         //plateformVectorPostion.entrySet().stream().
         //        forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
-
+        if(replacePlatform!=null)
+            logVector[opPos + plateformVectorPostion.get(replacePlatform)] -=1;
         // update platform
         logVector[opPos + plateformVectorPostion.get(platform)] += 1;
     }
 
-    public void resetAllOperatorPlatforms(double[] logVector) {
+    public void resetAllOperatorPlatforms() {
+        vectorLogsWithResetPlatforms = vectorLogs.clone();
         for(String operator:operatorNames){
             // get operator position
             int opPos = getOperatorVectorPosition(operator);
             // reset all platforms to zero
             plateformVectorPostion.entrySet().stream().
-                    forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
+                    forEach(tuple->vectorLogsWithResetPlatforms[opPos + tuple.getValue()] = 0);
         }
     }
 
@@ -783,13 +775,19 @@ public class Shape {
 
     private List<String[]> exhaustivePlatformVectors = new ArrayList<>();
 
-    /**
-     * Will exhaustively generate all platform filled logVectors from the input logVector; and update  the platform vector will be used in the runner
-     * @param vectorLog
-     * @param platform
-     * @param start
-     */
-    public void exhaustivePlanFiller(double[] vectorLog,String[] platformVector, String platform, int start){
+
+    public void exhaustivePlanFiller(){
+        // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
+        exhaustivePlanFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(1), 0);
+    }
+        /**
+         * Will exhaustively generate all platform filled logVectors from the input logVector; and update  the platform vector will be used in the runner
+         * PS: currently support only 1D vector log generation
+         * @param vectorLog
+         * @param newPlatform
+         * @param start
+         */
+    public void exhaustivePlanFiller(double[] vectorLog,String[] platformVector, String newPlatform, int start){
         // if no generated plan fill it with equal values (all oerators in first platform java)
 
         // clone input vectorLog
@@ -800,34 +798,35 @@ public class Shape {
         if (exhaustiveVectors.isEmpty()){
             int iteration=0;
             for(String operator: operatorNames){
-                updateOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),newVectorLog);
+                updateOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),null,newVectorLog);
                 updatePlatformVector(iteration,DEFAULT_PLATFORMS.get(0),newPlatformLog);
                 iteration++;
             }
             exhaustiveVectors.add(newVectorLog.clone());
             exhaustivePlatformVectors.add(newPlatformLog.clone());
-            exhaustivePlanFiller(newVectorLog,newPlatformLog, platform,start);
+            exhaustivePlanFiller(newVectorLog,newPlatformLog, newPlatform,start);
             return;
         }
 
         // Recursive exhaustive filling platforms for each operator
         for(int i = start; i< operatorNames.size(); i++){
             String operator = operatorNames.get(i);
-            if(!(getOperatorPlatform(operator,vectorLog)==platform)){
+            //change if to check if the number of plateform for operator meets the new required operator number
+            if(!(getOperatorPlatform(operator,vectorLog)==newPlatform)){
                 // re-clone vectorLog
                 newVectorLog = vectorLog.clone();
                 // re-clone platformVector
                 newPlatformLog = platformVector.clone();
 
                 // update newVectorLog
-                updateOperatorPlatform(operator,platform,newVectorLog);
-                updatePlatformVector(i,platform,newPlatformLog);
+                updateOperatorPlatform(operator,newPlatform,DEFAULT_PLATFORMS.get(0),newVectorLog);
+                updatePlatformVector(i,newPlatform,newPlatformLog);
 
                 // add current vector to exhaustiveVectors
                 exhaustiveVectors.add(newVectorLog);
                 exhaustivePlatformVectors.add(newPlatformLog);
                 // recurse over newVectorLog
-                exhaustivePlanFiller(newVectorLog,newPlatformLog , platform,i+1);
+                exhaustivePlanFiller(newVectorLog,newPlatformLog , newPlatform,i+1);
             }
         }
     }
@@ -863,7 +862,7 @@ public class Shape {
             Arrays.stream(vectorLog).forEach(d -> {
                 outputVector[0] = outputVector[0].concat(nf.format(d) + " ");
             });
-            //this.logger.info("Enumerated rheem plan feature vector: " + outputVector[0]);
+            this.logger.info("Enumerated rheem plan feature vector: " + outputVector[0]);
             finaloutputVector[0] = finaloutputVector[0] + outputVector[0] + "\n";
         }
         return "Enumerated rheem plan feature vector: " + finaloutputVector[0];
@@ -964,7 +963,7 @@ public class Shape {
                         Set<Platform> platform = operator.getTargetPlatforms();
                         operatorName[0] = operator.toString().split("\\P{Alpha}+")[0];
                         // update platform
-                        platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),vectorLogs) );
+                        platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),null,vectorLogs) );
                     }
 
                     if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){

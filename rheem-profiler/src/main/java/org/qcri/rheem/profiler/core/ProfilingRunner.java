@@ -232,9 +232,9 @@ public class ProfilingRunner{
 
                     // Store execution log onDisk
                     storeExecutionLog(shape, endTime - startTime);
-                    shape.resetAllOperatorPlatforms(shape.getVectorLogs());
+                    shape.resetAllOperatorPlatforms();
 
-                    shape.exhaustivePlanFiller(shape.getVectorLogs(),shape.platformVector, Shape.DEFAULT_PLATFORMS.get(1),0);
+                    shape.exhaustivePlanFiller();
 
                     //shape.printEnumeratedLogs();
                     System.out.print(shape.printEnumeratedLogs());
