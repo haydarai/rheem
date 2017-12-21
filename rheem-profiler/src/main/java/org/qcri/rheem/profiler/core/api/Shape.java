@@ -817,7 +817,6 @@ public class Shape {
                 newVectorLog = vectorLog.clone();
                 // re-clone platformVector
                 newPlatformLog = platformVector.clone();
-
                 // update newVectorLog
                 updateOperatorPlatform(operator,newPlatform,DEFAULT_PLATFORMS.get(0),newVectorLog);
                 updatePlatformVector(i,newPlatform,newPlatformLog);
