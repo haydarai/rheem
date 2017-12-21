@@ -131,7 +131,7 @@ public class GeneticOptimizerApp {
         // Apply binning if requested.
         //        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
 
-        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
+        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.01d);
         if (binningStretch > 1d) {
             System.out.print("Applying binning... ");
             int numOriginalPartialExecutions = this.partialExecutions.size();
