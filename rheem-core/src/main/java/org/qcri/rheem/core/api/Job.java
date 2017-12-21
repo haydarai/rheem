@@ -32,10 +32,7 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -118,7 +115,7 @@ public class Job extends OneTimeExecutable {
     private final Set<String> udfJarPaths = new HashSet<>();
 
     private Monitor monitor;
-    
+
     /**
      * Name for this instance.
      */
@@ -171,8 +168,8 @@ public class Job extends OneTimeExecutable {
         // Prepare instrumentation.
         this.experiment = experiment;
         this.stopWatch = new StopWatch(experiment);
-        this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization", new String[0]);
-        this.executionRound = this.stopWatch.getOrCreateRound("Execution", new String[0]);
+        this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization");
+        this.executionRound = this.stopWatch.getOrCreateRound("Execution");
 
         // Configure job monitor.
         if (Monitor.isEnabled(this.configuration)) {
@@ -245,24 +242,37 @@ public class Job extends OneTimeExecutable {
             this.estimateKeyFigures();
 
             // Get an execution plan.
+            int executionId = 0;
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
-
             this.optimizationRound.stop();
+            if (this.experiment != null) {
+                this.experiment.addMeasurement(ExecutionPlanMeasurement.capture(
+                        executionPlan,
+                        String.format("execution-plan-%d", executionId)
+                ));
+            }
 
-            // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in monitoring nor execution.
+            // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
             String runId = "1";
             try {
                 monitor.initialize(this.configuration, runId, executionPlan.toJsonList());
-            }catch (Exception e) {
-                this.logger.warn("Failed to initalize monitor: {}", e);
+            } catch (Exception e) {
+                this.logger.warn("Failed to initialize monitor: {}", e);
             }
 
 
             // Take care of the execution.
-            int executionId = 0;
             while (!this.execute(executionPlan, executionId)) {
                 this.optimizationRound.start();
-                if (this.postProcess(executionPlan, executionId)) executionId++;
+                if (this.postProcess(executionPlan, executionId)) {
+                    executionId++;
+                    if (this.experiment != null) {
+                        this.experiment.addMeasurement(ExecutionPlanMeasurement.capture(
+                                executionPlan,
+                                String.format("execution-plan-%d", executionId)
+                        ));
+                    }
+                }
                 this.optimizationRound.stop();
             }
 
