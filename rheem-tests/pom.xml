@@ -86,6 +86,11 @@
             <artifactId>rheem-flink</artifactId>
             <version>0.3.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-profiler_2.11</artifactId>
+            <version>0.3.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <build>

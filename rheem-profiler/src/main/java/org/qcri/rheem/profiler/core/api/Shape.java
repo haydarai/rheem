@@ -84,7 +84,7 @@ public class Shape {
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
-        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);
+        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);
     }};
 
     static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -92,6 +92,10 @@ public class Shape {
         put("StreamChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 1*channelPosStep);
         put("RddChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 2*channelPosStep);
         put("FileChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 3*channelPosStep);
+        // Below should be added in different position
+        // DAtasetchannel is a flink type channel
+        put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 3*channelPosStep);
+
     }};
 
     static HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -957,7 +961,7 @@ public class Shape {
                     // Update operator name
                     if(operator.isExecutionOperator()){
                         operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
-                                .toLowerCase().replace("java","").replace("spark","");
+                                .toLowerCase().replace("java","").replace("spark","").replace("flink","");
                     } else {
                         Set<Platform> platform = operator.getTargetPlatforms();
                         operatorName[0] = operator.toString().split("\\P{Alpha}+")[0];

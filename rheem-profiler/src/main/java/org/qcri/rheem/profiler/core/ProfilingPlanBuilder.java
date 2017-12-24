@@ -2,11 +2,18 @@ package org.qcri.rheem.profiler.core;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.flink.operators.*;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
@@ -16,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static org.qcri.rheem.profiler.java.JavaOperatorProfilers.createJavaReduceByProfiler;
 
@@ -607,8 +615,229 @@ public class ProfilingPlanBuilder implements Serializable {
         //List allCardinalities = this.profilingConfig.getInputCardinality();
         //List dataQuata = this.profilingConfig.getDataQuantaSize();
         //List UdfComplexity = this.profilingConfig.getUdfsComplexity();
-
+        String fileUrl=new Configuration().getStringProperty("rheem.core.log.syntheticData");
         switch (plateform) {
+            case "flink":
+                switch (operator) {
+                    case "textsource":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkTextFileSource op= new FlinkTextFileSource("file:///"+fileUrl); op.setName("FinkTextFileSource"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                                );
+                        //return SparkPlanOperatorProfilers.createSparkTextFileSourceProfiler(1, type);
+                    case "collectionsource":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkCollectionSource op= new FlinkCollectionSource(type); op.setName("FinkCollectionFileSource"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                    case "map":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkMapOperator op= new FlinkMapOperator(
+                                        type,
+                                        type,
+                                        new TransformationDescriptor<>(
+                                            DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+                                            type.getDataUnitType().getTypeClass(),
+                                            type.getDataUnitType().getTypeClass()
+                                        )
+                                    );
+                                    op.setName("FinkMap"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return SparkPlanOperatorProfilers.createSparkMapProfiler(1, UdfComplexity,type);
+
+                    case "filter":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkFilterOperator op= new FlinkFilterOperator(type, new PredicateDescriptor<>(
+                                        DataGenerators.generatefilterUDF(UdfComplexity,dataQuantaScale,type,"filter"),
+                                        type.getDataUnitType().getTypeClass()));
+                                        op.setName("FinkFilter"); return op;},
+                                    new Configuration(),
+                                    DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkFilterProfiler(1, UdfComplexity, type));
+
+                    case "flatmap":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkFlatMapOperator op= new FlinkFlatMapOperator(type,
+                                        type,
+                                        new FlatMapDescriptor<>(
+                                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"flatmap"),
+                                                type.getDataUnitType().getTypeClass(),
+                                                type.getDataUnitType().getTypeClass()
+                                        ));
+                                    op.setName("FinkFlatMap"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkFlatMapProfiler(1, UdfComplexity, type));
+
+                    case "reduce":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkReduceByOperator op= new FlinkReduceByOperator(
+                                        type,
+                                        new TransformationDescriptor<>(DataGenerators.generateUDF(
+                                                UdfComplexity,dataQuantaScale,type,"filter"), type.getDataUnitType().getTypeClass(), type.getDataUnitType().getTypeClass()),
+                                        new ReduceDescriptor<>(DataGenerators.generateBinaryUDF(UdfComplexity,dataQuantaScale,type), type.getDataUnitType().getTypeClass())
+                                    );
+                                    op.setName("FinkReduce"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkReduceByProfiler(1, UdfComplexity, type));
+
+                    case "globalreduce":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkGlobalReduceOperator op= new FlinkGlobalReduceOperator(
+                                        type,
+                                        new ReduceDescriptor<>(DataGenerators.generateBinaryUDF(UdfComplexity,dataQuantaScale,type), type.getDataUnitType().getTypeClass())
+                                );
+                                    op.setName("FinkGlobalReduce"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkGlobalReduceProfiler(1000, UdfComplexity, type));
+
+                    case "distinct":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkDistinctOperator op= new FlinkDistinctOperator(
+                                        type
+                                );
+                                    op.setName("FinkDistinct"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkDistinctProfiler(1, type));
+
+                    case "sort":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkSortOperator op= new FlinkSortOperator(
+                                        new TransformationDescriptor<>(in->in, type.getDataUnitType().getTypeClass(), type.getDataUnitType().getTypeClass()),
+                                        type
+                                );
+                                    op.setName("FinkSort"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkSortProfiler(1, type));
+
+                    case "count":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkCountOperator op= new FlinkCountOperator(
+                                        type
+                                );
+                                    op.setName("FinkCount"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkCountProfiler(1, type));
+
+                    case "groupby":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkGroupByOperator op= new FlinkGroupByOperator(
+                                        new TransformationDescriptor<>(
+                                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+                                                type.getDataUnitType().getTypeClass(),
+                                                type.getDataUnitType().getTypeClass()
+                                        ),
+                                        type,
+                                        type
+                                );
+                                    op.setName("FinkGroupBy"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkMaterializedGroupByProfiler(1, UdfComplexity, type));
+
+                    case "join":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkJoinOperator op= new FlinkJoinOperator(
+                                        type,
+                                        type,
+                                        new TransformationDescriptor<>(
+                                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+                                                type.getDataUnitType().getTypeClass(),
+                                                type.getDataUnitType().getTypeClass()
+                                        ),
+                                        new TransformationDescriptor<>(
+                                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+                                                type.getDataUnitType().getTypeClass(),
+                                                type.getDataUnitType().getTypeClass()
+                                        )
+                                );
+                                    op.setName("FinkJoin"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkJoinProfiler(1, UdfComplexity, type));
+
+                    case "union":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkUnionAllOperator op= new FlinkUnionAllOperator(
+                                        type
+                                );
+                                    op.setName("FinkUnion"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkUnionProfiler(1, type));
+
+                    case "cartesian":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkCartesianOperator op= new FlinkCartesianOperator(
+                                        type,
+                                        type
+                                );
+                                    op.setName("FinkCartesian"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkCartesianProfiler(1, type));
+
+                    case "callbacksink":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkLocalCallbackSink op= new FlinkLocalCallbackSink(dataQuantum -> { },type); op.setName("FinkCallBackSink"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
+                    case "repeat":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkRepeatOperator op= new FlinkRepeatOperator(
+                                        profilingConfig.getIterations().get(0),
+                                        type
+                                );
+                                    op.setName("FinkRepeat"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkRepeatProfiler(1, type,profilingConfig.getIterations().get(0) ));
+                    case "randomsample":
+                    case "shufflesample":
+                    case "bernoullisample":
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkSampleOperator op= new FlinkSampleOperator(
+                                        iteration->profilingConfig.getSampleSize(),
+                                        type,
+                                        iteration -> 42L
+                                );
+                                    op.setName("FinkSample"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+
+                    default:
+                        logger.error("Unknown operator: " + operator);
+                        return new OperatorProfilerBase(
+                                (Supplier<ExecutionOperator> & Serializable) () -> {FlinkLocalCallbackSink op= new FlinkLocalCallbackSink(dataQuantum -> { },type); op.setName("FinkCallBackSink"); return op;},
+                                new Configuration(),
+                                DataGenerators.generateGenerator(1,type)
+                        );
+                        //return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
+                }
             case "spark":
                 switch (operator) {
                     case "textsource":

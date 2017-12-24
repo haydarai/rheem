@@ -17,6 +17,7 @@ import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.flink.Flink;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
@@ -114,6 +115,8 @@ public class ProfilingRunner{
                 rheemContext = new RheemContext().with(Java.basicPlugin());
             case "spark":
                 rheemContext = new RheemContext().with(Spark.basicPlugin());
+            case "flink":
+                rheemContext = new RheemContext().with(Flink.basicPlugin());
         }
 
         // Check dataType of the generated plan
@@ -191,6 +194,9 @@ public class ProfilingRunner{
                                 textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.core.log.syntheticData") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                             case "spark":
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                break;
+                            case "flink":
                                 textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                         }
@@ -348,6 +354,8 @@ public class ProfilingRunner{
                 rheemContext = new RheemContext().with(Java.basicPlugin());
             case "spark":
                 rheemContext = new RheemContext().with(Spark.basicPlugin());
+            case "flink":
+                rheemContext = new RheemContext().with(Flink.basicPlugin());
         }
         plan.unaryOperatorProfilers.get(0).getOperator().connectTo(0,plan.sinkOperatorProfiler.getOperator(),0);
 

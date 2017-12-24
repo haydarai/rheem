@@ -83,6 +83,13 @@ public abstract class OperatorProfiler {
     }
 
     public void prepare( long dq,long... inputCardinalities) {
+        this.operator = this.operatorGenerator.get();
+        //this.inputCardinalities = RheemArrays.asList(inputCardinalities);
+        //this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
+        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
+            long inputCardinality = inputCardinalities[inputIndex];
+            this.prepareInput(inputIndex, dq, inputCardinality);
+        }
     }
 
 
