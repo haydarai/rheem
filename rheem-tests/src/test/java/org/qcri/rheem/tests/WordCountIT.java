@@ -16,6 +16,8 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.Counter;
+import org.qcri.rheem.flink.Flink;
+import org.qcri.rheem.flink.operators.FlinkTextFileSource;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.operators.JavaReduceByOperator;
@@ -23,19 +25,13 @@ import org.qcri.rheem.profiler.core.api.Shape;
 import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
-import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-
-
-
-import static org.qcri.rheem.tests.RheemPlans.createUri;
 
 /**
  * Word count integration test. Besides going through different {@link Platform} combinations, each test addresses a different
@@ -229,8 +225,9 @@ public class WordCountIT {
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(Spark.basicPlugin());
         rheemContext.register(Java.basicPlugin());
+        rheemContext.register(Flink.basicPlugin());
 
-        TextFileSource textFileSource = new SparkTextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        TextFileSource textFileSource = new FlinkTextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new SparkFlatMapOperator<>(

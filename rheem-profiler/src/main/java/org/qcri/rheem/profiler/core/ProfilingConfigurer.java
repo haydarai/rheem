@@ -44,7 +44,7 @@ public class ProfilingConfigurer {
     // TODO: replace with actual read functions from a user input file
     private static final String DEFAULT_UDF_COMPLEXITIES = "1,2,3";
     private static final String DEFAULT_SELECTIVITY_COMPLEXITIES = "1,2,3";
-    // The below can be applied only for unary operator profiling
+    // The below can be applied only for unary executionOperator profiling
     private static final String DEFAULT_BINARY_INPUT_RATIOS = "1,10,100";
     private static final String DEFAULT_LOOP_ITERATION_NUMBERS = "10,100";
     public static final String DEFAULT_PLATEFORMS = "java,spark,flink";

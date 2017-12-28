@@ -57,6 +57,12 @@ public class TopologyGenerator {
      * maximum number of Loops Topologies to be used in generated topologies
      *
      */
+    private static int maxPipelineTopologies = -1 ;
+
+    /**
+     * maximum number of Loops Topologies to be used in generated topologies
+     *
+     */
     private static int maxLoopTopologies = 0 ;
 
     /**
@@ -81,6 +87,14 @@ public class TopologyGenerator {
      *
      */
     private static Integer currentJunctureNumber = 0 ;
+
+
+    /**
+     * Current number of Pipeline Topologies to be used in generated topologies
+     *
+     */
+    private static Integer currentPipelineNumber = 0 ;
+
 
     /**
      * maximum number of Juncture Topologies to be used in generated topologies
@@ -118,7 +132,7 @@ public class TopologyGenerator {
         // Disabled case that handles single Operator Topology
         // TODO the below case should be put in an outside part before the the topology loops
         if((nodesNumber==1)&&(false))
-            // Single operator topology
+            // Single executionOperator topology
             return singleOperatortopology();
 
         int previousGeneratedTopologies = newGeneratedTopologies;
@@ -134,49 +148,53 @@ public class TopologyGenerator {
             //System.arraycopy(tmp2, 0, tmp, 0,0);
 
                 if (tmpPreviousTopology.isPipeline()){
-                // if the tmpPreviousTopology is pipeline the only one topology possiblity to generate (i.e 1 new juncture + 1 new pipeline)
-                // Handles the case of creating the first merge Topology (i.e with only one Juncture Topology)
-                PipelineTopology tmpPipeline = new PipelineTopology(nodesNumber);
-                JunctureTopology tmpJuncture = new JunctureTopology(nodesNumber);
+                    // if the tmpPreviousTopology is pipeline the only one topology possiblity to generate (i.e 1 new juncture + 1 new pipeline)
+                    // Handles the case of creating the first merge Topology (i.e with only one Juncture Topology)
+                    PipelineTopology tmpPipeline = new PipelineTopology(nodesNumber);
+                    JunctureTopology tmpJuncture = new JunctureTopology(nodesNumber);
 
-                // Connect the last generated Topology with tmpJuncture
-                tmpPreviousTopology.connectTo(0,tmpJuncture,0);
-                // Connect the created Pipeline Topology with tmpJuncture
-                tmpPipeline.connectTo(0,tmpJuncture,1);
+                    // Connect the last generated Topology with tmpJuncture
+                    tmpPreviousTopology.connectTo(0,tmpJuncture,0);
+                    // Connect the created Pipeline Topology with tmpJuncture
+                    tmpPipeline.connectTo(0,tmpJuncture,1);
 
-                // Add the new Topology with Juncture
-                topologyList.add(tmpJuncture);
-                newGeneratedTopologies+=1;
+                    // Add the new Topology with Juncture
+                    topologyList.add(tmpJuncture);
+                    newGeneratedTopologies+=1;
 
-                // update the number of junctions
-                currentJunctureNumber =+1;
-
-            } else if (tmpPreviousTopology.isJuncture()){
-                // create another copy because we will be adding two topoloogies here
-                Topology tmpPreviousTopology2 = tmpPreviousTopology.createCopy(nodesNumber-1);
+                    // update the number of junctions
+                    currentJunctureNumber+=1;
 
 
-                // case of juncture topology; two possible topologies to generate (i.e: first is 1 new pipeline; second: 1 new juncture + 1 new pipeline)
-                PipelineTopology tmpPipeline = new PipelineTopology(nodesNumber);
+                } else if (tmpPreviousTopology.isJuncture()){
+                    // create another copy because we will be adding two topoloogies here
+                    Topology tmpPreviousTopology2 = tmpPreviousTopology.createCopy(nodesNumber-1);
 
-                // Connect the last generated Topology with tmpJuncture
-                tmpPreviousTopology.connectTo(0,tmpPipeline,0);
 
-                // Add the first generated topology
-                topologyList.add(tmpPipeline);
+                    // case of juncture topology; two possible topologies to generate (i.e: first is 1 new pipeline; second: 1 new juncture + 1 new pipeline)
+                    PipelineTopology tmpPipeline = new PipelineTopology(nodesNumber);
 
-                JunctureTopology tmpJuncture = new JunctureTopology(nodesNumber);
-                PipelineTopology tmpPipeline2 = new PipelineTopology(nodesNumber);
-                // Connect the last generated Topology with tmpJuncture
-                tmpPreviousTopology.connectTo(0,tmpJuncture,0);
-                // Connect the created Pipeline Topology with tmpJuncture
-                tmpPipeline2.connectTo(0,tmpJuncture,1);
+                    // Connect the last generated Topology with tmpJuncture
+                    tmpPreviousTopology.connectTo(0,tmpPipeline,0);
 
-                // Add the first generated topology
-                topologyList.add(tmpJuncture);
 
-                newGeneratedTopologies+=2;
-                currentJunctureNumber =+1;
+
+                    JunctureTopology tmpJuncture = new JunctureTopology(nodesNumber);
+                    PipelineTopology tmpPipeline2 = new PipelineTopology(nodesNumber);
+                    // Connect the last generated Topology with tmpJuncture
+                    tmpPreviousTopology.connectTo(0,tmpJuncture,0);
+                    // Connect the created Pipeline Topology with tmpJuncture
+                    tmpPipeline2.connectTo(0,tmpJuncture,1);
+
+                    // Add the new juncture generated topology
+                    topologyList.add(tmpJuncture);
+
+                    // Add the new pipeline generated topology
+                    topologyList.add(tmpPipeline);
+
+                    currentPipelineNumber+=1;
+                    newGeneratedTopologies+=2;
+                    currentJunctureNumber+=1;
 
             }
             else if (tmpPreviousTopology.isLoop()){
@@ -221,6 +239,7 @@ public class TopologyGenerator {
         if (nodesNumber==1) {
             topologyList.add(new PipelineTopology(nodesNumber));
             generateLoops(1,nodesNumber);
+            currentPipelineNumber +=1;
             newGeneratedTopologies+=1;
         }
 

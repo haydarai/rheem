@@ -6,9 +6,7 @@ import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.profiler.core.api.OperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
@@ -47,7 +45,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
 
     protected final long executionPaddingTime;
 
-    //protected SparkExecutionOperator operator;
+    //protected SparkExecutionOperator executionOperator;
 
     protected SparkExecutor sparkExecutor;
 
@@ -63,7 +61,7 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
         //super();
 
         this.operatorGenerator = operatorGenerator;
-        this.operator = this.operatorGenerator.get();
+        this.executionOperator = this.operatorGenerator.get();
 
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
 
@@ -83,10 +81,10 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
     /**
      * Call this method before {@link #run()} to prepare the profiling run
      *
-     * @param inputCardinalities number of input elements for each input of the profiled operator
+     * @param inputCardinalities number of input elements for each input of the profiled executionOperator
      */
     public void prepare(long dataQuantaSize,long... inputCardinalities) {
-        this.operator = this.operatorGenerator.get();
+        this.executionOperator = this.operatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
         //this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
         for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
@@ -321,19 +319,19 @@ public abstract class SparkOperatorProfiler extends OperatorProfiler {
     }
 
     /**
-     * Get the operator
+     * Get the executionOperator
      * @return
      */
     @Override
-    public SparkExecutionOperator getOperator() {
-        return (SparkExecutionOperator) operator;
+    public SparkExecutionOperator getExecutionOperator() {
+        return (SparkExecutionOperator) executionOperator;
     }
 
     /**
-     * Set the operator
-     * @param operator
+     * Set the executionOperator
+     * @param executionOperator
      */
-    //public void setOperator(SparkExecutionOperator operator) {
-    //    this.operator = operator;
+    //public void setExecutionOperator(SparkExecutionOperator executionOperator) {
+    //    this.executionOperator = executionOperator;
     //}
 }

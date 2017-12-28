@@ -34,7 +34,7 @@ public class PlanProfiler {
     public List<OperatorProfiler> binaryOperatorProfilers;
 
     /**
-     * Sink operator profiler
+     * Sink executionOperator profiler
      */
     public OperatorProfiler sinkOperatorProfiler;
 

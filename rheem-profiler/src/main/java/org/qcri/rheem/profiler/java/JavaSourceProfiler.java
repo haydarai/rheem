@@ -52,7 +52,7 @@ public abstract class JavaSourceProfiler extends JavaOperatorProfiler{
         // List of operators requiring collection channels.
         operatorsWithCollectionInput.addAll(Arrays.asList(JavaTextFileSource.class));
 
-        if (operatorsWithCollectionInput.contains(this.operator.getClass())) {
+        if (operatorsWithCollectionInput.contains(this.executionOperator.getClass())) {
             this.outputChannelInstance = createChannelInstance();
         } else {
             this.outputChannelInstance = createCollectionChannelInstance();

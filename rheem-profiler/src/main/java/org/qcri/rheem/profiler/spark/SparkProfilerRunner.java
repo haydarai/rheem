@@ -23,7 +23,7 @@ public class SparkProfilerRunner implements Serializable {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.printf("Usage: java %s <operator to profile> [<cardinality n>[,<cardinality n>]*]+ \n", SparkProfilerRunner.class);
+            System.err.printf("Usage: java %s <executionOperator to profile> [<cardinality n>[,<cardinality n>]*]+ \n", SparkProfilerRunner.class);
             System.exit(1);
         }
 
@@ -52,7 +52,7 @@ public class SparkProfilerRunner implements Serializable {
             operators.add(inputOperator);
         }
 
-        //String operator = args[0];
+        //String executionOperator = args[0];
         /*List<List<Long>> allCardinalities2 = new LinkedList<>();
         for (int i = 1; i < args.length; i++) {
             List<Long> cardinalities = Arrays.stream(args[i].split(",")).map(Long::valueOf).collect(Collectors.toList());
@@ -74,7 +74,7 @@ public class SparkProfilerRunner implements Serializable {
                         List<OperatorProfiler.Result> results;
                         System.out.println();
                         System.out.println("*****************************************************");
-                        System.out.println("Starting profiling of " + operator + " operator: ");
+                        System.out.println("Starting profiling of " + operator + " executionOperator: ");
 
                         switch (operator) {
                             case "textsource":
@@ -190,7 +190,7 @@ public class SparkProfilerRunner implements Serializable {
 //                break;
 //            }
                             default:
-                                System.out.println("Unknown operator: " + operator);
+                                System.out.println("Unknown executionOperator: " + operator);
                                 return;
                         }
                         results.stream().forEach(result->result.setUdfComplexity(UdfComplexity));

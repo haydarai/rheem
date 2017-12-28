@@ -42,7 +42,7 @@ public class JavaUnaryOperatorProfiler extends JavaOperatorProfiler {
         // List of operators requiring collection channels.
         operatorsWithCollectionInput.addAll(Arrays.asList(JavaReduceByOperator.class, JavaGlobalReduceOperator.class, JavaCountOperator.class, JavaMaterializedGroupByOperator.class));
 
-        if (operatorsWithCollectionInput.contains(this.operator.getClass())) {
+        if (operatorsWithCollectionInput.contains(this.executionOperator.getClass())) {
             // Create Collection channels.
             // Allocate input.
             this.inputChannelInstance = createCollectionChannelInstance(dataQuanta);
@@ -83,7 +83,7 @@ public class JavaUnaryOperatorProfiler extends JavaOperatorProfiler {
         // List of operators requiring collection channels.
         operatorsWithCollectionInput.addAll(Arrays.asList(JavaReduceByOperator.class, JavaGlobalReduceOperator.class, JavaCountOperator.class, JavaMaterializedGroupByOperator.class));
 
-        if (operatorsWithCollectionInput.contains(this.operator.getClass())) {
+        if (operatorsWithCollectionInput.contains(this.executionOperator.getClass())) {
             // Create Collection channels.
             // Allocate input.
             this.inputChannelInstance = createCollectionChannelInstance(dataQuanta);
@@ -110,8 +110,8 @@ public class JavaUnaryOperatorProfiler extends JavaOperatorProfiler {
     }
 
     @Override
-    public JavaExecutionOperator getOperator() {
-        return (JavaExecutionOperator)this.operator;
+    public JavaExecutionOperator getExecutionOperator() {
+        return (JavaExecutionOperator)this.executionOperator;
     }
 
 }

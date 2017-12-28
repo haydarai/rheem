@@ -25,7 +25,7 @@ public class JavaProfilerRunner {
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.err.printf("Usage: java %s <operator to profile> <cardinality>[,<cardinality>] <dataQuantaSize>[,<dataQuantaSize>]\n", JavaProfilerRunner.class);
+            System.err.printf("Usage: java %s <executionOperator to profile> <cardinality>[,<cardinality>] <dataQuantaSize>[,<dataQuantaSize>]\n", JavaProfilerRunner.class);
             System.exit(1);
         }
 
@@ -68,7 +68,7 @@ public class JavaProfilerRunner {
                         List<OperatorProfiler.Result> results ;
                         System.out.println();
                         System.out.println("*****************************************************");
-                        System.out.println("Starting profiling of " + operator + " operator: ");
+                        System.out.println("Starting profiling of " + operator + " executionOperator: ");
                         switch (operator) {
                             case "textsource":
                                 results = profile(JavaOperatorProfilers.createJavaTextFileSourceProfiler(dataQuata), cardinalities, dataQuata);
@@ -180,7 +180,7 @@ public class JavaProfilerRunner {
                                 break;
                             }
                             default:
-                                System.out.println("Unknown operator: " + operator);
+                                System.out.println("Unknown executionOperator: " + operator);
                                 return;
                         }
                         results.stream().forEach(result->result.setUdfComplexity(UdfComplexity));
@@ -197,7 +197,7 @@ public class JavaProfilerRunner {
             }
 
             System.out.println();
-            System.out.println("Profiling results of " + operator + " operator: ");
+            System.out.println("Profiling results of " + operator + " executionOperator: ");
             System.out.println(RheemCollections.getAny(allResults).getCsvHeader());
             allResults.forEach(result -> System.out.println(result.toCsvString()));
         }
@@ -365,7 +365,7 @@ public class JavaProfilerRunner {
         }
         ProfilingUtils.sleep(1000);
 
-        System.out.printf("Profiling %s with %dx%d data quanta.\n", javaBinaryOperatorProfiler.getOperator(), cardinality0, cardinality1);
+        System.out.printf("Profiling %s with %dx%d data quanta.\n", javaBinaryOperatorProfiler.getExecutionOperator(), cardinality0, cardinality1);
         final StopWatch stopWatch = createStopWatch();
 
         System.out.println("Prepare...");

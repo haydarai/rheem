@@ -365,7 +365,7 @@ public class RheemPlans {
         loopOperator.setName("loop");
         loopOperator.initialize(source, convergenceSource);
 
-        // Build the sample operator.
+        // Build the sample executionOperator.
         SparkShufflePartitionSampleOperator<Integer> sampleOperator =
                 new SparkShufflePartitionSampleOperator<>(
                         iterationNumber -> sampleSize,

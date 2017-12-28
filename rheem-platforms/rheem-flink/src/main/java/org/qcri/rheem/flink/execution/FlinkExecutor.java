@@ -1,11 +1,9 @@
 package org.qcri.rheem.flink.execution;
 
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.*;
@@ -13,7 +11,6 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.compiler.FunctionCompiler;
-import org.qcri.rheem.flink.compiler.KeySelectorFunction;
 import org.qcri.rheem.flink.operators.FlinkExecutionOperator;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
 
@@ -113,7 +110,9 @@ public class FlinkExecutor extends PushExecutorTemplate {
                 this.logger.info("{} was not executed eagerly as requested.", task);
             }else {
                 try {
-                    this.fee.execute();
+                    // avoid to run execute when no sink is present as it raises an exception for Flin executor
+                    if(task.getOperator().isSink())
+                        this.fee.execute();
                 } catch (Exception e) {
                     throw new RheemException(e);
                 }

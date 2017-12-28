@@ -31,11 +31,11 @@ public class SparkSinkProfiler extends SparkOperatorProfiler {
     protected Result executeOperator() {
         final ChannelInstance inputChannelInstance = createChannelInstance(this.inputRdd, this.sparkExecutor);
 
-        // Let the operator execute.
+        // Let the executionOperator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                (SparkExecutionOperator)this.operator,
+                (SparkExecutionOperator)this.executionOperator,
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{}
         );

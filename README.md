@@ -35,7 +35,7 @@ Note the `***`: Rheem ships with multiple modules that can be included in your a
 * `rheem-basic`: provides common operators and data types for your apps (recommended)
 * `rheem-api`: provides an easy-to-use Scala and Java API to assemble Rheem plans (recommended)
 * `rheem-java`, `rheem-spark`, `rheem-graphchi`, `rheem-sqlite3`, `rheem-postgres`: adapters for the various supported processing platforms
-* `rheem-profiler`: provides functionality to learn operator and UDF cost functions from historical execution data
+* `rheem-profiler`: provides functionality to learn executionOperator and UDF cost functions from historical execution data
 
 For the sake of version flexibility, you still have to include your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
@@ -72,7 +72,7 @@ $ java -Drheem.configuration=url://to/my/rheem.properties ...
 You can find the most relevant settings in the following:
 * General settings
   * `rheem.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
-  * `rheem.core.log.executions (= ~/.rheem/executions.json)` where to log execution times of operator groups
+  * `rheem.core.log.executions (= ~/.rheem/executions.json)` where to log execution times of executionOperator groups
   * `rheem.core.log.cardinalities (= ~/.rheem/cardinalities.json)` where to log cardinality measurements
   * `rheem.core.optimizer.instrumentation (= org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Rheem plans; other options are `org.qcri.rheem.core.profiling.NoInstrumentationStrategy` and `org.qcri.rheem.core.profiling.FullInstrumentationStrategy`
   * `rheem.core.optimizer.reoptimize (= false)`: whether to progressively optimize Rheem plans
@@ -122,7 +122,7 @@ Further, it models a CPU load that is proportional to the input cardinality.
 However, more complex functions are possible.
 In particular, you can use
 * the variables `in0`, `in1`, ... and `out0`, `out1`, ... to incorporate the input and output cardinalities, respectively;
-* operator properties, such as `numIterations` for the `PageRankOperator` implementations;
+* executionOperator properties, such as `numIterations` for the `PageRankOperator` implementations;
 * the operators `+`, `-`, `*`, `/`, `%`, `^`, and parantheses;
 * the functions `min(x0, x1, ...))`, `max(x0, x1, ...)`, `abs(x)`, `log(x, base)`, `ln(x)`, `ld(x)`;
 * and the constants `e` and `pi`.

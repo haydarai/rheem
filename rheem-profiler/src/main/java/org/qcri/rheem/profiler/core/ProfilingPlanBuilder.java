@@ -13,10 +13,9 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.flink.operators.*;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.data.UdfGenerators;
 import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
-import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
+import org.qcri.rheem.profiler.spark.SparkOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +23,6 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Supplier;
-
-import static org.qcri.rheem.profiler.java.JavaOperatorProfilers.createJavaReduceByProfiler;
 
 /**
  * Generates rheem plans for profiling.
@@ -91,9 +88,14 @@ public class ProfilingPlanBuilder implements Serializable {
         // Loop through all dataTypes
         for(DataSetType type:profilingConfig.getDataType()){
             // Loop through all plateforms
-            for (String platform:profilingConfig.getProfilingPlateform()){
+            //for (String platform:profilingConfig.getProfilingPlateform()){
                 // Set the shape's platform
-                shape.setPlateform(platform);
+            // TODO: the below set is not required
+            List<String> platforms = profilingConfig.getProfilingPlateform();
+            // select a new platform randomly
+            int PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+            String platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                shape.setPlateform(platforms);
                 //Loop through all unary operators
                 // TODO: we have to multiply by number of pipelines existing in current shape and number of nodes per pipeline
                 for (String unaryOperator:profilingConfig.getUnaryExecutionOperators()){
@@ -104,20 +106,24 @@ public class ProfilingPlanBuilder implements Serializable {
                             // Fill the sources
                             for (Topology t : shape.getSourceTopologies()) {
                                 //if (t.getNodes().isEmpty())
-                                prepareSource(t, type, platform);
+                                prepareSource(t, type, platforms);
                             }
 
                             // TODO: Fill pipeline topologies with exhaustive way (pass a list of operators (e.g:[map,map,map])   to be filled in the below loop)
-                            // Fill with unary operator profilers
+                            // Fill with unary executionOperator profilers
                             for (Topology t : shape.getPipelineTopologies()) {
                                 // check if the nodes are not already filled in the source or sink
                                 if ((t.getNodes().isEmpty() || (!t.isSource())))
-                                    for (int i = 1; i <= t.getNodeNumber(); i++)
-                                        // TODO: fill the nodes with the operator list
+                                    for (int i = 1; i <= t.getNodeNumber(); i++) {
+                                        // select a new platform randomly
+                                        PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+                                        platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                                        // TODO: fill the nodes with the executionOperator list
                                         t.getNodes().push(randomUnaryNodeFill(type, platform));
+                                    }
                             }
 
-                            // Fill with binary operator profilers
+                            // Fill with binary executionOperator profilers
                             for (Topology t : shape.getJunctureTopologies()) {
                                 // check if the nodes are not already filled in the source or sink
                                 //if (t.getNodes().isEmpty())
@@ -148,7 +154,7 @@ public class ProfilingPlanBuilder implements Serializable {
                         }
                     }
                 }
-            }
+            //}
         }
         shape.setSubShapes(tmpSubShapes);
         return planProfilers;
@@ -163,7 +169,7 @@ public class ProfilingPlanBuilder implements Serializable {
         List<PlanProfiler> planProfilers = new ArrayList<>();
         PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
 
-        // Start with the sink operator
+        // Start with the sink executionOperator
         //shape.getSinkTopology().getNode
         return planProfilers;
     }
@@ -172,7 +178,7 @@ public class ProfilingPlanBuilder implements Serializable {
          */
     private static void buildPlanProfiler(Shape shape, DataSetType type){
 
-        // Start with the sink operator
+        // Start with the sink executionOperator
         Topology sinkTopology = shape.getSinkTopology();
 
 
@@ -202,30 +208,30 @@ public class ProfilingPlanBuilder implements Serializable {
                     .forEach(n->{
                         OperatorProfiler op = n.getField1();
                         DataSetType opIn1DataType,opOutDataType;
-                        // check the operator type
+                        // check the executionOperator type
                         // handle the source case
-                        if (op.getOperator().isSource()) {
+                        if (op.getExecutionOperator().isSource()) {
                             opIn1DataType = null;
-                            opOutDataType = op.getOperator().getOutput(0).getType();
-                        }else if (op.getOperator().isSink()) {
-                            opIn1DataType = op.getOperator().getInput(0).getType();
+                            opOutDataType = op.getExecutionOperator().getOutput(0).getType();
+                        }else if (op.getExecutionOperator().isSink()) {
+                            opIn1DataType = op.getExecutionOperator().getInput(0).getType();
                             opOutDataType = null;
                         }else {
-                            opIn1DataType = op.getOperator().getInput(0).getType();
-                            opOutDataType = op.getOperator().getOutput(0).getType();
+                            opIn1DataType = op.getExecutionOperator().getInput(0).getType();
+                            opOutDataType = op.getExecutionOperator().getOutput(0).getType();
                         }
 
-                        // check if the operator profiler has the required dataType
+                        // check if the executionOperator profiler has the required dataType
                         if((opIn1DataType!=null)&&(!opIn1DataType.equals(profilingConfig.getDataType()))){
-                            // TODO: Need to change the operator udf to be compatible with new datatype or create intermediate operator
+                            // TODO: Need to change the executionOperator udf to be compatible with new datatype or create intermediate executionOperator
                             // Remplace the slot
-                            op.getOperator().setInput(0,new InputSlot<>("in", op.getOperator(), type));
+                            op.getExecutionOperator().setInput(0,new InputSlot<>("in", op.getExecutionOperator(), type));
                         }
 
                         if((opOutDataType!=null)&&(!opOutDataType.equals(profilingConfig.getDataType()))){
-                            // TODO: Need to change the operator udf to be compatible with new datatype or create intermediate operator
+                            // TODO: Need to change the executionOperator udf to be compatible with new datatype or create intermediate executionOperator
                             // Remplace the slot
-                            op.getOperator().setOutput(0,new OutputSlot<>("out", op.getOperator(), type));
+                            op.getExecutionOperator().setOutput(0,new OutputSlot<>("out", op.getExecutionOperator(), type));
                         }
                     });
 
@@ -265,7 +271,7 @@ public class ProfilingPlanBuilder implements Serializable {
                 // TODO: check the dataType and correct it
                 // connect previous with current node
                 try{
-                    currentNode.getField1().getOperator().connectTo(0,previousNode.getField1().getOperator(),inputSlot);
+                    currentNode.getField1().getExecutionOperator().connectTo(0,previousNode.getField1().getExecutionOperator(),inputSlot);
                 } catch (Exception e){
                     logger.error(e.getMessage());
                 }
@@ -311,8 +317,8 @@ public class ProfilingPlanBuilder implements Serializable {
             Tuple2<String, OperatorProfiler> loopNode = currentnode;
             loopNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
 
-            loopNode.getField1().getOperator().connectTo(LoopTopology.ITERATION_OUTPUT_INDEX,
-                    currentnode.getField1().getOperator(),inputSlot);
+            loopNode.getField1().getExecutionOperator().connectTo(LoopTopology.ITERATION_OUTPUT_INDEX,
+                    currentnode.getField1().getExecutionOperator(),inputSlot);
 
             // return null
             return new Tuple2<>();
@@ -322,7 +328,7 @@ public class ProfilingPlanBuilder implements Serializable {
         Tuple2<String, OperatorProfiler> previousNode = null;
         Tuple2<String, OperatorProfiler> loopNode = currentnode;
 
-        if (loopNode.getField1().getOperator().isSink()){
+        if (loopNode.getField1().getExecutionOperator().isSink()){
             // Handle the case where loop topology is sink topology too
 
             // update the nodes
@@ -331,7 +337,7 @@ public class ProfilingPlanBuilder implements Serializable {
             loopNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
 
             // connect the loop topology to final output
-            loopNode.getField1().getOperator().connectTo(LoopTopology.FINAL_OUTPUT_INDEX,previousNode.getField1().getOperator(),inputSlot);
+            loopNode.getField1().getExecutionOperator().connectTo(LoopTopology.FINAL_OUTPUT_INDEX,previousNode.getField1().getExecutionOperator(),inputSlot);
             // Get the start Iteration Topology
             Topology startInterationTopology = loopTopology.getLoopBodyInput();
 
@@ -355,7 +361,7 @@ public class ProfilingPlanBuilder implements Serializable {
             // this will connect the INITIAL_INPUT_INDEX
             //connectNodes(predecessors.get(0), loopNode, LoopTopology.INITIAL_INPUT_INDEX);
             Tuple2<String, OperatorProfiler> initialInputIndexNode = predecessors.get(0).getNodes().peek();
-            //initialInputIndexNode.getField1().getOperator().connectTo(0,loopNode.getField1().getOperator(),LoopTopology.INITIAL_INPUT_INDEX);
+            //initialInputIndexNode.getField1().getExecutionOperator().connectTo(0,loopNode.getField1().getExecutionOperator(),LoopTopology.INITIAL_INPUT_INDEX);
 
             // connect the nodes of the initialization topology
             connectNodes(predecessors.get(0), loopNode,LoopTopology.INITIAL_INPUT_INDEX);
@@ -365,7 +371,7 @@ public class ProfilingPlanBuilder implements Serializable {
             Tuple2<String, OperatorProfiler> sourceNode;
             sourceNode = (Tuple2<String, OperatorProfiler>) nodes.pop();
 
-            sourceNode.getField1().getOperator().connectTo(0,loopNode.getField1().getOperator(), LoopTopology.INITIAL_INPUT_INDEX);
+            sourceNode.getField1().getExecutionOperator().connectTo(0,loopNode.getField1().getExecutionOperator(), LoopTopology.INITIAL_INPUT_INDEX);
         }
 
         currentLoop = new LoopTopology(0,0);
@@ -384,7 +390,10 @@ public class ProfilingPlanBuilder implements Serializable {
      * PS: Source node i counted in the node number
      * @param topology
      */
-    private static void prepareSource(Topology topology, DataSetType type, String plateform) {
+    private static void prepareSource(Topology topology, DataSetType type, List<String> plateforms) {
+        // select teh first platform to appear in the config file for the source operators
+        int PlatformRnd;
+        String plateform = profilingConfig.getProfilingPlateform().get(0);
         // add the first source node
         topology.getNodes().push(sourceNodeFill(type, plateform));
 
@@ -393,8 +402,12 @@ public class ProfilingPlanBuilder implements Serializable {
                 return;
 
         // add the remaining nodes with unary nodes
-        for(int i=1;i<=topology.getNodeNumber();i++)
-                topology.getNodes().push(randomUnaryNodeFill(type, plateform));
+        for(int i=1;i<=topology.getNodeNumber();i++) {
+            // re-select a new platform randomly
+            PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+            plateform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+            topology.getNodes().push(randomUnaryNodeFill(type, plateform));
+        }
     }
 
     /**
@@ -468,7 +481,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * Fills the toopology instance with binary profiling operator
+     * Fills the toopology instance with binary profiling executionOperator
      * @return
      */
     private static Tuple2<String,OperatorProfiler> binaryNodeFill(DataSetType type, String plateform){
@@ -479,7 +492,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * Fills the toopology instance with binary profiling operator
+     * Fills the toopology instance with binary profiling executionOperator
      * @return
      */
     private static Tuple2<String,OperatorProfiler> binaryNodeFill(DataSetType type, String plateform, String operator){
@@ -490,7 +503,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * Fills the toopology instance with binary profiling operator
+     * Fills the toopology instance with binary profiling executionOperator
      * @return
      */
     private static Tuple2<String,OperatorProfiler> loopNodeFill(DataSetType type, String plateform){
@@ -580,11 +593,11 @@ public class ProfilingPlanBuilder implements Serializable {
         PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
         // Set the pla Profiler
 
-            // Set source operator profiler
+            // Set source executionOperator profiler
             planProfiler.setSourceOperatorProfiler(SparkOperatorProfilers.createSparkCollectionSourceProfiler(1,String.class));
-            // Set unary operator profiler
+            // Set unary executionOperator profiler
             planProfiler.setUnaryOperatorProfilers(Arrays.asList(SparkOperatorProfilers.createSparkMapProfiler(1,3)));
-            // Set sink operator profiler
+            // Set sink executionOperator profiler
             planProfiler.setSinkOperatorProfiler(SparkOperatorProfilers.createSparkLocalCallbackSinkProfiler(1));
 
         profilingPlans.add(planProfiler);
@@ -592,7 +605,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * Builds an operator profiling specifically for single operator profiling with fake jobs
+     * Builds an executionOperator profiling specifically for single executionOperator profiling with fake jobs
      * @param profilingConfig
      * @return
      */
@@ -632,6 +645,20 @@ public class ProfilingPlanBuilder implements Serializable {
                                 new Configuration(),
                                 DataGenerators.generateGenerator(1,type)
                         );
+//                    case "map":
+//                        return new OperatorProfilerBase(
+//                                (Supplier<Operator> & Serializable) () -> {MapOperator op= new MapOperator(
+//                                        new TransformationDescriptor<>(
+//                                                DataGenerators.generateUDF(UdfComplexity,dataQuantaScale,type,"map"),
+//                                                type.getDataUnitType().getTypeClass(),
+//                                                type.getDataUnitType().getTypeClass()
+//                                        ),
+//                                        type,
+//                                        type
+//                                );
+//                                op.setName("FinkMap"); op.addTargetPlatform(Java.platform()); return op;},
+//                                DataGenerators.generateGenerator(1,type)
+//                        );
                     case "map":
                         return new OperatorProfilerBase(
                                 (Supplier<ExecutionOperator> & Serializable) () -> {FlinkMapOperator op= new FlinkMapOperator(
@@ -830,7 +857,7 @@ public class ProfilingPlanBuilder implements Serializable {
                         );
 
                     default:
-                        logger.error("Unknown operator: " + operator);
+                        logger.error("Unknown executionOperator: " + operator);
                         return new OperatorProfilerBase(
                                 (Supplier<ExecutionOperator> & Serializable) () -> {FlinkLocalCallbackSink op= new FlinkLocalCallbackSink(dataQuantum -> { },type); op.setName("FinkCallBackSink"); return op;},
                                 new Configuration(),
@@ -892,7 +919,7 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (SparkPlanOperatorProfilers.createSparkBernoulliSampleProfiler(1, type,profilingConfig.getSampleSize()));
 
                     default:
-                        logger.error("Unknown operator: " + operator);
+                        logger.error("Unknown executionOperator: " + operator);
                         return (SparkPlanOperatorProfilers.createSparkLocalCallbackSinkProfiler(1, type));
                 }
             case "java":
@@ -960,18 +987,18 @@ public class ProfilingPlanBuilder implements Serializable {
                         return (JavaOperatorProfilers.createCollectingJavaLocalCallbackSinkProfiler(1,type));
 
                     default:
-                        logger.error("Unknown operator: " + operator);
+                        logger.error("Unknown executionOperator: " + operator);
                         return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
                 }
             default:
-                logger.error("Unknown operator: " + operator);
+                logger.error("Unknown executionOperator: " + operator);
                 return (JavaOperatorProfilers.createJavaLocalCallbackSinkProfiler(1));
         }
     }
 
-// The below is for single operator profiling
+// The below is for single executionOperator profiling
     /**
-     * Builds an operator profiling specifically for single operator profiling with fake jobs
+     * Builds an executionOperator profiling specifically for single executionOperator profiling with fake jobs
      * @param Plateform
      * @return
      */

@@ -32,9 +32,9 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
 
     public int cpuMhz;
 
-    //protected Supplier<JavaExecutionOperator> operatorGenerator;
+    //protected Supplier<JavaExecutionOperator> executionOperatorGenerator;
 
-    //protected JavaExecutionOperator operator;
+    //protected JavaExecutionOperator executionOperator;
 
     protected JavaExecutor executor;
 
@@ -52,19 +52,19 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
     public JavaOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
                             Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
-        this.operatorGenerator = operatorGenerator;
-        this.operator = operatorGenerator.get();
+        this.executionOperatorGenerator = operatorGenerator;
+        this.executionOperator = operatorGenerator.get();
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
 
         // No need for fake job  in the case of plan generation
-        // Should be enabled for single operator profiling
+        // Should be enabled for single executionOperator profiling
         //this.executor = ProfilingUtils.fakeJavaExecutor();
         this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
     }
 
 
     public void prepare( long dataQuantaSize,long... inputCardinalities) {
-        this.operator = this.operatorGenerator.get();
+        this.executionOperator = this.executionOperatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
         this.dataQuantaSize = dataQuantaSize;
         //this.dataQuantaSize = udfComplexity;
@@ -135,7 +135,7 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
         return (CollectionChannel.Instance) channel.createInstance(null, null, -1);
     }
 
-//    public JavaExecutionOperator getOperator() {
+//    public JavaExecutionOperator getExecutionOperator() {
 //        return this.JavaOperator;
 //    }
 
@@ -148,8 +148,8 @@ public abstract class JavaOperatorProfiler extends OperatorProfiler {
     protected void evaluate(ChannelInstance[] inputs,
                             ChannelInstance[] outputs) {
         OptimizationContext optimizationContext = new DefaultOptimizationContext(this.executor.getJob());
-        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
-        JavaExecutionOperator javaOperator = (JavaExecutionOperator) operator;
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(executionOperator);
+        JavaExecutionOperator javaOperator = (JavaExecutionOperator) executionOperator;
         javaOperator.evaluate(inputs, outputs, this.executor, operatorContext);
     }
 

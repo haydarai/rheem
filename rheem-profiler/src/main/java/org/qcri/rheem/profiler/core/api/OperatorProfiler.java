@@ -1,30 +1,15 @@
 package org.qcri.rheem.profiler.core.api;
 
-import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.execution.JavaExecutor;
-import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
-import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -37,17 +22,29 @@ public abstract class OperatorProfiler {
 
     public int cpuMhz;
 
-    protected Supplier<? extends ExecutionOperator> operatorGenerator;
+    protected Supplier<? extends ExecutionOperator> executionOperatorGenerator;
 
-    public ExecutionOperator getOperator() {
-        return operator;
+    protected Supplier<? extends Operator> operatorGenerator;
+
+    public Operator getOperator() {
+        if(this.operator !=null)
+            return operator;
+        else {
+            throw new RheemException("no profiling Execution Opertor nor Operator found!");
+        }
     }
 
-    public void setOperator(ExecutionOperator operator) {
-        this.operator = operator;
+    public ExecutionOperator getExecutionOperator() {
+        return executionOperator;
     }
 
-    protected ExecutionOperator operator;
+    public void setExecutionOperator(ExecutionOperator executionOperator) {
+        this.executionOperator = executionOperator;
+    }
+
+    protected ExecutionOperator executionOperator;
+
+    protected Operator operator;
 
     protected Executor executor;
 
@@ -74,16 +71,16 @@ public abstract class OperatorProfiler {
     public OperatorProfiler(Supplier<? extends ExecutionOperator> operatorGenerator,
                             Supplier<?>... dataQuantumGenerators) {
         this.platform = operatorGenerator.get().getPlatform();
-        this.operatorGenerator = operatorGenerator;
+        this.executionOperatorGenerator = operatorGenerator;
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
-        // Assign the operator
-        this.operator=this.operatorGenerator.get();
+        // Assign the executionOperator
+        this.executionOperator =this.executionOperatorGenerator.get();
         //this.executor = ProfilingUtils.fakeJavaExecutor();
         this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
     }
 
     public void prepare( long dq,long... inputCardinalities) {
-        this.operator = this.operatorGenerator.get();
+        this.executionOperator = this.executionOperatorGenerator.get();
         //this.inputCardinalities = RheemArrays.asList(inputCardinalities);
         //this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
         for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {

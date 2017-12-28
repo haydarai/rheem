@@ -5,7 +5,6 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,18 +32,31 @@ public class OperatorProfilerBase extends OperatorProfiler {
      */
     public OperatorProfilerBase(Operator operator){
         this.rheemOperator = operator;
-        //this.setOperator(executionOperator);
+        //this.setExecutionOperator(executionOperator);
     }
 
-    public OperatorProfilerBase(Supplier<ExecutionOperator> operatorGenerator,
-                                 Configuration configuration,
-                                 Supplier<?>... dataQuantumGenerators) {
+    public OperatorProfilerBase(Supplier<Operator> operatorGenerator,
+                                Supplier<?>... dataQuantumGenerators) {
         this.operatorGenerator = operatorGenerator;
-        this.operator = this.operatorGenerator.get();
+        this.operator = operatorGenerator.get();
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
 
-//        if (operatorGenerator.get().isSource()) {
-//            UnarySource unarySource = (UnarySource) operatorGenerator.get();
+//        if (executionOperatorGenerator.get().isSource()) {
+//            UnarySource unarySource = (UnarySource) executionOperatorGenerator.get();
+//            unarySource.get
+//        }
+        this.fileUrl = new Configuration().getStringProperty("rheem.core.log.syntheticData");
+    }
+
+    public OperatorProfilerBase(Supplier<ExecutionOperator> executionOperatorGenerator,
+                                 Configuration configuration,
+                                 Supplier<?>... dataQuantumGenerators) {
+        this.executionOperatorGenerator = executionOperatorGenerator;
+        this.executionOperator = this.executionOperatorGenerator.get();
+        this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
+
+//        if (executionOperatorGenerator.get().isSource()) {
+//            UnarySource unarySource = (UnarySource) executionOperatorGenerator.get();
 //            unarySource.get
 //        }
         this.fileUrl = new Configuration().getStringProperty("rheem.core.log.syntheticData");

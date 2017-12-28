@@ -14,7 +14,6 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -33,7 +32,7 @@ public class Shape {
     private List<Shape> subShapes = new ArrayList<>();
     private List<Topology> allTopologies = new ArrayList<>();
     private List<Topology> sourceTopologies = new ArrayList<>();
-    private String plateform;
+    private List<String> plateform;
     private List<PipelineTopology> pipelineTopologies = new ArrayList<>();
     private List<JunctureTopology> junctureTopologies = new ArrayList<>();
     private List<LoopTopology> loopTopologies = new ArrayList<>();
@@ -101,7 +100,7 @@ public class Shape {
     static HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("JavaCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);put("JavaCollectionSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("JavaObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("JavaObjectFileSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);put("SparkCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("SparkCollectionSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
-        put("SparkObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);put("SparkObjectFileSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
+        put("SparkObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);put("SparkObjectFileSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);put("FlinkCollectionSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
     }};
 
     public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
@@ -243,7 +242,7 @@ public class Shape {
     private static Stack<LoopHeadOperator> loopHeads = new Stack();
 
     /**
-     * Create a preExecution shape from a sink operator
+     * Create a preExecution shape from a sink executionOperator
      * @param sinkOperator
      * @return
      */
@@ -252,7 +251,7 @@ public class Shape {
     }
 
     /**
-     * Create a shape from a sink operator
+     * Create a shape from a sink executionOperator
      * @param sinkOperator
      * @param ispreExecution
      * @return
@@ -260,13 +259,13 @@ public class Shape {
     public static Shape createShape(LocalCallbackSink sinkOperator, boolean ispreExecution, boolean prepareVectorLog){
         Shape newShape = new Shape(new Configuration());
 
-        // Initiate current and predecessor operator
+        // Initiate current and predecessor executionOperator
         Operator currentOperator = sinkOperator;
         final List<Operator> predecessorOperators = Arrays.stream(sinkOperator.getAllInputs())
                 .map(inputSlot -> inputSlot.getOccupant().getOwner())
                 .collect(Collectors.toList());
         //Operator predecessorOperator = sinkOperator.getInput(0).getOccupant().getOwner();
-        // DEclare and initialize predecessor operator
+        // DEclare and initialize predecessor executionOperator
         Operator predecessorOperator = predecessorOperators.get(0);
         ListIterator iterpredecessorOperators = predecessorOperators.listIterator();
         //for (Operator predecessorOperator:predecessorOperators){
@@ -276,7 +275,7 @@ public class Shape {
             // Loop until the source
             while (!predecessorOperator.isSource()) {
                 // Handle pipeline cas
-                // check if predecessor is unary operator
+                // check if predecessor is unary executionOperator
                 if (predecessorOperator instanceof UnaryToUnaryOperator) {
                     PipelineTopology newPipelineTopology = new PipelineTopology();
 
@@ -306,13 +305,13 @@ public class Shape {
                                     iterpredecessorOperators.add(operator);
                             });
 
-                    // update predecessor with the first input operator
+                    // update predecessor with the first input executionOperator
                     predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
 
 
                     //for(Operator tmpPredecessorOperator:tmpPredecessorOperators) {
                     while (predecessorOperator instanceof UnaryToUnaryOperator) {
-                        // add operator to new topology
+                        // add executionOperator to new topology
                         newPipelineTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
                         // update current and predecessor operatorNames
                         currentOperator = predecessorOperator;
@@ -357,7 +356,7 @@ public class Shape {
                     newShape.getJunctureTopologies().add(newJunctureTopology);
                     newShape.getAllTopologies().add(newJunctureTopology);
 
-                    // add operator to new topology
+                    // add executionOperator to new topology
                     newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
                     // update current and predecessor operatorNames
@@ -375,7 +374,7 @@ public class Shape {
                                     iterpredecessorOperators.add(operator);
                             });
 
-                    // update predecessor with the first input operator
+                    // update predecessor with the first input executionOperator
                     predecessorOperator = tmpPredecessorOperators.get(0);
 
                     if (predecessorOperator.isSource()) {
@@ -398,7 +397,7 @@ public class Shape {
                     newShape.getLoopTopologies().add(newLoopTopology);
                     newShape.getAllTopologies().add(newLoopTopology);
 
-                    // add operator to new topology
+                    // add executionOperator to new topology
                     newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
                     // update current and predecessor operatorNames
@@ -452,11 +451,11 @@ public class Shape {
     }
 
 
-    public String getPlateform() {
+    public List<String> getPlateform() {
         return plateform;
     }
 
-    public void setPlateform(String plateform) {
+    public void setPlateform(List<String> plateform) {
         this.plateform = plateform;
     }
 
@@ -517,6 +516,8 @@ public class Shape {
                             .forEach(tuple ->{
                                 int start = 4;
                                 String[] operatorName = tuple.getField0().split("\\P{Alpha}+");
+                                // remove platform prefix from operator
+                                operatorName[0] = operatorName[0].toLowerCase().replace("java","").replace("spark","").replace("flink","");
                                 if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
                                     // Handle the case of 2D generated logs
 
@@ -527,7 +528,7 @@ public class Shape {
                                     tmpVectorLogs2D[0][1]=this.getJunctureTopologies().size();
                                     tmpVectorLogs2D[0][2]=this.getLoopTopologies().size();
                                     tmpVectorLogs2D[0][3]=0;
-                                    // check if there's a duplicate operator
+                                    // check if there's a duplicate executionOperator
                                     operatorNames2d.stream()
                                             .filter(list-> !list.contains(operatorName[0]))
                                             .findFirst()
@@ -569,7 +570,7 @@ public class Shape {
     }
 
     /**
-     * Add log for only one operator
+     * Add log for only one executionOperator
      * @param logs
      * @param t
      * @param tuple
@@ -590,7 +591,7 @@ public class Shape {
         try {
             return OPERATOR_VECTOR_POSITION.get(operator.toLowerCase());
         } catch (Exception e){
-            throw new RheemException(String.format("couldn't find position log for operator %s",operator.toLowerCase()));
+            throw new RheemException(String.format("couldn't find position log for executionOperator %s",operator.toLowerCase()));
         }
     }
 
@@ -608,7 +609,7 @@ public class Shape {
     }
 
     /**
-     * Fill {@var vectorLogs} with rheem operator parameters
+     * Fill {@var vectorLogs} with rheem executionOperator parameters
      * @param operatorProfilerBase
      * @param logs
      * @param t
@@ -617,7 +618,7 @@ public class Shape {
     void preFillLog(OperatorProfilerBase operatorProfilerBase, double[] logs, Topology t, int start){
 
         //Tuple2<String,OperatorProfilerBase> tuple2 = (Tuple2<String,OperatorProfilerBase>) tuple;
-        // TODO: if the operator is inside pipeline and the pipeline is inside a loop body then the operator should be put as pipeline and loop
+        // TODO: if the executionOperator is inside pipeline and the pipeline is inside a loop body then the executionOperator should be put as pipeline and loop
         if (t.isPipeline())
             logs[start+2]+=1;
         else if(t.isJuncture())
@@ -635,10 +636,10 @@ public class Shape {
             selectivity= operatorProfilerBase.getRheemOperator().getOutput(0).getCardinalityEstimate().getAverageEstimate()/
                     operatorProfilerBase.getRheemOperator().getInput(0).getCardinalityEstimate().getAverageEstimate();
         else if(operatorProfilerBase.getRheemOperator().isSource())
-            // case of source operator we set the selectivity to 1
+            // case of source executionOperator we set the selectivity to 1
             selectivity = 1;
         else if(operatorProfilerBase.getRheemOperator().isLoopHead()){
-            // case of a loop head (e.g: repeat operator) we replace the selectivity with number of iterations
+            // case of a loop head (e.g: repeat executionOperator) we replace the selectivity with number of iterations
             LoopHeadOperator loopOperator = (LoopHeadOperator)operatorProfilerBase.getRheemOperator();
             selectivity = loopOperator.getNumExpectedIterations();
         }
@@ -647,24 +648,27 @@ public class Shape {
     }
 
     /**
-     * Fill {@var vectorLogs} with execution operator parameters
+     * Fill {@var vectorLogs} with execution executionOperator parameters
      * @param tuple
      * @param logs
      * @param t
      * @param start
      */
     void fillLog(Tuple2<String,OperatorProfiler> tuple, double[] logs, Topology t, int start){
-        switch (tuple.getField1().getOperator().getPlatform().getName()){
+        switch (tuple.getField1().getExecutionOperator().getPlatform().getName()){
             case "Java Streams":
                 logs[start]+=1;
                 break;
             case "Apache Spark":
                 logs[start+1]+=1;
                 break;
+            case "Flink":
+                logs[start+1]+=10;
+                break;
             default:
                 System.out.println("wrong plateform!");
         }
-        // TODO: if the operator is inside pipeline and the pipeline is inside a loop body then the operator should be put as pipeline and loop
+        // TODO: if the executionOperator is inside pipeline and the pipeline is inside a loop body then the executionOperator should be put as pipeline and loop
         if (t.isPipeline())
             logs[start+2]+=1;
         else if(t.isJuncture())
@@ -677,16 +681,16 @@ public class Shape {
 
         // average selectivity
         double  selectivity = 0;
-        if ((!tuple.getField1().getOperator().isSource())&&(!tuple.getField1().getOperator().isSink())&&(!tuple.getField1().getOperator().isLoopHead()))
+        if ((!tuple.getField1().getExecutionOperator().isSource())&&(!tuple.getField1().getExecutionOperator().isSink())&&(!tuple.getField1().getExecutionOperator().isLoopHead()))
             // average selectivity of non source/sink/loop operatorNames
-            selectivity= tuple.getField1().getOperator().getOutput(0).getCardinalityEstimate().getAverageEstimate()/
-                    tuple.getField1().getOperator().getInput(0).getCardinalityEstimate().getAverageEstimate();
-        else if(tuple.getField1().getOperator().isSource())
-            // case of source operator we set the selectivity to 1
+            selectivity= tuple.getField1().getExecutionOperator().getOutput(0).getCardinalityEstimate().getAverageEstimate()/
+                    tuple.getField1().getExecutionOperator().getInput(0).getCardinalityEstimate().getAverageEstimate();
+        else if(tuple.getField1().getExecutionOperator().isSource())
+            // case of source executionOperator we set the selectivity to 1
             selectivity = 1;
-        else if(tuple.getField1().getOperator().isLoopHead()){
-            // case of a loop head (e.g: repeat operator) we replace the selectivity with number of iterations
-            LoopHeadOperator loopOperator = (LoopHeadOperator)tuple.getField1().getOperator();
+        else if(tuple.getField1().getExecutionOperator().isLoopHead()){
+            // case of a loop head (e.g: repeat executionOperator) we replace the selectivity with number of iterations
+            LoopHeadOperator loopOperator = (LoopHeadOperator)tuple.getField1().getExecutionOperator();
             selectivity = loopOperator.getNumExpectedIterations();
         }
         logs[start+6] += (int) selectivity;
@@ -704,13 +708,13 @@ public class Shape {
     }
 
     /**
-     * Modify operator cost
+     * Modify executionOperator cost
      * @param operator
      * @param cost
      * @param logVector
      */
     private void updateOperatorOutputCardinality(String operator, double cost, double[] logVector) {
-        // get operator position
+        // get executionOperator position
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
@@ -718,13 +722,13 @@ public class Shape {
     }
 
     /**
-     * Modify operator cost
+     * Modify executionOperator cost
      * @param operator
      * @param cost
      * @param logVector
      */
     private void updateOperatorInputCardinality(String operator, double cost, double[] logVector) {
-        // get operator position
+        // get executionOperator position
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
@@ -732,13 +736,13 @@ public class Shape {
     }
 
     /**
-     * Modify operator platform
+     * Modify executionOperator platform
      * @param operator
      * @param platform
      * @param logVector
      */
     private void updateOperatorPlatform(String operator, String platform, String replacePlatform, double[] logVector) {
-        // get operator position
+        // get executionOperator position
         int opPos = getOperatorVectorPosition(operator);
         // reset all platforms to zero
         //plateformVectorPostion.entrySet().stream().
@@ -752,7 +756,7 @@ public class Shape {
     public void resetAllOperatorPlatforms() {
         vectorLogsWithResetPlatforms = vectorLogs.clone();
         for(String operator:operatorNames){
-            // get operator position
+            // get executionOperator position
             int opPos = getOperatorVectorPosition(operator);
             // reset all platforms to zero
             plateformVectorPostion.entrySet().stream().
@@ -761,12 +765,12 @@ public class Shape {
     }
 
     /**
-     * get operator platform
+     * get executionOperator platform
      * @param operator
      * @param logVector
      */
     private String getOperatorPlatform(String operator, double[] logVector) {
-        // get operator position
+        // get executionOperator position
         int opPos = getOperatorVectorPosition(operator);
         for (String platform : DEFAULT_PLATFORMS) {
             if (logVector[opPos + getPlatformVectorPosition(platform)] == 1)
@@ -812,10 +816,10 @@ public class Shape {
             return;
         }
 
-        // Recursive exhaustive filling platforms for each operator
+        // Recursive exhaustive filling platforms for each executionOperator
         for(int i = start; i< operatorNames.size(); i++){
             String operator = operatorNames.get(i);
-            //change if to check if the number of plateform for operator meets the new required operator number
+            //change if to check if the number of plateform for executionOperator meets the new required executionOperator number
             if(!(getOperatorPlatform(operator,vectorLog)==newPlatform)){
                 // re-clone vectorLog
                 newVectorLog = vectorLog.clone();
@@ -941,12 +945,12 @@ public class Shape {
         try {
             return plateformVectorPostion.get(platform);
         } catch (Exception e){
-            throw new RheemException(String.format("couldn't find a plateform for operator %s",platform));
+            throw new RheemException(String.format("couldn't find a plateform for executionOperator %s",platform));
         }
     }
 
     /**
-     * update with execution operator informations (plateform, output cardinality)
+     * update with execution executionOperator informations (plateform, output cardinality)
      * @param localOperatorContexts
      */
     public void updateExecutionOperators(Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts) {
@@ -958,7 +962,7 @@ public class Shape {
                     double averageOutputCardinality = 0;
                     double averageInputCardinality = 0;
 
-                    // Update operator name
+                    // Update executionOperator name
                     if(operator.isExecutionOperator()){
                         operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
                                 .toLowerCase().replace("java","").replace("spark","").replace("flink","");

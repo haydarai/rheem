@@ -27,8 +27,8 @@ public class JavaBinaryOperatorProfiler extends JavaOperatorProfiler {
 
         super.prepare(dataQuantaSize, inputCardinalities);
 
-        // Create operator.
-        assert inputCardinalities.length == this.operator.getNumInputs();
+        // Create executionOperator.
+        assert inputCardinalities.length == this.executionOperator.getNumInputs();
         int inputCardinality0 = (int) inputCardinalities[0];
         int inputCardinality1 = (int) inputCardinalities[1];
 
@@ -66,7 +66,7 @@ public class JavaBinaryOperatorProfiler extends JavaOperatorProfiler {
     }
 
     @Override
-    public JavaExecutionOperator getOperator() {
-        return (JavaExecutionOperator)this.operator;
+    public JavaExecutionOperator getExecutionOperator() {
+        return (JavaExecutionOperator)this.executionOperator;
     }
 }

@@ -13,9 +13,7 @@ import org.qcri.rheem.spark.operators.SparkCountOperator;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -51,8 +49,8 @@ public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
 
         RddChannel.Instance outputChannelInstance = createChannelInstance(this.sparkExecutor);
 
-        // Check if the operator needs execution with output collection channel
-        if (operatorsWithCollectionOutput.contains(this.operator.getClass())){
+        // Check if the executionOperator needs execution with output collection channel
+        if (operatorsWithCollectionOutput.contains(this.executionOperator.getClass())){
             // Create an output collection channel
             final ChannelDescriptor channelDescriptor = CollectionChannel.DESCRIPTOR;
             final Channel channel = channelDescriptor.createChannel(null, new Configuration());
@@ -64,16 +62,16 @@ public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
             return executeOperatorWithCollectionOutput(inputChannelInstance,outputCollectionChannelInstance);
         }
 
-        // Let the operator execute.
+        // Let the executionOperator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                (SparkExecutionOperator) this.operator,
+                (SparkExecutionOperator) this.executionOperator,
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputChannelInstance}
         );
 
-        // Force the execution of the operator.
+        // Force the execution of the executionOperator.
         outputChannelInstance.provideRdd().foreach(dataQuantum -> {
         });
         final long endTime = System.currentTimeMillis();
@@ -96,11 +94,11 @@ public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
     }
 
     protected Result executeOperatorWithCollectionOutput(RddChannel.Instance inputChannelInstance,CollectionChannel.Instance outputCollectionChannelInstance) {
-        // Let the operator execute.
+        // Let the executionOperator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.evaluate(
-                (SparkExecutionOperator) this.operator,
+                (SparkExecutionOperator) this.executionOperator,
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputCollectionChannelInstance}
         );

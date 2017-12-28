@@ -95,7 +95,7 @@ public class GeneticOptimizerApp {
             System.out.printf("Removed %d executions with no template-based estimators.\n", lastSize - newSize);
             lastSize = newSize;
 
-            this.partialExecutions.removeIf(partialExecution -> !this.checkSpread(partialExecution, maxCardinalitySpread));
+            //this.partialExecutions.removeIf(partialExecution -> !this.checkSpread(partialExecution, maxCardinalitySpread));
             newSize = this.partialExecutions.size();
             System.out.printf("Removed %d executions with a too large cardinality spread (> %.2f).\n", lastSize - newSize, minCardinalityConfidence);
             lastSize = newSize;
@@ -105,7 +105,7 @@ public class GeneticOptimizerApp {
             System.out.printf("Removed %d executions with zero cardinalities.\n", lastSize - newSize);
             lastSize = newSize;
 
-            this.partialExecutions.removeIf(partialExecution -> !this.checkConfidence(partialExecution, minCardinalityConfidence));
+            //this.partialExecutions.removeIf(partialExecution -> !this.checkConfidence(partialExecution, minCardinalityConfidence));
             newSize = this.partialExecutions.size();
             System.out.printf("Removed %d executions with a too low cardinality confidence (< %.2f).\n", lastSize - newSize, minCardinalityConfidence);
             lastSize = newSize;
@@ -131,7 +131,7 @@ public class GeneticOptimizerApp {
         // Apply binning if requested.
         //        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
 
-        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.01d);
+        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.05d);
         if (binningStretch > 1d) {
             System.out.print("Applying binning... ");
             int numOriginalPartialExecutions = this.partialExecutions.size();

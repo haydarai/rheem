@@ -8,7 +8,7 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 abstract public class TopologySlot<T> {
     /**
-     * Identifies this slot within its operator.
+     * Identifies this slot within its executionOperator.
      */
     private final String name;
 
@@ -22,7 +22,7 @@ abstract public class TopologySlot<T> {
 
 
     /**
-     * The operator that is being decorated by this slot.
+     * The executionOperator that is being decorated by this slot.
      */
     private Topology owner;
 

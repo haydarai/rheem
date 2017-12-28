@@ -27,7 +27,7 @@ public class ProfilingUtils {
      * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
     public static Job fakeJob(String... udfJars) {
-        // Create a fake job for a single operator profiling
+        // Create a fake job for a single executionOperator profiling
         Job fakeJob =  new RheemContext().createJob("Fake job", new RheemPlan(), udfJars);
         final InstrumentationStrategy instrumentation = fakeJob.getConfiguration().getInstrumentationStrategyProvider().provide();
         // Add cross platform execution to the fake job

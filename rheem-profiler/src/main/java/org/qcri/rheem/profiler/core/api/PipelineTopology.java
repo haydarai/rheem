@@ -1,11 +1,6 @@
 package org.qcri.rheem.profiler.core.api;
 
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-
-import java.util.Arrays;
 import java.util.Stack;
-import java.util.stream.Collectors;
 
 /**
  * Created by migiwara on 07/07/17.
@@ -35,7 +30,6 @@ public class PipelineTopology extends TopologyBase implements Topology {
     }
 
     public PipelineTopology(int topologyNumber){
-
         this.inputTopologySlots = new InputTopologySlot[1];
         this.outputTopologySlots = new OutputTopologySlot[1];
         this.inputTopologySlots[0] = new InputTopologySlot("in", this);

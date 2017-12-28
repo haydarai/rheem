@@ -82,7 +82,7 @@ public class ProfilingRunner{
      * - input cardinality (for the source operators)
      * // TODO: - input data type
      * - data quanta size
-     * - udf complexity for each operator
+     * - udf complexity for each executionOperator
      * - selectivty complexity
      * @param shapes
      * @param profilingConfiguration
@@ -109,15 +109,17 @@ public class ProfilingRunner{
 
     private static List<OperatorProfiler.Result> executeShapeProfiling(Shape shape) {
 
-
-        switch (shape.getPlateform()) {
-            case "java":
-                rheemContext = new RheemContext().with(Java.basicPlugin());
-            case "spark":
-                rheemContext = new RheemContext().with(Spark.basicPlugin());
-            case "flink":
-                rheemContext = new RheemContext().with(Flink.basicPlugin());
-        }
+        // Initialize rheemContext
+        rheemContext = new RheemContext();
+        for(String platform:shape.getPlateform())
+            switch (platform) {
+                case "java":
+                    rheemContext = rheemContext.with(Java.basicPlugin());
+                case "spark":
+                    rheemContext = rheemContext.with(Spark.basicPlugin());
+                case "flink":
+                    rheemContext = rheemContext.with(Flink.basicPlugin());
+            }
 
         // Check dataType of the generated plan
         //checkDataType(shape);
@@ -138,7 +140,7 @@ public class ProfilingRunner{
         shape.getSourceTopologies().stream()
                 .forEach(t->{
                     sourceProfilers.add(t.getNodes().firstElement().getField1());
-                    textFileSources.add((TextFileSource)t.getNodes().firstElement().getField1().getOperator());
+                    textFileSources.add((TextFileSource)t.getNodes().firstElement().getField1().getExecutionOperator());
                 });
 
         // To be tested
@@ -147,8 +149,8 @@ public class ProfilingRunner{
                 .forEach(t->{
                     t.getNodes().stream()
                             .forEach(node -> {
-                                if (node.getField1().getOperator().isLoopHead())
-                                    loopHeadOperators.add((RepeatOperator) node.getField1().getOperator());
+                                if (node.getField1().getExecutionOperator().isLoopHead())
+                                    loopHeadOperators.add((RepeatOperator) node.getField1().getExecutionOperator());
                             });
                 });
 
@@ -166,18 +168,18 @@ public class ProfilingRunner{
                                     " with  %d Topology Number;  %d Pipeline Topollogies; %d Juncture Topologies;" +
                                     " %d Loop Topologies  \n",
                             inputCardinality, dataQuantaSize,
-                            shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getOperator().getOutput(0).getType().toString(),
+                            shape.getSourceTopologies().get(0).getNodes().get(0).getField1().getExecutionOperator().getOutput(0).getType().toString(),
                             shape.getPlateform(), shape.getTopologyNumber(), shape.getPipelineTopologies().size(), shape.getJunctureTopologies().size(), shape.getLoopTopologies().size()));
 
-                    // Prepare input source operator
+                    // Prepare input source executionOperator
                     for (OperatorProfiler sourceProfiler : sourceProfilers) {
                         // Update the dataQuantumGenerators with the appropriate dataQuanta size
                         sourceProfiler.setDataQuantumGenerators(DataGenerators.generateGenerator(dataQuantaSize,
-                                sourceProfiler.getOperator().getOutput(0).getType()));
+                                sourceProfiler.getExecutionOperator().getOutput(0).getType()));
                         try {
                             //System.out.printf("[PROFILING] Preparing input data! \n");
                             logger.info("[PROFILING] Preparing input data! \n");
-                            // Prepare source operator
+                            // Prepare source executionOperator
                             sourceProfiler.prepare(dataQuantaSize, inputCardinality);
                         } catch (Exception e) {
                             LoggerFactory.getLogger(ProfilingRunner.class).error(
@@ -187,9 +189,9 @@ public class ProfilingRunner{
                         }
                     }
 
-                    // Update source operator url location
+                    // Update source executionOperator url location
                     for (TextFileSource textFileSource : textFileSources) {
-                        switch (shape.getPlateform()) {
+                        switch (shape.getPlateform().get(0)) {
                             case "java":
                                 textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.core.log.syntheticData") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
@@ -205,7 +207,7 @@ public class ProfilingRunner{
 
                     // Prepare loop operators
                     for (RepeatOperator loopHeadOperator : loopHeadOperators) {
-                        // reset loop operator state
+                        // reset loop executionOperator state
                         loopHeadOperator.setState(LoopHeadOperator.State.NOT_STARTED);
                         loopHeadOperator.setNumExpectedIterations(iteration);
                         //loopHeadOperator.setState();
@@ -216,7 +218,7 @@ public class ProfilingRunner{
                     final long startTime = System.currentTimeMillis();
 
                     final Topology sinkTopology = shape.getSinkTopology();
-                    ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size() - 1).getField1().getOperator();
+                    ExecutionOperator sinkOperator = sinkTopology.getNodes().elementAt(sinkTopology.getNodes().size() - 1).getField1().getExecutionOperator();
 
                     // Execute Plan
                     executePlan(sinkOperator,shape);
@@ -224,9 +226,10 @@ public class ProfilingRunner{
                     // Save ending execution time
                     final long endTime = System.currentTimeMillis();
 
-                    // clear source operator data
+                    // clear source executionOperator data
                     for (Topology t : shape.getSourceTopologies()) {
-                        switch (shape.getPlateform()) {
+                        // check the first platform
+                        switch (shape.getPlateform().get(0)) {
                             case "java":
                                 JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
                                 sourceProfiler.clearSourceData();
@@ -245,12 +248,12 @@ public class ProfilingRunner{
                     //shape.printEnumeratedLogs();
                     System.out.print(shape.printEnumeratedLogs());
                     List<Long> inputCardinalities = new ArrayList<>();
-                    //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumOutputs());
+                    //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getExecutionOperator().getNumOutputs());
                     // Gather and assemble all result metrics.
                     results.add(new OperatorProfiler.Result(
                                     inputCardinalities,
                                     1,
-//                (long)  shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getOperator().getNumInputs(),
+//                (long)  shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getExecutionOperator().getNumInputs(),
                                     endTime - startTime,
                                     provideDiskBytes(startTime, endTime),
                                     provideNetworkBytes(startTime, endTime),
@@ -357,9 +360,9 @@ public class ProfilingRunner{
             case "flink":
                 rheemContext = new RheemContext().with(Flink.basicPlugin());
         }
-        plan.unaryOperatorProfilers.get(0).getOperator().connectTo(0,plan.sinkOperatorProfiler.getOperator(),0);
+        plan.unaryOperatorProfilers.get(0).getExecutionOperator().connectTo(0,plan.sinkOperatorProfiler.getExecutionOperator(),0);
 
-        plan.getSourceOperatorProfiler().getOperator().connectTo(0,plan.unaryOperatorProfilers.get(0).getOperator(),0);
+        plan.getSourceOperatorProfiler().getExecutionOperator().connectTo(0,plan.unaryOperatorProfilers.get(0).getExecutionOperator(),0);
 
     }
 
@@ -370,21 +373,21 @@ public class ProfilingRunner{
 
         LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(results, Integer.class);
 
-        //plan.sinkOperatorProfiler.getOperator().connectTo(0,sink,0);
+        //plan.sinkOperatorProfiler.getExecutionOperator().connectTo(0,sink,0);
 
         final long startTime = System.currentTimeMillis();
 
         // Have Rheem execute the plan.
-        rheemContext.execute(new RheemPlan(plan.sinkOperatorProfiler.getOperator()));
+        rheemContext.execute(new RheemPlan(plan.sinkOperatorProfiler.getExecutionOperator()));
 
         final long endTime = System.currentTimeMillis();
 
         List<Long> inputCardinalities = new ArrayList<>();
-        inputCardinalities.add((long) plan.getSourceOperatorProfiler().getOperator().getNumOutputs());
+        inputCardinalities.add((long) plan.getSourceOperatorProfiler().getExecutionOperator().getNumOutputs());
         // Gather and assemble all result metrics.
         return new OperatorProfiler.Result(
                 inputCardinalities,
-                (long) plan.getSourceOperatorProfiler().getOperator().getNumInputs(),
+                (long) plan.getSourceOperatorProfiler().getExecutionOperator().getNumInputs(),
                 endTime - startTime,
                 provideDiskBytes(startTime, endTime),
                 provideNetworkBytes(startTime, endTime),
@@ -395,7 +398,7 @@ public class ProfilingRunner{
     }
 
     /**
-     * Profiling single operator
+     * Profiling single executionOperator
      * @param operatorsProfiler
      * @param profilingConfig
      * @return
@@ -414,7 +417,7 @@ public class ProfilingRunner{
         for(OperatorProfiler operatorProfiler:operatorsProfiler){
              List<OperatorProfiler.Result> operatorResult = new ArrayList<>();
              System.out.println("*****************************************************");
-             System.out.println("Starting profiling of " + operatorProfiler.getOperator().getName() + " operator: ");
+             System.out.println("Starting profiling of " + operatorProfiler.getExecutionOperator().getName() + " executionOperator: ");
              for (long cardinality:inputCardinality){
                  for (int dataQanta:dataQuantas){
                      for (int udf:UdfsComplexity){

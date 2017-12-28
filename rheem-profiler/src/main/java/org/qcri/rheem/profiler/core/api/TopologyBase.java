@@ -67,7 +67,7 @@ public class TopologyBase implements Topology {
 
 
     /**
-     * This important variable saves the the layer of the topology (i.e. for how many number of nodes it was created)
+     * This important variable saves the the layer of the topology (i.e. for how many number of nodes "in termes of pipelines pipelines" is connected to)
      * PS: first nodeNumber implementation was having this purpose too as well as the number of number of nodes that is
      * updated after instantiation
      */
