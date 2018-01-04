@@ -1,4 +1,4 @@
-package org.qcri.rheem.profiler.data;
+package org.qcri.rheem.profiler.generators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -8,7 +8,6 @@ import org.qcri.rheem.core.types.DataSetType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;

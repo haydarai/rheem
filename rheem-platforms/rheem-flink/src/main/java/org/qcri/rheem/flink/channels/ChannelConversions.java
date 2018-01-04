@@ -8,7 +8,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.flink.operators.*;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.operators.JavaTsvFileSink;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,9 +48,9 @@ public class ChannelConversions {
 
         public static Collection<ChannelConversion> ALL = Arrays.asList(
             COLLECTION_TO_DATASET,
-            DATASET_TO_COLLECTION,
-            OBJECT_FILE_TO_DATASET,
-            DATASET_TO_OBJECT_FILE,
-            DATASET_TO_HDFS_TSV
+            DATASET_TO_COLLECTION//,
+       //     OBJECT_FILE_TO_DATASET,
+       //     DATASET_TO_OBJECT_FILE,
+        //    DATASET_TO_HDFS_TSV
         );
 }

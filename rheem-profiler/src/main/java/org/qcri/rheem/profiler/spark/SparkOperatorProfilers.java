@@ -3,8 +3,8 @@ package org.qcri.rheem.profiler.spark;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.data.UdfGenerators;
+import org.qcri.rheem.profiler.generators.DataGenerators;
+import org.qcri.rheem.profiler.generators.UdfGenerators;
 import org.qcri.rheem.spark.operators.*;
 
 import java.lang.reflect.Type;

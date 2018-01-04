@@ -17,6 +17,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.stream.Stream;
 
 /**
@@ -162,26 +164,26 @@ public class ExecutionLog implements AutoCloseable {
     public void storeVector(double[] logs, long executionTime) throws IOException {
 
         try {
-            File file = new File(configuration.getStringProperty("rheem.core.log.planVector"));
+            File file = new File(configuration.getStringProperty("rheem.profiler.logs.planVector_1D"));
             final File parentFile = file.getParentFile();
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
                 throw new RheemException("Could not initialize cardinality repository.");
             }
             this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 
-            // create 2Dlog file directory
-            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
-            //file2dLog.mkdir();
-            if (!parentFile.exists() && !file2dLog.getParentFile().mkdirs()) {
-                throw new RheemException("Could not initialize 2d log repository.");
-            }
+//            // create 2Dlog file directory
+//            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
+//            //file2dLog.mkdir();
+//            if (!parentFile.exists() && !file2dLog.getParentFile().mkdirs()) {
+//                throw new RheemException("Could not initialize 2d log repository.");
+//            }
         } catch (RheemException e) {
             throw e;
         } catch (Exception e) {
             throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
         }
 
-        // Handle 1D log generation
+        // Handle 1D log storage
         NumberFormat nf = new DecimalFormat("##.#");
 
         for(int i=0;i<logs.length;i++){
@@ -190,7 +192,6 @@ public class ExecutionLog implements AutoCloseable {
         writer.write(Long.toString(executionTime));
         writer.write("\n");
         writer.close();
-        // Handle 2D log generation
     }
 
     public void store2DVector(double[][] logs, long executionTime) throws IOException {
@@ -198,7 +199,7 @@ public class ExecutionLog implements AutoCloseable {
         try {
 
             // create 2Dlog file directory
-            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
+            File file2dLog = new File(configuration.getStringProperty("rheem.profiler.logs.planVector_2D"));
             //file2dLog.mkdir();
             final File parentFile = file2dLog.getParentFile();
 
@@ -213,7 +214,7 @@ public class ExecutionLog implements AutoCloseable {
             throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
         }
 
-        // Handle 2D log generation
+        // Handle 2D log storage
         NumberFormat nf = new DecimalFormat("##.#");
 
         for(int i=0;i<logs.length;i++) {
@@ -227,6 +228,42 @@ public class ExecutionLog implements AutoCloseable {
         writer.write(Long.toString(executionTime));
         writer.write("\n");
         writer.close();
+    }
 
+    public void storeProfilingErrors(double[] logs, long executionTime,Exception error ) throws IOException {
+
+        String errorMessage;
+
+        errorMessage = "Error Date: " + new Date() + "\n" +
+                "Error message: " + error.getLocalizedMessage().toString()+ "\n" +
+                "Error stack trace: " + Arrays.stream(error.getStackTrace()).map(s->s.toString()).reduce((s1, s2)-> s1+"\n"+s2).get() + "\n" +
+                "Error clause: " + error.getCause() ;
+
+        try {
+            File file = new File(configuration.getStringProperty("rheem.profiler.logs.errors"));
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+            this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
+        }
+
+        // Handle 1D log storage
+        NumberFormat nf = new DecimalFormat("##.#");
+
+        for(int i=0;i<logs.length;i++){
+            writer.write( nf.format( logs[i]) + " ");
+        }
+        writer.write(Long.toString(executionTime));
+        writer.write("\n");
+        writer.write("Error Message <\n");
+        writer.write(errorMessage);
+        writer.write(">\n");
+        writer.close();
     }
 }

@@ -3,8 +3,6 @@ package org.qcri.rheem.profiler.spark;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
@@ -26,7 +24,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
     public SparkTextFileSourceProfiler(Configuration configuration,
                                        Supplier<?> dataQuantumGenerator) {
         //this(configuration.getStringProperty("rheem.profiler.datagen.url"), configuration, dataQuantumGenerator);
-        this(configuration.getStringProperty("rheem.core.log.syntheticData"),configuration,dataQuantumGenerator);
+        this(configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix"),configuration,dataQuantumGenerator);
     }
 
     private SparkTextFileSourceProfiler(String fileUrl,

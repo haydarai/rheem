@@ -1,11 +1,10 @@
-package org.qcri.rheem.profiler.data;
+package org.qcri.rheem.profiler.generators;
 
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
-import java.util.stream.Collector;
 
 /**
  * Created by migiwara on 10/05/17.

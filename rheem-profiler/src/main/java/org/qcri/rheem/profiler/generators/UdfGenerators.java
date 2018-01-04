@@ -1,9 +1,6 @@
-package org.qcri.rheem.profiler.data;
+package org.qcri.rheem.profiler.generators;
 
-import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
@@ -11,8 +8,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -232,7 +227,8 @@ public class UdfGenerators <Input, Output> implements Serializable{
             case 3:
                 return s -> {
                     mapStringUDF(complexity,dataQuataSize).apply(s);
-                    return (s.indexOf("a")> 0 & ((s.indexOf("a") & 1) == 0));
+                    //return false;
+                    return (s.indexOf("a")> 0 || ((s.indexOf("a") & 1) == 0));
                 };
             default:
                 return null;

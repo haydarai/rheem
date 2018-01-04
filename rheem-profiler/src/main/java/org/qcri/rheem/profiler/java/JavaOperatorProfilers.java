@@ -4,8 +4,8 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.*;
-import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.data.UdfGenerators;
+import org.qcri.rheem.profiler.generators.DataGenerators;
+import org.qcri.rheem.profiler.generators.UdfGenerators;
 
 import java.util.*;
 import java.util.function.Supplier;

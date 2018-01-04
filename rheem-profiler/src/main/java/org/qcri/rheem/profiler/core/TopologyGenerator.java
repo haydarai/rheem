@@ -310,6 +310,12 @@ public class TopologyGenerator {
 
                 // the final output is left for the sunk in the runner
 
+                // update the loop body topologies with (this.isLoopBody = true)
+                Topology tmpTop = sourceLeftNodeSuccessor;
+                while(tmpTop.getSuccessors().get(0)!=loopTopology){
+                    tmpTop.getSuccessors().get(0).setBooleanBody(true);
+                    tmpTop = tmpTop.getSuccessors().get(0);
+                }
 
                 // add the
                 loopTopologyList.add(loopTopology);

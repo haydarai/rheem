@@ -559,21 +559,29 @@ public class Configuration {
 
     private static void bootstrapProfilingProperties(Configuration configuration) {
 
-        configuration.setProperty("rheem.core.log.planVector", StringUtils.join(
-                Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector.txt"),
-                File.separator
-        ));
-
-        configuration.setProperty("rheem.core.log.syntheticData", StringUtils.join(
+        configuration.setProperty("rheem.profiler.logs.syntheticDataURL.prefix", StringUtils.join(
                 Arrays.asList(System.getProperty("user.home"), ".rheem", "syntheticData"),
                 File.separator
         ));
 
-        configuration.setProperty("rheem.core.log.2Dlogs", StringUtils.join(
-                Arrays.asList(System.getProperty("user.home"), ".rheem", "2Dlogs", "logExecutionPlan"),
+        configuration.setProperty("rheem.profiler.logs.planVector_1D", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector_1D.log"),
                 File.separator
         ));
 
+        configuration.setProperty("rheem.profiler.logs.planVector_2D", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector_2D.log"),
+                File.separator
+        ));
+
+        configuration.setProperty("rheem.profiler.generate2dLogs", "false");
+
+        configuration.setProperty("rheem.profiler.logs.errors", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "profiling_errors.log"),
+                File.separator
+        ));
+
+        configuration.setProperty("rheem.profiler.errors.discard", "true");
     }
 
     /**

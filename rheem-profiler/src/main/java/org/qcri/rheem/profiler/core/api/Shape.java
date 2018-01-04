@@ -83,7 +83,10 @@ public class Shape {
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
-        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);
+        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);
+        // Below should be added in different position
+        // DAtasetchannel is a flink type channel
+        put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);
     }};
 
     static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -93,14 +96,26 @@ public class Shape {
         put("FileChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 3*channelPosStep);
         // Below should be added in different position
         // DAtasetchannel is a flink type channel
-        put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 3*channelPosStep);
-
+        put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);
     }};
 
     static HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
+        put("collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("collectionsource",startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
+        put("objectfilesource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);
+        put("Collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
+        put("collectionsink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
+        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
+    }};
+
+    static HashMap<String,Integer> OLD_CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("JavaCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);put("JavaCollectionSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("JavaObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("JavaObjectFileSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);put("SparkCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("SparkCollectionSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
-        put("SparkObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);put("SparkObjectFileSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);put("FlinkCollectionSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
+        put("SparkObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);put("SparkObjectFileSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
+        // Below should be added in different position
+        // DAtasetchannel is a flink type channel
+        put("FlinkCollectionSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
+        put("FlinkCollectionSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
+
     }};
 
     public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
@@ -595,6 +610,14 @@ public class Shape {
         }
     }
 
+    private int getConversionOperatorVectorPosition(String operator) {
+        try {
+            return CONVERSION_OPERATOR_VECTOR_POSITION.get(operator.toLowerCase());
+        } catch (Exception e){
+            throw new RheemException(String.format("couldn't find position log for executionOperator %s",operator.toLowerCase()));
+        }
+    }
+
     /**
      * Calculate average selectivity
      * @param logs
@@ -662,11 +685,11 @@ public class Shape {
             case "Apache Spark":
                 logs[start+1]+=1;
                 break;
-            case "Flink":
+            case "Apache Flink":
                 logs[start+1]+=10;
                 break;
             default:
-                System.out.println("wrong plateform!");
+                throw new RheemException("wrong plateform!");
         }
         // TODO: if the executionOperator is inside pipeline and the pipeline is inside a loop body then the executionOperator should be put as pipeline and loop
         if (t.isPipeline())
@@ -710,29 +733,43 @@ public class Shape {
     /**
      * Modify executionOperator cost
      * @param operator
-     * @param cost
+     * @param outputCardinality
      * @param logVector
      */
-    private void updateOperatorOutputCardinality(String operator, double cost, double[] logVector) {
+    private void updateOperatorOutputCardinality(String operator, double outputCardinality, double[] logVector) {
         // get executionOperator position
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
-        logVector[opPos + 7] = cost;
+        logVector[opPos + 7] = outputCardinality;
     }
 
     /**
      * Modify executionOperator cost
      * @param operator
-     * @param cost
+     * @param outputCardinality
      * @param logVector
      */
-    private void updateOperatorInputCardinality(String operator, double cost, double[] logVector) {
+    private void updateConversionOperatorOutputCardinality(String operator, double outputCardinality, double[] logVector) {
+        // get executionOperator position
+        int opPos = getConversionOperatorVectorPosition(operator);
+
+        // update cost
+        logVector[opPos + 3] = outputCardinality;
+    }
+
+    /**
+     * Modify executionOperator cost
+     * @param operator
+     * @param inputCardinality
+     * @param logVector
+     */
+    private void updateOperatorInputCardinality(String operator, double inputCardinality, double[] logVector) {
         // get executionOperator position
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
-        logVector[opPos + 6] = cost;
+        logVector[opPos + 6] = inputCardinality;
     }
 
     /**
@@ -900,9 +937,35 @@ public class Shape {
 
     private void addConversionOperator(ExecutionTask conversionOperator) {
         String[] channelName = conversionOperator.toString().split("\\P{Alpha}+");
+        //operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
+                //.toLowerCase().replace("java","").replace("spark","").replace("flink","");
         // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
-        int channelStartPosition = getconversionOperatorVectorPosition(channelName[1]);
-        vectorLogs[channelStartPosition]+=1;
+        // get conversion operator
+        String platform = conversionOperator.getPlatform().getName();
+
+        int conversionOpStartPosition = getconversionOperatorVectorPosition(channelName[1].toLowerCase().replace("java","").replace("spark","").replace("flink",""));
+
+        // update number of conversion operators for digit position 1
+        vectorLogs[conversionOpStartPosition]+=1;
+
+        // update the platform for digits position 2-3
+        switch (platform){
+            case "Java Streams":
+                vectorLogs[conversionOpStartPosition+1]+=1;
+                break;
+            case "Apache Spark":
+                vectorLogs[conversionOpStartPosition+2]+=1;
+                break;
+            case "Apache Flink":
+                vectorLogs[conversionOpStartPosition+2]+=10;
+                break;
+            default:
+                throw new RheemException("wrong plateform!");
+        }
+
+        //update with output cardinality in digit 4
+        // get channel cardinality
+        //double outputCard = conversionOperator.getOperator().getCardinalityEstimator(0);
     }
 
     private int getconversionOperatorVectorPosition(String conversionOperator) {
@@ -992,20 +1055,34 @@ public class Shape {
                                     .map(list -> {
                                         int index = operatorNamesPostExecution2d.indexOf(list);
                                         list.add(operatorName[0]);
-                                        // update shape's vector log with output cardinality
-                                        updateOperatorOutputCardinality(operatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
-                                        // update shape's vector log with target platform
-                                        updateOperatorInputCardinality(operatorName[0], finalAverageInputCardinality,vectorLogs2D[index]);
+                                        // check if the operator is a conversion op
+                                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                                            // update shape's vector log with output cardinality
+                                            updateOperatorOutputCardinality(operatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
+                                        else
+                                            updateConversionOperatorOutputCardinality(operatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
+                                        // check if the operator is a conversion op
+                                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                                            // update shape's vector log with target platform
+                                            updateOperatorInputCardinality(operatorName[0], finalAverageInputCardinality,vectorLogs2D[index]);
+                                        //else
+
                                         return list;
                                     });
                         }
+
                         // Update 1d vector log
-                        updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
-                        // update shape's vector log with target platform
-                        updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
+                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                            updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                        else
+                            updateConversionOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+
+                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                            // update shape's vector log with target platform
+                            updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
 
                         // update the estimate inputcardinality/dataQuantasize
-                        if(localOperatorContexts.get(operator).getOperator().isSource()){
+                        if(localOperatorContexts.get(operator).getOperator().isSource()&&(localOperatorContexts.get(operator).getOperator() instanceof TextFileSource)){
                             this.setEstimatedInputCardinality(averageOutputCardinality);
                             TextFileSource textFileSource = (TextFileSource) localOperatorContexts.get(operator).getOperator();
                             double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();

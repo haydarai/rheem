@@ -4,7 +4,6 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Stack;
 
@@ -48,8 +47,10 @@ public interface Topology {
     void setNodes(Stack nodes);
 
     List<Topology> getPredecessors();
+    List<Topology> getSuccessors();
 
-    Topology getLeftTopNode();
+
+        Topology getLeftTopNode();
 
     boolean resetInputSlots(Integer slot);
 

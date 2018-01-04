@@ -9,7 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.core.api.OperatorProfiler;
-import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.profiler.generators.DataGenerators;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 
 import java.util.*;

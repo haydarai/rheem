@@ -4,18 +4,14 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.profiler.core.api.OperatorProfiler;
-import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.data.UdfGenerators;
+import org.qcri.rheem.profiler.generators.DataGenerators;
 import org.qcri.rheem.spark.operators.*;
 
 import java.io.Serializable;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Utilities to create {@link SparkOperatorProfiler} instances.

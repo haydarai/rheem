@@ -45,7 +45,7 @@ public class OperatorProfilerBase extends OperatorProfiler {
 //            UnarySource unarySource = (UnarySource) executionOperatorGenerator.get();
 //            unarySource.get
 //        }
-        this.fileUrl = new Configuration().getStringProperty("rheem.core.log.syntheticData");
+        this.fileUrl = new Configuration().getStringProperty("rheem.core.log.syntheticDataURL.prefix");
     }
 
     public OperatorProfilerBase(Supplier<ExecutionOperator> executionOperatorGenerator,
@@ -59,7 +59,7 @@ public class OperatorProfilerBase extends OperatorProfiler {
 //            UnarySource unarySource = (UnarySource) executionOperatorGenerator.get();
 //            unarySource.get
 //        }
-        this.fileUrl = new Configuration().getStringProperty("rheem.core.log.syntheticData");
+        this.fileUrl = new Configuration().getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix");
     }
 
     @Override

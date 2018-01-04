@@ -1,11 +1,5 @@
 package org.qcri.rheem.profiler.core.api;
 
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Stack;
 
 /**
@@ -19,6 +13,7 @@ public class LoopTopology extends TopologyBase implements Topology {
 
     public static final int ITERATION_OUTPUT_INDEX = 0;
     public static final int FINAL_OUTPUT_INDEX = 1;
+
     /**
      * Pipeline Topology that will be contained inside the Loop Topology
      */
@@ -43,6 +38,8 @@ public class LoopTopology extends TopologyBase implements Topology {
 
         this.outputTopologySlots[ITERATION_OUTPUT_INDEX] = new OutputTopologySlot("iterOut", this);
         this.outputTopologySlots[FINAL_OUTPUT_INDEX] = new OutputTopologySlot("finOut", this);
+
+        this.setBooleanBody(true);
     }
 
     /**
@@ -59,6 +56,10 @@ public class LoopTopology extends TopologyBase implements Topology {
         this.outputTopologySlots[FINAL_OUTPUT_INDEX] = new OutputTopologySlot("finOut", this);
 
         this.topologyNumber=topologyNumber;
+
+        this.setBooleanBody(true);
+        //isLoopBody = true;
+
     }
 
     /**
@@ -77,6 +78,8 @@ public class LoopTopology extends TopologyBase implements Topology {
 
         this.numIterations = numIterations;
         this.topologyNumber=topologyNumber;
+
+        this.setBooleanBody(true);
     }
 
     /**

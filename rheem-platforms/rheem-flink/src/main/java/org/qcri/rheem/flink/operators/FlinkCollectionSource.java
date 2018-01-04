@@ -15,7 +15,6 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,8 +45,8 @@ public class FlinkCollectionSource<Type> extends CollectionSource<Type> implemen
             ChannelInstance[] outputs,
             FlinkExecutor flinkExecutor,
             OptimizationContext.OperatorContext operatorContext) {
-        assert inputs.length == 0;
-        assert outputs.length == 1;
+        //assert inputs.length == 1;
+        //assert outputs.length == 0;
 
         final Collection<Type> collection;
         if (this.collection != null) {

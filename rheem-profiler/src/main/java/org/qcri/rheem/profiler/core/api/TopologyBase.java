@@ -92,7 +92,7 @@ public class TopologyBase implements Topology {
     /**
      * is true when the topology is a part of a loop body
      */
-    private Boolean isLoopBody = true;
+    private Boolean isLoopBody = false;
 
 
 
@@ -147,6 +147,19 @@ public class TopologyBase implements Topology {
             }
         }
         return predecessors;
+    }
+
+    public List<Topology> getSuccessors(){
+        OutputTopologySlot[] outputSlots = this.getAllOutputs();
+        List<Topology> successors = new ArrayList<>();
+        for(OutputTopologySlot output:outputSlots){
+            // check if there's predecessor
+            if (!output.getOccupiedSlots().isEmpty()){
+                InputTopologySlot input = (InputTopologySlot) output.getOccupiedSlots().get(0);
+                successors.add(input.getOwner());
+            }
+        }
+        return successors;
     }
 
     public Topology getLeftTopNode(){

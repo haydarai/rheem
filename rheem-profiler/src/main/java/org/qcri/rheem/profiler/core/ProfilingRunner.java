@@ -20,8 +20,8 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.flink.Flink;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.profiler.core.api.*;
-import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.data.UdfGenerators;
+import org.qcri.rheem.profiler.generators.DataGenerators;
+import org.qcri.rheem.profiler.generators.UdfGenerators;
 import org.qcri.rheem.profiler.java.JavaSourceProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
@@ -53,6 +53,9 @@ public class ProfilingRunner{
     private static Configuration configuration = new Configuration();
     private static int runningPlanPerShape;
     private static int runningCounter = 0;
+
+    private static ExecutionLog executionLog = ExecutionLog.open(configuration);
+
 
     public void ProfilingRunner(ProfilingConfig profilingConfig, PlatformExecution profilingPlatformExecution,
                                  ProfilingPlan profilingPlan){
@@ -99,15 +102,19 @@ public class ProfilingRunner{
         shapes.stream().forEach(s -> {
             s.getSubShapes().stream().forEach(executionShape->{
                         if ((runningPlanPerShape==-1)||(runningCounter<runningPlanPerShape))
-                            executeShapeProfiling(executionShape);
-                    });
+                            try {
+                                executeShapeProfiling(executionShape);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+            });
                     // reintiate running counter
                     runningCounter=0;
                 }
         );
     }
 
-    private static List<OperatorProfiler.Result> executeShapeProfiling(Shape shape) {
+    private static List<OperatorProfiler.Result> executeShapeProfiling(Shape shape) throws IOException {
 
         // Initialize rheemContext
         rheemContext = new RheemContext();
@@ -193,13 +200,13 @@ public class ProfilingRunner{
                     for (TextFileSource textFileSource : textFileSources) {
                         switch (shape.getPlateform().get(0)) {
                             case "java":
-                                textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.core.log.syntheticData") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                textFileSource.setInputUrl("file:///" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix") + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                             case "spark":
-                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                             case "flink":
-                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.core.log.syntheticData")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                         }
                         logger.info(String.format("[PROFILING] input file url: %s \n", textFileSource.getInputUrl()));
@@ -245,15 +252,12 @@ public class ProfilingRunner{
 
                     shape.exhaustivePlanFiller();
 
-                    //shape.printEnumeratedLogs();
-                    System.out.print(shape.printEnumeratedLogs());
                     List<Long> inputCardinalities = new ArrayList<>();
-                    //inputCardinalities.add((long) shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getExecutionOperator().getNumOutputs());
+
                     // Gather and assemble all result metrics.
                     results.add(new OperatorProfiler.Result(
                                     inputCardinalities,
                                     1,
-//                (long)  shape.getSourceTopologies().get(0).getNodes().elementAt(0).getField1().getExecutionOperator().getNumInputs(),
                                     endTime - startTime,
                                     provideDiskBytes(startTime, endTime),
                                     provideNetworkBytes(startTime, endTime),
@@ -283,7 +287,7 @@ public class ProfilingRunner{
     }
 
 
-    private static void executePlan(ExecutionOperator sinkOperator, Shape shape) {
+    private static void executePlan(ExecutionOperator sinkOperator, Shape shape) throws IOException {
 
 
         // Have Rheem execute the plan.
@@ -295,10 +299,21 @@ public class ProfilingRunner{
         try {
             job.execute();
         }catch (Exception e) {
-            throw new RheemException("[ERROR] Job execution failed.", e);
+            if(configuration.getBooleanProperty("rheem.profiler.errors.discard")) {
+                String errorMessage = Arrays.stream(e.getStackTrace()).map(s->s.toString()).reduce((s1,s2)-> s1+"\n"+s2).get();
+                executionLog.storeProfilingErrors(shape.getVectorLogs(), 0, e);
+                //throw new RheemException("[ERROR] Job execution failed.", e);
+            }
+            else
+                throw new RheemException("[ERROR] Job execution failed.", e);
+
+                // Handle the case of error logging in
+                // includes: profiling shape, error,
+
             //throw e;
         } catch (OutOfMemoryError outOfMemoryError){
-            throw new RheemException("[ERROR] Job execution failed: out of memory error!", outOfMemoryError);
+            if(configuration.getBooleanProperty("rheem.profiler.errors.discard"))
+                throw new RheemException("[ERROR] Job execution failed: out of memory error!", outOfMemoryError);
         }
 //
 // catch (Throwable t) {
@@ -324,17 +339,17 @@ public class ProfilingRunner{
     /**
      * Generate onDisk the log for training the ML for learning Topology models
      */
-    private static void storeExecutionLog(Shape shape, long executionTime){
-        try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
+    private static void storeExecutionLog(Shape shape, long executionTime) throws IOException {
+        //try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
             if(configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
                 executionLog.store2DVector(shape.getVectorLogs2D(),executionTime);
             }
             // Store 1D log vector in all cases
             executionLog.storeVector(shape.getVectorLogs(),executionTime);
 
-        } catch (Exception e) {
-            logger.error("Storing partial executions failed.", e);
-        }
+//        } catch (Exception e) {
+//            logger.error("Storing partial executions failed.", e);
+//        }
     }
     public static void exhaustivePlanProfiling(List<List<PlanProfiler>> planProfiler,
                                            ProfilingConfig profilingConfiguration){
