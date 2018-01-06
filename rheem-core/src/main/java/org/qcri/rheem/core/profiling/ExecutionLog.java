@@ -234,10 +234,10 @@ public class ExecutionLog implements AutoCloseable {
 
         String errorMessage;
 
-        errorMessage = "Error Date: " + new Date() + "\n" +
-                "Error message: " + error.getLocalizedMessage().toString()+ "\n" +
-                "Error stack trace: " + Arrays.stream(error.getStackTrace()).map(s->s.toString()).reduce((s1, s2)-> s1+"\n"+s2).get() + "\n" +
-                "Error clause: " + error.getCause() ;
+        errorMessage = "ERROR DATE: " + new Date() + "\n" +
+                "ERROR MESSAGE: " + error.getLocalizedMessage().toString()+ "\n" +
+                "ERROR STACK TRACE: " + Arrays.stream(error.getStackTrace()).map(s->s.toString()).reduce((s1, s2)-> s1+"\n"+s2).get() + "\n" +
+                "ERROR CLAUSE: " + error.getCause() ;
 
         try {
             File file = new File(configuration.getStringProperty("rheem.profiler.logs.errors"));
@@ -261,9 +261,9 @@ public class ExecutionLog implements AutoCloseable {
         }
         writer.write(Long.toString(executionTime));
         writer.write("\n");
-        writer.write("Error Message <\n");
+        writer.write("ERROR TRACE <\n");
         writer.write(errorMessage);
-        writer.write(">\n");
+        writer.write("\n>\n");
         writer.close();
     }
 }

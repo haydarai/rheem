@@ -111,13 +111,25 @@ public class ProfilingPlanBuilder implements Serializable {
 
                             // Fill with binary executionOperator profilers
                             for (Topology t : shape.getJunctureTopologies()) {
+                                // select a new platform randomly
+                                PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+                                platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
                                 // check if the nodes are not already filled in the source or sink
-                                //if (t.getNodes().isEmpty())
                                 t.getNodes().push(binaryNodeFill(type, platform));
                             }
 
                             // Fill the loop topologies
                             for (Topology t : shape.getLoopTopologies()) {
+                                // select a new platform randomly
+                                PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+                                platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                                // if there's multiple platform; case of flink loop operator is avoided to avoid having non flink operator inside loop subPlan
+                                if(profilingConfig.getProfilingPlateform().size()>1)
+                                    while(platform.equals("flink")){
+                                        // select a new platform randomly
+                                        PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+                                        platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                                    }
                                 t.getNodes().push(loopNodeFill(type, platform));
                             }
 
@@ -498,6 +510,14 @@ public class ProfilingPlanBuilder implements Serializable {
         String operator = profilingConfig.getLoopExecutionOperators().get(rnd);
         return new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, plateform,1,udfRnd));
     }
+
+
+    /**
+     * NOTE: THE BELOW IS OBSOLETE (NOT update/tested was used for single operator profiling)
+     */
+
+
+
 
     /**
      * Builds all possible combinations of profiling plans of the input {@link Topology}ies

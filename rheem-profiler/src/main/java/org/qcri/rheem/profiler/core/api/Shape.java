@@ -823,16 +823,16 @@ public class Shape {
 
     public void exhaustivePlanFiller(){
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
-        exhaustivePlanFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(1), 0);
+        exhaustivePlanFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(1), 0, -1);
     }
         /**
          * Will exhaustively generate all platform filled logVectors from the input logVector; and update  the platform vector will be used in the runner
          * PS: currently support only 1D vector log generation
          * @param vectorLog
          * @param newPlatform
-         * @param start
+         * @param startOperatorIndex
          */
-    public void exhaustivePlanFiller(double[] vectorLog,String[] platformVector, String newPlatform, int start){
+    public void exhaustivePlanFiller(double[] vectorLog,String[] platformVector, String newPlatform, int startOperatorIndex, int exhaustivePlatformVectorsMaxBuffer){
         // if no generated plan fill it with equal values (all oerators in first platform java)
 
         // clone input vectorLog
@@ -849,12 +849,17 @@ public class Shape {
             }
             exhaustiveVectors.add(newVectorLog.clone());
             exhaustivePlatformVectors.add(newPlatformLog.clone());
-            exhaustivePlanFiller(newVectorLog,newPlatformLog, newPlatform,start);
+            exhaustivePlanFiller(newVectorLog,newPlatformLog, newPlatform, startOperatorIndex, exhaustivePlatformVectorsMaxBuffer);
             return;
         }
 
+        // exit if @var{exhaustivePlatformVector} has reached buffer
+        if((exhaustivePlatformVectorsMaxBuffer!=-1)&&(exhaustivePlatformVectorsMaxBuffer<exhaustivePlatformVectors.size()))
+            //exit
+            return;
+
         // Recursive exhaustive filling platforms for each executionOperator
-        for(int i = start; i< operatorNames.size(); i++){
+        for(int i = startOperatorIndex; i< operatorNames.size(); i++){
             String operator = operatorNames.get(i);
             //change if to check if the number of plateform for executionOperator meets the new required executionOperator number
             if(!(getOperatorPlatform(operator,vectorLog)==newPlatform)){
@@ -870,7 +875,7 @@ public class Shape {
                 exhaustiveVectors.add(newVectorLog);
                 exhaustivePlatformVectors.add(newPlatformLog);
                 // recurse over newVectorLog
-                exhaustivePlanFiller(newVectorLog,newPlatformLog , newPlatform,i+1);
+                exhaustivePlanFiller(newVectorLog,newPlatformLog , newPlatform, i+1, exhaustivePlatformVectorsMaxBuffer);
             }
         }
     }
