@@ -111,7 +111,8 @@ public class WordCountIT {
         reduceByOperator.connectTo(0, sink, 0);
 
         Shape shape = Shape.createShape(sink);
-        shape.exhaustivePlanFiller(shape.getVectorLogs(),shape.platformVector, Shape.DEFAULT_PLATFORMS.get(1),0,-1);
+        shape.exhaustivePlanPlatformFiller();
+        //shape.exhaustivePlanPlatformFiller(shape.getVectorLogs(),new String[Shape.MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], Shape.DEFAULT_PLATFORMS.get(1),0,-1);
         // Have Rheem execute the plan.
         RheemPlan rheemPlan = new RheemPlan(sink);
         Job job = rheemContext.createJob(null,rheemPlan);
@@ -281,7 +282,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         //rheemContext.execute(rheemPlan);
         Shape shape = Shape.createShape(sink);
-        //shape.exhaustivePlanFiller(shape.getVectorLogs(),Shape.DEFAULT_PLATFORMS.get(1),0);
+        //shape.exhaustivePlanPlatformFiller(shape.getVectorLogs(),Shape.DEFAULT_PLATFORMS.get(1),0);
         //shape.printEnumeratedLogs();
         // Have Rheem execute the plan.
         RheemPlan rheemPlan = new RheemPlan(sink);
