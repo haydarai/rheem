@@ -42,22 +42,26 @@ public class Shape {
     //private final int VECTOR_SIZE = 105;
     //private final int VECTOR_SIZE = 146;
     //private final int VECTOR_SIZE = 194;
-    private final int VECTOR_SIZE = 213;
+    private final int VECTOR_SIZE = 251;
     double[] vectorLogs= new double[VECTOR_SIZE];
     double[][] vectorLogs2D= new double[10][VECTOR_SIZE];
 
     double[] vectorLogsWithResetPlatforms= new double[VECTOR_SIZE];
     private int topologyNumber;
     private List<String> operatorNames = new ArrayList<>();
+    private List<String> channelNames = new ArrayList<>();
+
     List<List<String>> operatorNames2d = new ArrayList<>();
     List<List<String>> operatorNamesPostExecution2d = new ArrayList<>();
     private List<Junction> junctions = new ArrayList<>();
     private List<ExecutionTask> executionTasks = new ArrayList<>();
     private List<double[]> exhaustiveVectors = new ArrayList<>();
     private static int startOpPos = 4;
-    private static int opPosStep = 8;
+    private static int opPosStep = 10;
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
+
+    // Feature vector length: startOpPos + maxOperatorNumber * opPosStep + maxChannelNumber * channelPosStep +
 
     public double getEstimatedInputCardinality() {
         return estimatedInputCardinality;
@@ -79,7 +83,7 @@ public class Shape {
     private double estimatedDataQuataSize;
 
 
-    HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    public HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
         put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
@@ -92,7 +96,7 @@ public class Shape {
         put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);
     }};
 
-    static HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    public HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("CollectionChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 0*channelPosStep);
         put("StreamChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 1*channelPosStep);
         put("RddChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 2*channelPosStep);
@@ -102,7 +106,7 @@ public class Shape {
         put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);
     }};
 
-    static HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    public HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("collectionsource",startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("objectfilesource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);
         put("Collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
@@ -126,7 +130,7 @@ public class Shape {
     HashMap<String,Integer> plateformVectorPostion = new HashMap<String,Integer>(){{
         put("Java Streams",0);
         put("Apache Spark",1);
-        put("Apache Flink",1);
+        put("Apache Flink",2);
     }};
     // TODO: Currently only single sink topology generation is supported
     private Topology sinkTopology;
@@ -647,14 +651,14 @@ public class Shape {
         //Tuple2<String,OperatorProfilerBase> tuple2 = (Tuple2<String,OperatorProfilerBase>) tuple;
         // TODO: if the executionOperator is inside pipeline and the pipeline is inside a loop body then the executionOperator should be put as pipeline and loop
         if (t.isPipeline())
-            logs[start+2]+=1;
-        else if(t.isJuncture())
-            logs[start+3]+=1;
-        if((t.isLoop())||(t.isLoopBody()))
             logs[start+4]+=1;
+        else if(t.isJuncture())
+            logs[start+5]+=1;
+        if((t.isLoop())||(t.isLoopBody()))
+            logs[start+6]+=1;
 
         // average complexity
-        logs[start+5] += operatorProfilerBase.getUDFcomplexity();
+        logs[start+7] += operatorProfilerBase.getUDFcomplexity();
 
         // average selectivity
         double  selectivity = 0;
@@ -670,7 +674,7 @@ public class Shape {
             LoopHeadOperator loopOperator = (LoopHeadOperator)operatorProfilerBase.getRheemOperator();
             selectivity = loopOperator.getNumExpectedIterations();
         }
-        logs[start+6] += (int) selectivity;
+        logs[start+8] += (int) selectivity;
         //TODO: duplicate and selectivity to be added
     }
 
@@ -690,21 +694,21 @@ public class Shape {
                 logs[start+1]+=1;
                 break;
             case "Apache Flink":
-                logs[start+1]+=10;
+                logs[start+2]+=1;
                 break;
             default:
                 throw new RheemException("wrong plateform!");
         }
         // TODO: if the executionOperator is inside pipeline and the pipeline is inside a loop body then the executionOperator should be put as pipeline and loop
         if (t.isPipeline())
-            logs[start+2]+=1;
-        else if(t.isJuncture())
-            logs[start+3]+=1;
-        if((t.isLoop())||(t.isLoopBody()))
             logs[start+4]+=1;
+        else if(t.isJuncture())
+            logs[start+5]+=1;
+        if((t.isLoop())||(t.isLoopBody()))
+            logs[start+6]+=1;
 
         // average complexity
-        logs[start+5] += tuple.getField1().getUDFcomplexity();
+        logs[start+7] += tuple.getField1().getUDFcomplexity();
 
         // average selectivity
         double  selectivity = 0;
@@ -720,7 +724,7 @@ public class Shape {
             LoopHeadOperator loopOperator = (LoopHeadOperator)tuple.getField1().getExecutionOperator();
             selectivity = loopOperator.getNumExpectedIterations();
         }
-        logs[start+6] += (int) selectivity;
+        logs[start+8] += (int) selectivity;
         //TODO: duplicate and selectivity to be added
     }
 
@@ -745,7 +749,7 @@ public class Shape {
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
-        logVector[opPos + 7] = outputCardinality;
+        logVector[opPos + 9] = outputCardinality;
     }
 
     /**
@@ -773,7 +777,7 @@ public class Shape {
         int opPos = getOperatorVectorPosition(operator);
 
         // update cost
-        logVector[opPos + 6] = inputCardinality;
+        logVector[opPos + 8] = inputCardinality;
     }
 
     /**
@@ -788,15 +792,20 @@ public class Shape {
         // reset all platforms to zero
         //plateformVectorPostion.entrySet().stream().
         //        forEach(tuple->logVector[opPos + tuple.getValue()] = 0);
+//        if(replacePlatform!=null) {
+//            if(replacePlatform=="Apache Flink")
+//                logVector[opPos + plateformVectorPostion.get(replacePlatform)] -= 10;
+//            else
+//                logVector[opPos + plateformVectorPostion.get(replacePlatform)] -= 1;
+//        }
+//        if(newPlatform=="Apache Flink")
+//            logVector[opPos + plateformVectorPostion.get(newPlatform)] += 10;
+//        else
+//            logVector[opPos + plateformVectorPostion.get(newPlatform)] += 1;
+
         if(replacePlatform!=null) {
-            if(replacePlatform=="Apache Flink")
-                logVector[opPos + plateformVectorPostion.get(replacePlatform)] -= 10;
-            else
                 logVector[opPos + plateformVectorPostion.get(replacePlatform)] -= 1;
         }
-        if(newPlatform=="Apache Flink")
-            logVector[opPos + plateformVectorPostion.get(newPlatform)] += 10;
-        else
             logVector[opPos + plateformVectorPostion.get(newPlatform)] += 1;
 
         // update platform
@@ -820,13 +829,20 @@ public class Shape {
      */
     private String getOperatorPlatform(String operator, double[] logVector) {
         // get executionOperator position
+//        int opPos = getOperatorVectorPosition(operator);
+//        for (String platform : DEFAULT_PLATFORMS) {
+//            if (logVector[opPos + getPlatformVectorPosition(platform)] == 2)
+//                return platform;
+//            // check the case of flink
+//            else if(((int)logVector[opPos + getPlatformVectorPosition(platform)]) % 10 == 2)
+//                return DEFAULT_PLATFORMS.get(2);
+//        }
+//        return null;
         int opPos = getOperatorVectorPosition(operator);
         for (String platform : DEFAULT_PLATFORMS) {
-            if (logVector[opPos + getPlatformVectorPosition(platform)] == 1)
+            if (logVector[opPos + getPlatformVectorPosition(platform)] >= 1)
                 return platform;
-            // check the case of flink
-            else if(((int)logVector[opPos + getPlatformVectorPosition(platform)]) % 10 == 1)
-                return DEFAULT_PLATFORMS.get(2);
+                // check the case of flink
         }
         return null;
     }
@@ -840,26 +856,29 @@ public class Shape {
 
 
     public void exhaustivePlanPlatformFiller(List<String> platforms){
+        resetAllOperatorPlatforms();
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
-        exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], platforms.get(1), 0, -1);
+        exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], platforms.get(1), platforms.get(0), 0, -1);
         for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
             int finalI = i;
             exhaustivePlatformVectors.stream()
-                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, platforms.get(finalI), 0, -1));
+                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, platforms.get(finalI),platforms.get(finalI-1), 0, -1));
         }
     }
 
     public void exhaustivePlanPlatformFiller(){
+
+        resetAllOperatorPlatforms();
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
         //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
-        exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
+        exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), DEFAULT_PLATFORMS.get(0), 0, 1000);
 
         for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
             int finalI = i;
             ArrayList<String[]> exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
             //for(String[] platformVector:exhaustivePlatformVectorsCopy){
             for(int j=0; j<exhaustivePlatformVectorsCopy.size();j++){
-                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), DEFAULT_PLATFORMS.get(finalI), 0, -1);
+                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), DEFAULT_PLATFORMS.get(finalI),DEFAULT_PLATFORMS.get(finalI-1), 0, -1);
             }
             exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
 //            exhaustivePlatformVectors.stream()
@@ -873,7 +892,7 @@ public class Shape {
          * @param newPlatform
          * @param startOperatorIndex
          */
-    public void exhaustivePlanPlatformFiller(double[] vectorLog, String[] platformVector, String newPlatform, int startOperatorIndex, int exhaustivePlatformVectorsMaxBuffer){
+    public void exhaustivePlanPlatformFiller(double[] vectorLog, String[] platformVector, String newPlatform,String replacePlatform, int startOperatorIndex, int exhaustivePlatformVectorsMaxBuffer){
         // if no generated plan fill it with equal values (all oerators in first platform java)
 
         // clone input vectorLog
@@ -890,7 +909,7 @@ public class Shape {
             }
             exhaustiveVectors.add(newVectorLog.clone());
             exhaustivePlatformVectors.add(newPlatformLog.clone());
-            exhaustivePlanPlatformFiller(newVectorLog,newPlatformLog, newPlatform, startOperatorIndex, exhaustivePlatformVectorsMaxBuffer);
+            exhaustivePlanPlatformFiller(newVectorLog,newPlatformLog, newPlatform, replacePlatform, startOperatorIndex, exhaustivePlatformVectorsMaxBuffer);
             return;
         }
 
@@ -902,22 +921,23 @@ public class Shape {
         // Recursive exhaustive filling platforms for each executionOperator
         for(int i = startOperatorIndex; i< operatorNames.size(); i++){
             String operator = operatorNames.get(i);
-            //change if to check if the number of plateform for executionOperator meets the new required executionOperator number
-            if(!(getOperatorPlatform(operator,vectorLog)==newPlatform)){
+            //TODO: change if to check if the number of platform for executionOperator meets the new required executionOperator number
+            //if(!(getOperatorPlatform(operator,vectorLog)==newPlatform)){
+                String tmpReplacePlatform = getOperatorPlatform(operator,vectorLog);
                 // re-clone vectorLog
                 newVectorLog = vectorLog.clone();
                 // re-clone platformVector
                 newPlatformLog = platformVector.clone();
                 // update newVectorLog
-                updateOperatorPlatform(operator,newPlatform,DEFAULT_PLATFORMS.get(0),newVectorLog);
+                updateOperatorPlatform(operator,newPlatform,tmpReplacePlatform,newVectorLog);
                 updatePlatformVector(i,newPlatform,newPlatformLog);
 
                 // add current vector to exhaustiveVectors
                 exhaustiveVectors.add(newVectorLog);
                 exhaustivePlatformVectors.add(newPlatformLog);
                 // recurse over newVectorLog
-                exhaustivePlanPlatformFiller(newVectorLog,newPlatformLog , newPlatform, i+1, exhaustivePlatformVectorsMaxBuffer);
-            }
+                exhaustivePlanPlatformFiller(newVectorLog,newPlatformLog , newPlatform, replacePlatform, i+1, exhaustivePlatformVectorsMaxBuffer);
+            //}
         }
     }
 
@@ -1003,7 +1023,7 @@ public class Shape {
                 vectorLogs[conversionOpStartPosition+2]+=1;
                 break;
             case "Apache Flink":
-                vectorLogs[conversionOpStartPosition+2]+=10;
+                vectorLogs[conversionOpStartPosition+3]+=1;
                 break;
             default:
                 throw new RheemException("wrong plateform!");
@@ -1024,6 +1044,7 @@ public class Shape {
 
     private void addChannelLog(Channel outChannel) {
         String[] channelName = outChannel.toString().split("\\P{Alpha}+");
+        channelNames.add(channelName[0]);
         // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
         int channelStartPosition = getJunctureVectorPosition(channelName[0]);
         if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
@@ -1058,6 +1079,7 @@ public class Shape {
         }
     }
 
+    private List<String> executionOperatorNames = new ArrayList<>();
     /**
      * update with execution executionOperator informations (plateform, output cardinality)
      * @param localOperatorContexts
@@ -1065,24 +1087,27 @@ public class Shape {
     public void updateExecutionOperators(Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts) {
         localOperatorContexts.keySet().stream()
             .forEach(operator -> {
-                // We discard composite operators
+                // Composite operators discard
                 if(operator.isElementary()) {
-                    String[] operatorName = new String[1];
+                    String[] executionOperatorName = new String[1];
                     double averageOutputCardinality = 0;
                     double averageInputCardinality = 0;
 
                     // Update executionOperator name
                     if(operator.isExecutionOperator()){
-                        operatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
+                        executionOperatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
                                 .toLowerCase().replace("java","").replace("spark","").replace("flink","");
                     } else {
                         Set<Platform> platform = operator.getTargetPlatforms();
-                        operatorName[0] = operator.toString().split("\\P{Alpha}+")[0];
+                        executionOperatorName[0] = operator.toString().split("\\P{Alpha}+")[0].toLowerCase();
                         // update platform
-                        platform.stream().forEach(p->updateOperatorPlatform(operatorName[0],p.getName(),null,vectorLogs) );
+                        platform.stream().forEach(p->updateOperatorPlatform(executionOperatorName[0],p.getName(),null,vectorLogs) );
                     }
 
                     if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){
+                        // update present execution operator names
+                        executionOperatorNames.add(executionOperatorName[0]);
+
                         // get average input/output cardinalities
                         averageOutputCardinality = localOperatorContexts.get(operator).getOutputCardinality(0).getAverageEstimate();
                         averageInputCardinality = Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities())
@@ -1096,21 +1121,21 @@ public class Shape {
                             double finalAverageOutputCardinality = averageOutputCardinality;
                             double finalAverageInputCardinality = averageInputCardinality;
                             operatorNamesPostExecution2d.stream()
-                                    .filter(list-> !list.contains(operatorName[0]))
+                                    .filter(list-> !list.contains(executionOperatorName[0]))
                                     .findFirst()
                                     .map(list -> {
                                         int index = operatorNamesPostExecution2d.indexOf(list);
-                                        list.add(operatorName[0]);
+                                        list.add(executionOperatorName[0]);
                                         // check if the operator is a conversion op
-                                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                                        if(OPERATOR_VECTOR_POSITION.containsKey(executionOperatorName[0].toLowerCase()))
                                             // update shape's vector log with output cardinality
-                                            updateOperatorOutputCardinality(operatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
+                                            updateOperatorOutputCardinality(executionOperatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
                                         else
-                                            updateConversionOperatorOutputCardinality(operatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
+                                            updateConversionOperatorOutputCardinality(executionOperatorName[0], finalAverageOutputCardinality,vectorLogs2D[index]);
                                         // check if the operator is a conversion op
-                                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                                        if(OPERATOR_VECTOR_POSITION.containsKey(executionOperatorName[0].toLowerCase()))
                                             // update shape's vector log with target platform
-                                            updateOperatorInputCardinality(operatorName[0], finalAverageInputCardinality,vectorLogs2D[index]);
+                                            updateOperatorInputCardinality(executionOperatorName[0], finalAverageInputCardinality,vectorLogs2D[index]);
                                         //else
 
                                         return list;
@@ -1118,14 +1143,14 @@ public class Shape {
                         }
 
                         // Update 1d vector log
-                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
-                            updateOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                        if(OPERATOR_VECTOR_POSITION.containsKey(executionOperatorName[0].toLowerCase()))
+                            updateOperatorOutputCardinality(executionOperatorName[0],averageOutputCardinality,vectorLogs);
                         else
-                            updateConversionOperatorOutputCardinality(operatorName[0],averageOutputCardinality,vectorLogs);
+                            updateConversionOperatorOutputCardinality(executionOperatorName[0],averageOutputCardinality,vectorLogs);
 
-                        if(OPERATOR_VECTOR_POSITION.containsKey(operatorName[0].toLowerCase()))
+                        if(OPERATOR_VECTOR_POSITION.containsKey(executionOperatorName[0].toLowerCase()))
                             // update shape's vector log with target platform
-                            updateOperatorInputCardinality(operatorName[0],averageInputCardinality,vectorLogs);
+                            updateOperatorInputCardinality(executionOperatorName[0],averageInputCardinality,vectorLogs);
 
                         // update the estimate inputcardinality/dataQuantasize
                         if(localOperatorContexts.get(operator).getOperator().isSource()&&(localOperatorContexts.get(operator).getOperator() instanceof TextFileSource)){
@@ -1136,7 +1161,6 @@ public class Shape {
                             this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
                         }
                     }
-
                 }
             });
     }
