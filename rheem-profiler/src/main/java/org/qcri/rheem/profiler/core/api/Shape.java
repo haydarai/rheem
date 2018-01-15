@@ -885,6 +885,24 @@ public class Shape {
 //                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(finalI), 0, -1));
         }
     }
+
+    public void exhaustivePlanPlatformFiller(int exhaustivePlatformVectorsMaxBuffer){
+        // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
+        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
+        exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, exhaustivePlatformVectorsMaxBuffer);
+
+        for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
+            int finalI = i;
+            ArrayList<String[]> exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
+            //for(String[] platformVector:exhaustivePlatformVectorsCopy){
+            for(int j=0; j<exhaustivePlatformVectorsCopy.size();j++){
+                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), DEFAULT_PLATFORMS.get(finalI), 0, exhaustivePlatformVectorsMaxBuffer);
+            }
+            exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
+//            exhaustivePlatformVectors.stream()
+//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(finalI), 0, -1));
+        }
+    }
         /**
          * Will exhaustively generate all platform filled logVectors from the input logVector; and update  the platform vector will be used in the runner
          * PS: currently support only 1D vector log generation

@@ -119,7 +119,6 @@ public class WordCountIT {
 
         job.execute();
 
-
         // update the shape channels
         shape.updateChannels(job.getPlanImplementation().getJunctions());
         shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());

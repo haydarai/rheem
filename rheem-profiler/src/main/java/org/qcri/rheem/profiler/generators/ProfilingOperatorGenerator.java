@@ -15,6 +15,7 @@ import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.function.Supplier;
 
@@ -258,7 +259,7 @@ public class ProfilingOperatorGenerator {
                                     }, type);
 
                                     //set a collector
-                                    op.setCollector(new LinkedList());
+                                    op.setCollector(new ArrayList());
                                     op.setName("FinkCallBackSink");
                                     return op;
                                 },

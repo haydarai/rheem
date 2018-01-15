@@ -243,7 +243,11 @@ public class Job extends OneTimeExecutable {
 
             // Get an execution plan.
             int executionId = 0;
-            ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+            ExecutionPlan executionPlan;
+            if(configuration.getBooleanProperty("rheem.core.optimizer.BlackBoxLearner"))
+                executionPlan = this.createInitialExecutionPlanMLearner();
+            else
+                executionPlan = this.createInitialExecutionPlan();
             this.optimizationRound.stop();
             if (this.experiment != null) {
                 this.experiment.addMeasurement(ExecutionPlanMeasurement.capture(
@@ -356,6 +360,22 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.stop("Cardinality&Load Estimation");
     }
 
+
+    private ExecutionPlan createInitialExecutionPlanMLearner(){
+
+        // exhaustive enumerate all
+
+        // Load Model
+
+        // Predict execution time
+
+        // pick Minimum
+
+        // convert feature vector to execution Plan
+
+        final ExecutionPlan MLexecutionPlan = null;
+        return MLexecutionPlan;
+    }
 
     /**
      * Determine a good/the best execution plan from a given {@link RheemPlan}.

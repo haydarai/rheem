@@ -250,8 +250,7 @@ public class ProfilingRunner{
                     storeExecutionLog(shape, endTime - startTime);
                     shape.resetAllOperatorPlatforms();
 
-                    //shape.exhaustivePlanPlatformFiller();
-                    //shape.printEnumeratedLogs();
+                    shape.exhaustivePlanPlatformFiller(1000);
 
                     List<Long> inputCardinalities = new ArrayList<>();
 
