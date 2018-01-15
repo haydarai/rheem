@@ -15,8 +15,8 @@ import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -258,8 +258,11 @@ public class ProfilingOperatorGenerator {
                                     FlinkLocalCallbackSink op = new FlinkLocalCallbackSink(dataQuantum -> {
                                     }, type);
 
-                                    //set a collector
-                                    op.setCollector(new ArrayList());
+                                    List<String> collector = new LinkedList<>();
+
+                                    // set a collector
+                                    //op.setCollector(collector);
+
                                     op.setName("FinkCallBackSink");
                                     return op;
                                 },
@@ -305,8 +308,10 @@ public class ProfilingOperatorGenerator {
                                     FlinkLocalCallbackSink op = new FlinkLocalCallbackSink(dataQuantum -> {
                                     }, type);
 
+                                    List<String> collector = new LinkedList<>();
+
                                     // set a collector
-                                    op.setCollector(new LinkedList());
+                                    op.setCollector(collector);
                                     op.setName("FinkCallBackSink");
                                     return op;
                                 },

@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.api;
 
-import com.sun.javafx.geom.Shape;
-import org.json.JSONObject;
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
@@ -244,7 +242,7 @@ public class Job extends OneTimeExecutable {
             // Get an execution plan.
             int executionId = 0;
             ExecutionPlan executionPlan;
-            if(configuration.getBooleanProperty("rheem.core.optimizer.BlackBoxLearner"))
+            if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
                 executionPlan = this.createInitialExecutionPlanMLearner();
             else
                 executionPlan = this.createInitialExecutionPlan();
