@@ -303,6 +303,9 @@ public class ProfilingOperatorGenerator {
                                 (Supplier<ExecutionOperator> & Serializable) () -> {
                                     FlinkLocalCallbackSink op = new FlinkLocalCallbackSink(dataQuantum -> {
                                     }, type);
+
+                                    // set a collector
+                                    op.setCollector(new LinkedList());
                                     op.setName("FinkCallBackSink");
                                     return op;
                                 },
