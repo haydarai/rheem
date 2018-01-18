@@ -12,7 +12,7 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

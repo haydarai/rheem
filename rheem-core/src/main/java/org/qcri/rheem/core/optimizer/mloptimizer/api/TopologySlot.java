@@ -1,6 +1,5 @@
-package org.qcri.rheem.profiler.core.api;
+package org.qcri.rheem.core.optimizer.mloptimizer.api;
 
-import org.apache.pig.builtin.TOP;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**

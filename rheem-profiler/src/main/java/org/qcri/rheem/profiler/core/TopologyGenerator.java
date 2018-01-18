@@ -1,5 +1,6 @@
 package org.qcri.rheem.profiler.core;
 
+import org.qcri.rheem.core.optimizer.mloptimizer.api.*;
 import org.qcri.rheem.profiler.core.api.*;
 
 import java.util.ArrayList;

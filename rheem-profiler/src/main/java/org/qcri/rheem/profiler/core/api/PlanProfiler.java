@@ -1,22 +1,11 @@
 package org.qcri.rheem.profiler.core.api;
 
-import org.apache.pig.builtin.TOP;
-import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Shape;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Topology;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.java.Java;
-import org.qcri.rheem.profiler.util.ProfilingUtils;
-import org.qcri.rheem.profiler.util.RrdAccessor;
-import org.qcri.rheem.spark.Spark;
-import org.rrd4j.ConsolFun;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import sun.security.provider.SHA;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**

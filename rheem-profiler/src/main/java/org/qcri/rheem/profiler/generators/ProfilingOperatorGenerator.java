@@ -9,8 +9,8 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.flink.operators.*;
 import org.qcri.rheem.profiler.core.ProfilingPlanBuilder;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
-import org.qcri.rheem.profiler.core.api.OperatorProfilerBase;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfilerBase;
 import org.qcri.rheem.profiler.java.JavaOperatorProfilers;
 import org.qcri.rheem.profiler.spark.SparkPlanOperatorProfilers;
 

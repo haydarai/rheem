@@ -23,26 +23,31 @@ public class LoadModel {
 
     private static List<double[]> featureVectors = new ArrayList<>();
 
-    public static void loadModel(List<double[]> featurevectors) throws IOException {
+    public static void loadModel(List<double[]> featurevectors) {
 
         featureVectors = featurevectors;
 
         // save features vectors
         featureVectors.stream()
                 .forEach(f -> {
-                    try {
-                        storeVector(f, 0);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    storeVector(f, 0);
                 });
 
         // run model loader in python
-        Process p = Runtime.getRuntime().exec(configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation"));
+
+        String[] cmd = {
+                "python",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
+        };
+
+        try {
+            Process p = Runtime.getRuntime().exec(cmd);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    private static void storeVector(double[] logs, long executionTime) throws IOException {
+    private static void storeVector(double[] logs, long executionTime) {
 
         try {
             File file = new File(configuration.getStringProperty("rheem.core.optimizer.mloptimizer.saveVectorLocation"));
@@ -50,6 +55,14 @@ public class LoadModel {
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
                 throw new RheemException("Could not initialize cardinality repository.");
             }
+
+            // DElete the file if exist
+            if(file.delete()){
+                System.out.println(file.getName() + " is deleted!");
+            }else{
+                System.out.println("Delete operation is failed.");
+            }
+
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
 
 //            // create 2Dlog file directory
@@ -66,12 +79,16 @@ public class LoadModel {
 
         // Handle 1D log storage
         NumberFormat nf = new DecimalFormat("##.#");
+        try {
+            for(int i=0;i<logs.length;i++){
+                writer.write( nf.format( logs[i]) + " ");
+            }
+            writer.write(Long.toString(0));
+            writer.write("\n");
 
-        for(int i=0;i<logs.length;i++){
-            writer.write( nf.format( logs[i]) + " ");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        writer.write(Long.toString(0));
-        writer.write("\n");
-        writer.close();
     }
 }

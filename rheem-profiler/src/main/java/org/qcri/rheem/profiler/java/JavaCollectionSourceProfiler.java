@@ -2,7 +2,7 @@ package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaCollectionSource;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
 
 import java.util.ArrayList;
 import java.util.Collection;

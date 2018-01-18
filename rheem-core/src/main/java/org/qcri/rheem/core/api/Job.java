@@ -16,6 +16,10 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.optimizer.enumeration.*;
+import org.qcri.rheem.core.optimizer.mloptimizer.LoadModel;
+import org.qcri.rheem.core.optimizer.mloptimizer.LogGenerator;
+import org.qcri.rheem.core.optimizer.mloptimizer.MLestimation;
+import org.qcri.rheem.core.optimizer.mloptimizer.Vector2ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
@@ -61,6 +65,11 @@ public class Job extends OneTimeExecutable {
      * The {@link RheemPlan} to be executed by this instance.
      */
     private final RheemPlan rheemPlan;
+
+    /**
+     * The {@link RheemPlan} to be executed by this instance.
+     */
+    private final RheemPlan profilingRheemPlan;
 
     /**
      * {@link OptimizationContext} for the {@link #rheemPlan}.
@@ -120,6 +129,11 @@ public class Job extends OneTimeExecutable {
     private final String name;
 
     /**
+     * Log generator containing Rheem plan feature vector used for ML optimizer
+     */
+    LogGenerator logGenerator = new LogGenerator();
+
+    /**
      * <i>Currently not used.</i>
      */
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
@@ -149,6 +163,8 @@ public class Job extends OneTimeExecutable {
         this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork(this.name);
         this.rheemPlan = rheemPlan;
+        this.profilingRheemPlan = rheemPlan;
+
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
         }
@@ -232,6 +248,11 @@ public class Job extends OneTimeExecutable {
 
         try {
 
+            // if ml learning model is used the the vector log preparation happen before inflation and hyperplan generation
+            if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
+                // exhaustive enumerate all
+                logGenerator.prepareVectorLog(rheemPlan,optimizationContext,true);
+            }
             // Prepare the #rheemPlan for the optimization.
             this.optimizationRound.start();
             this.prepareRheemPlan();
@@ -242,10 +263,10 @@ public class Job extends OneTimeExecutable {
             // Get an execution plan.
             int executionId = 0;
             ExecutionPlan executionPlan;
-            if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
-                executionPlan = this.createInitialExecutionPlanMLearner();
-            else
-                executionPlan = this.createInitialExecutionPlan();
+            //if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
+            //    executionPlan = this.createInitialExecutionPlanMLearner();
+            //else
+            executionPlan = this.createInitialExecutionPlan();
             this.optimizationRound.stop();
             if (this.experiment != null) {
                 this.experiment.addMeasurement(ExecutionPlanMeasurement.capture(
@@ -356,24 +377,27 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.stop("Cardinality&Load Estimation", "Push Estimation");
 
         this.optimizationRound.stop("Cardinality&Load Estimation");
+        //logGenerator.updateExecutionOperators(optimizationContext.getLocalOperatorContexts());
+
     }
 
 
-    private ExecutionPlan createInitialExecutionPlanMLearner(){
+    private PlanImplementation pickBestExecutionPlanMLearner(Collection<PlanImplementation> executionPlans) {
 
-        // exhaustive enumerate all
 
+        logGenerator.updateExecutionOperators(optimizationContext.getLocalOperatorContexts());
+        logGenerator.exhaustivePlanPlatformFiller();
 
         // Load Model
+        LoadModel.loadModel(logGenerator.getExhaustiveVectors());
 
-        // Predict execution time
-
-        // pick Minimum
+        // Predict execution time and pick minimuium
+        double[] bestFeatureVector =  MLestimation.getBestVector(logGenerator.getExhaustiveVectors());
 
         // convert feature vector to execution Plan
+        final PlanImplementation MLplanImplementation = Vector2ExecutionPlan.generate(executionPlans, bestFeatureVector);
 
-        final ExecutionPlan MLexecutionPlan = null;
-        return MLexecutionPlan;
+        return this.planImplementation = MLplanImplementation;
     }
 
     /**
@@ -402,8 +426,13 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        // pick best execution plan
-        this.pickBestExecutionPlan(executionPlans, null, null, null);
+
+        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
+            // pick best execution plan using ml optimizer
+            this.pickBestExecutionPlanMLearner(executionPlans);
+        else
+            // pick best execution plan using cost based optimizer
+            this.pickBestExecutionPlan(executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");

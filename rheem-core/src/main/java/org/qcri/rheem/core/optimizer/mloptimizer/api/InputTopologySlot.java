@@ -1,6 +1,4 @@
-package org.qcri.rheem.profiler.core.api;
-
-import org.qcri.rheem.core.types.DataSetType;
+package org.qcri.rheem.core.optimizer.mloptimizer.api;
 
 /**
  * Created by migiwara on 07/07/17.

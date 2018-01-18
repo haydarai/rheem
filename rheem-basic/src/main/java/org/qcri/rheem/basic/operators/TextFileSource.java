@@ -27,7 +27,6 @@ public class TextFileSource extends UnarySource<String> {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private String inputUrl;
 
     private final String encoding;
 
@@ -37,7 +36,7 @@ public class TextFileSource extends UnarySource<String> {
 
     public TextFileSource(String inputUrl, String encoding) {
         super(DataSetType.createDefault(String.class));
-        this.inputUrl = inputUrl;
+        super.inputUrl = inputUrl;
         this.encoding = encoding;
     }
 
@@ -52,12 +51,6 @@ public class TextFileSource extends UnarySource<String> {
         this.encoding = that.getEncoding();
     }
 
-    public void setInputUrl(String inputUrl) {
-        this.inputUrl = inputUrl;
-    }
-    public String getInputUrl() {
-        return this.inputUrl;
-    }
 
     @Override
     public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(

@@ -1,14 +1,11 @@
 package org.qcri.rheem.profiler.core;
 
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
-import org.qcri.rheem.profiler.core.api.PipelineTopology;
-import org.qcri.rheem.profiler.core.api.Topology;
-import org.qcri.rheem.profiler.core.api.TopologyInstance;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.PipelineTopology;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Topology;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.TopologyInstance;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Stack;
 

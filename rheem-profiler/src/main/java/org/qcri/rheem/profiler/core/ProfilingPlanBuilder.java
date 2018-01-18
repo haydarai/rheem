@@ -1,7 +1,11 @@
 package org.qcri.rheem.profiler.core;
 
-import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.LoopTopology;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Shape;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Topology;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.types.DataSetType;

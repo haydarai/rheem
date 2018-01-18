@@ -1,8 +1,8 @@
-package org.qcri.rheem.profiler.core.api;
+package org.qcri.rheem.core.optimizer.mloptimizer.api;
 
-import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.basic.operators.TextFileSource;
+//import org.qcri.rheem.basic.data.Tuple2;
+//import org.qcri.rheem.basic.operators.LocalCallbackSink;
+//import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -39,6 +39,8 @@ public class Shape {
     private List<PipelineTopology> pipelineTopologies = new ArrayList<>();
     private List<JunctureTopology> junctureTopologies = new ArrayList<>();
     private List<LoopTopology> loopTopologies = new ArrayList<>();
+    private static Stack<LoopHeadOperator> loopHeads = new Stack();
+
     //private final int VECTOR_SIZE = 105;
     //private final int VECTOR_SIZE = 146;
     //private final int VECTOR_SIZE = 194;
@@ -61,26 +63,11 @@ public class Shape {
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
 
-    // Feature vector length: startOpPos + maxOperatorNumber * opPosStep + maxChannelNumber * channelPosStep +
-
-    public double getEstimatedInputCardinality() {
-        return estimatedInputCardinality;
-    }
-
-    public void setEstimatedInputCardinality(double estimatedInputCardinality) {
-        this.estimatedInputCardinality = estimatedInputCardinality;
-    }
-
-    public double getEstimatedDataQuataSize() {
-        return estimatedDataQuataSize;
-    }
-
-    public void setEstimatedDataQuataSize(double estimatedDataQuataSize) {
-        this.estimatedDataQuataSize = estimatedDataQuataSize;
-    }
-
     private double estimatedInputCardinality;
     private double estimatedDataQuataSize;
+
+
+
 
 
     public HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -262,14 +249,13 @@ public class Shape {
     //int tmpstart =0;
 
 
-    private static Stack<LoopHeadOperator> loopHeads = new Stack();
 
     /**
      * Create a preExecution shape from a sink executionOperator
      * @param sinkOperator
      * @return
      */
-    public static Shape createShape(LocalCallbackSink sinkOperator) {
+    public static Shape createShape(UnarySink sinkOperator) {
         return createShape(sinkOperator,true, true);
     }
 
@@ -279,7 +265,7 @@ public class Shape {
      * @param ispreExecution
      * @return
      */
-    public static Shape createShape(LocalCallbackSink sinkOperator, boolean ispreExecution, boolean prepareVectorLog){
+    public static Shape createShape(UnarySink sinkOperator, boolean ispreExecution, boolean prepareVectorLog){
         Shape newShape = new Shape(new Configuration());
 
         // Initiate current and predecessor executionOperator
@@ -1171,9 +1157,9 @@ public class Shape {
                             updateOperatorInputCardinality(executionOperatorName[0],averageInputCardinality,vectorLogs);
 
                         // update the estimate inputcardinality/dataQuantasize
-                        if(localOperatorContexts.get(operator).getOperator().isSource()&&(localOperatorContexts.get(operator).getOperator() instanceof TextFileSource)){
+                        if(localOperatorContexts.get(operator).getOperator().isSource()&&(localOperatorContexts.get(operator).getOperator() instanceof UnarySource)){
                             this.setEstimatedInputCardinality(averageOutputCardinality);
-                            TextFileSource textFileSource = (TextFileSource) localOperatorContexts.get(operator).getOperator();
+                            UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
                             double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
                             this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
                             this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
@@ -1208,5 +1194,23 @@ public class Shape {
 
         vectorLogs2D = new double[10][VECTOR_SIZE];
         vectorLogs = new double[VECTOR_SIZE];
+    }
+
+    // Feature vector length: startOpPos + maxOperatorNumber * opPosStep + maxChannelNumber * channelPosStep +
+
+    public double getEstimatedInputCardinality() {
+        return estimatedInputCardinality;
+    }
+
+    public void setEstimatedInputCardinality(double estimatedInputCardinality) {
+        this.estimatedInputCardinality = estimatedInputCardinality;
+    }
+
+    public double getEstimatedDataQuataSize() {
+        return estimatedDataQuataSize;
+    }
+
+    public void setEstimatedDataQuataSize(double estimatedDataQuataSize) {
+        this.estimatedDataQuataSize = estimatedDataQuataSize;
     }
 }

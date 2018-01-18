@@ -58,6 +58,7 @@ public class Configuration {
         Actions.doSafe(() -> bootstrapPruningProviders(defaultConfiguration));
         Actions.doSafe(() -> bootstrapProperties(defaultConfiguration));
         Actions.doSafe(() -> bootstrapPlugins(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapMlOptimizerProperties(defaultConfiguration));
         Actions.doSafe(() -> bootstrapProfilingProperties(defaultConfiguration));
     }
 
@@ -555,6 +556,23 @@ public class Configuration {
         configuration.setProperties(customizableProperties);
 
 
+    }
+
+    private static void bootstrapMlOptimizerProperties(Configuration configuration) {
+        configuration.setProperty("rheem.core.optimizer.mloptimizer.modelLocation", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "loadModel.py"),
+                File.separator
+        ));
+
+        configuration.setProperty("rheem.core.optimizer.mloptimizer.saveVectorLocation", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "mlModelVectors.txt"),
+                File.separator
+        ));
+
+        configuration.setProperty("rheem.core.optimizer.mloptimizer.loadEstimatesLocation", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "estimates.txt"),
+                File.separator
+        ));
     }
 
     private static void bootstrapProfilingProperties(Configuration configuration) {

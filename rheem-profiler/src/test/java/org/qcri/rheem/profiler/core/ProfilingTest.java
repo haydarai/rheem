@@ -1,10 +1,9 @@
 package org.qcri.rheem.profiler.core;
 
-import org.junit.Test;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
 import org.qcri.rheem.profiler.core.api.PlanProfiler;
 import org.qcri.rheem.profiler.core.api.ProfilingConfig;
-import org.qcri.rheem.profiler.core.api.Topology;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Topology;
 
 import java.util.List;
 

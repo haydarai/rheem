@@ -3,11 +3,9 @@ package org.qcri.rheem.profiler.java;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
-import org.qcri.rheem.profiler.core.api.OperatorProfiler;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;

@@ -20,7 +20,7 @@ import org.qcri.rheem.flink.Flink;
 import org.qcri.rheem.flink.operators.FlinkLocalCallbackSink;
 import org.qcri.rheem.flink.operators.FlinkTextFileSource;
 import org.qcri.rheem.java.Java;
-import org.qcri.rheem.profiler.core.api.Shape;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Shape;
 import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
