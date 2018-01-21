@@ -419,6 +419,8 @@ public class Job extends OneTimeExecutable {
 
         List<OperatorAlternative> newSinksAlternative = new ArrayList<>();
         OperatorAlternative previousAlternativeOperator= operatorAlternative.get(0);
+        String previousAlternativeOperatorName= operatorAlternative.get(0).getAlternatives().get(0).getContainedOperator().toString();
+
         //previousAlternativeOperator.getAlternatives().removeIf(op->op.getContainedOperator().getTargetPlatforms().equals("Java Streams"));
         previousAlternativeOperator.keepAlternative(1);
         while(previousAlternativeOperator.getAllInputs().length>=1){
