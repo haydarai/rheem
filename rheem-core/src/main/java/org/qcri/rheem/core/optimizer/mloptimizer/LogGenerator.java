@@ -133,7 +133,19 @@ public class LogGenerator {
         //prepareTopologies(sink,ispreExecution);
         // prepare topologies
         sinks.stream()
-                .forEach( sink->prepareTopologies((UnarySink) sink,ispreExecution));
+                .forEach( sink->{
+                    Shape shape = prepareTopologies((UnarySink) sink,ispreExecution);
+                    shape.getSourceTopologies().stream()
+                            .forEach(t->this.sourceTopologies.add(t));
+                    shape.getAllTopologies().stream()
+                            .forEach(t->this.allTopologies.add(t));
+                    shape.getPipelineTopologies().stream()
+                            .forEach(t->this.pipelineTopologies.add(t));
+                    shape.getJunctureTopologies().stream()
+                            .forEach(t->this.junctureTopologies.add(t));
+                    shape.getLoopTopologies().stream()
+                            .forEach(t->this.loopTopologies.add(t));
+                });
 //ispreExecution
         double[] tmpVectorLogs1D = new double[VECTOR_SIZE];
         double[][] tmpVectorLogs2D= new double[10][VECTOR_SIZE];
@@ -382,6 +394,8 @@ public class LogGenerator {
                 }
             }
         }
+        // set new shape as associated shape of current log generator
+
 //        if (prepareVectorLog)
 //            newShape.prepareVectorLog(ispreExecution);
         return newShape;
@@ -970,7 +984,11 @@ public class LogGenerator {
                                 this.setEstimatedInputCardinality(averageOutputCardinality);
                                 UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
                                 double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
-                                this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                                // avoid having infinity
+                                if (averageOutputCardinality!=0)
+                                    this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                                else
+                                    this.setEstimatedDataQuataSize(fileSize/1);
                                 this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
                             }
                         }

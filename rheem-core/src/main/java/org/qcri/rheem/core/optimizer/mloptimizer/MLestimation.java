@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.mloptimizer;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.exception.RheemException;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -67,14 +68,10 @@ public class MLestimation {
             bufferedReader.close();
         }
         catch(FileNotFoundException ex) {
-            System.out.println(
-                    "Unable to open file '" +
-                            fileName + "'");
+            throw new RheemException("could not find estimates from loaded ML model!");
         }
         catch(IOException ex) {
-            System.out.println(
-                    "Error reading file '"
-                            + fileName + "'");
+            throw new RheemException("could not read estimates from loaded ML model!");
             // Or we could just do this:
             // ex.printStackTrace();
         }

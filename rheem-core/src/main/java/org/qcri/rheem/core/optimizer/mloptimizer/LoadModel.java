@@ -27,11 +27,17 @@ public class LoadModel {
 
         featureVectors = featurevectors;
 
-        // save features vectors
-        featureVectors.stream()
-                .forEach(f -> {
-                    storeVector(f, 0);
-                });
+        // check if feature file exists
+        File file = new File(configuration.getStringProperty("rheem.core.optimizer.mloptimizer.saveVectorLocation"));
+        file.delete();
+
+        storeVector(featureVectors,0);
+
+//        // save features vectors
+//        featureVectors.stream()
+//                .forEach(f -> {
+//                    storeVector(f, 0);
+//                });
 
         // run model loader in python
 
@@ -42,25 +48,18 @@ public class LoadModel {
         try {
             Process p = Runtime.getRuntime().exec(cmd);
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RheemException("could not load properly the ML model!");
         }
 
     }
 
-    private static void storeVector(double[] logs, long executionTime) {
+    private static void storeVector(List<double[]> featureVectors, long executionTime) {
 
         try {
             File file = new File(configuration.getStringProperty("rheem.core.optimizer.mloptimizer.saveVectorLocation"));
             final File parentFile = file.getParentFile();
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
                 throw new RheemException("Could not initialize cardinality repository.");
-            }
-
-            // DElete the file if exist
-            if(file.delete()){
-                System.out.println(file.getName() + " is deleted!");
-            }else{
-                System.out.println("Delete operation is failed.");
             }
 
             writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
@@ -80,14 +79,66 @@ public class LoadModel {
         // Handle 1D log storage
         NumberFormat nf = new DecimalFormat("##.#");
         try {
-            for(int i=0;i<logs.length;i++){
-                writer.write( nf.format( logs[i]) + " ");
+            for(double[] logs:featureVectors){
+                for(int i=0;i<logs.length;i++){
+                    writer.write( nf.format( logs[i]) + " ");
+                }
+                writer.write(Long.toString(0));
+                writer.write("\n");
             }
-            writer.write(Long.toString(0));
-            writer.write("\n");
+
 
             writer.close();
         } catch (IOException e) {
+            throw new RheemException("could not stream vectors to ML model!");
+        }
+    }
+
+//     public static void main(String[] args) throws FileNotFoundException, JAXBException, SAXException {
+//        loadLodel();
+//    }
+//
+//    private static void loadLodel() throws FileNotFoundException, JAXBException, SAXException {
+//
+//        PMML pmml = null;
+//
+//
+//        try(InputStream inputstream = new FileInputStream("C:\\Users\\FLVBSLV\\Documents\\GitHub\\jpmml-sklearn\\pipeline.pmml")){
+//            pmml = org.jpmml.model.PMMLUtil.unmarshal(inputstream);
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        ModelEvaluatorFactory modelEvaluatorFactory = ModelEvaluatorFactory.newInstance();
+//
+//        ModelEvaluator<?> modelEvaluator = modelEvaluatorFactory.newModelEvaluator(pmml);
+//
+//        Evaluator evaluator = (Evaluator)modelEvaluator;
+//
+//        List<InputField> inputFields = evaluator.getInputFields();
+//        System.out.println(inputFields);
+//    }
+    public static void main(String[] args){
+        String[] cmd = {
+                "cmd","/c","C:\\Users\\FLVBSLV\\Anaconda3\\python.exe",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
+        };
+
+        //String cmd = "/bash/bin -c echo password| python script.py '" + packet.toString() + "'";
+
+        try {
+            Process p = Runtime.getRuntime().exec("C:\\Users\\FLVBSLV\\Anaconda3\\python.exe C:\\Users\\FLVBSLV\\.rheem\\loadModel.py");
+
+            //Process p = Runtime.getRuntime().exec(cmd);
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String s = br.readLine();
+            System.out.println(s);
+            System.out.println("Sent");
+            p.waitFor();
+            p.destroy();
+        } catch (IOException e) {
+            throw new RheemException("could not load properly the ML model!");
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

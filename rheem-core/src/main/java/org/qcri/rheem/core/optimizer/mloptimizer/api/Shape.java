@@ -1161,7 +1161,11 @@ public class Shape {
                             this.setEstimatedInputCardinality(averageOutputCardinality);
                             UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
                             double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
-                            this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                            // avoid having infinity
+                            if (averageOutputCardinality!=0)
+                                this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                            else
+                                this.setEstimatedDataQuataSize(fileSize/1);
                             this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
                         }
                     }
