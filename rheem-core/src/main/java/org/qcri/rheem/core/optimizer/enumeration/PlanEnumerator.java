@@ -176,6 +176,7 @@ public class PlanEnumerator {
                            Map<ExecutionOperator, ExecutionTask> executedTasks,
                            Map<OutputSlot<?>, Collection<Channel>> openChannels) {
 
+
         this.optimizationContext = optimizationContext;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;

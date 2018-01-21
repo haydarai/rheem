@@ -12,6 +12,9 @@ import java.util.Collection;
 public class Vector2ExecutionPlan {
     public static PlanImplementation generate(Collection<PlanImplementation> planImplementations, double[] bestFeatureVector) {
 
+        // convert feature vector into plan implementation
+        //plan
+
         assert !planImplementations.isEmpty();
         final PlanImplementation planImplementation =  planImplementations.stream()
                 .reduce((p1,p2)->p1)

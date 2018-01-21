@@ -2,6 +2,8 @@ package org.qcri.rheem.core.optimizer.mloptimizer;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.text.DecimalFormat;
@@ -13,6 +15,7 @@ import java.util.List;
  * Load saved learned model
  */
 public class LoadModel {
+    private static final Logger logger = LoggerFactory.getLogger(LoadModel.class);
 
     private static Configuration configuration = new Configuration();
 
@@ -47,8 +50,16 @@ public class LoadModel {
 
         try {
             Process p = Runtime.getRuntime().exec(cmd);
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String s = br.readLine();
+            logger.info(s);
+            System.out.println(s);
+            p.waitFor();
+            p.destroy();
         } catch (IOException e) {
             throw new RheemException("could not load properly the ML model!");
+        } catch (InterruptedException e) {
+            throw new RheemException("could not wait for ML model to finish estimation!");
         }
 
     }
@@ -121,13 +132,13 @@ public class LoadModel {
 //    }
     public static void main(String[] args){
         String[] cmd = {
-                "cmd","/c","C:\\Users\\FLVBSLV\\Anaconda3\\python.exe",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
+                "python",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
         };
 
         //String cmd = "/bash/bin -c echo password| python script.py '" + packet.toString() + "'";
 
         try {
-            Process p = Runtime.getRuntime().exec("C:\\Users\\FLVBSLV\\Anaconda3\\python.exe C:\\Users\\FLVBSLV\\.rheem\\loadModel.py");
+            Process p = Runtime.getRuntime().exec(cmd);
 
             //Process p = Runtime.getRuntime().exec(cmd);
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));

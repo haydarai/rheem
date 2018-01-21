@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.mloptimizer;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Tuple2;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -20,7 +21,7 @@ public class MLestimation {
     private static Configuration configuration = new Configuration();
     private static List<Double>  estimates = new ArrayList<>();
 
-    public static double[] getBestVector(List<double[]> featureVectors){
+    public static Tuple2<double[],Double> getBestVector(List<double[]> featureVectors){
 
         // Load output estimates
         retreiveEstimates();
@@ -38,7 +39,7 @@ public class MLestimation {
                 minIndex = itr.previousIndex();
             }
         }
-        return featureVectors.get(minIndex);
+        return new Tuple2(featureVectors.get(minIndex),min);
     }
 
     // Load estimated times

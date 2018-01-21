@@ -20,6 +20,7 @@ import org.qcri.rheem.core.optimizer.mloptimizer.LoadModel;
 import org.qcri.rheem.core.optimizer.mloptimizer.LogGenerator;
 import org.qcri.rheem.core.optimizer.mloptimizer.MLestimation;
 import org.qcri.rheem.core.optimizer.mloptimizer.Vector2ExecutionPlan;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Tuple2;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
@@ -250,6 +251,8 @@ public class Job extends OneTimeExecutable {
 
             // if ml learning model is used the the vector log preparation happen before inflation and hyperplan generation
             if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
+                logger.info("rheem plan to feature vector convesion.");
+
                 // exhaustive enumerate all
                 logGenerator.prepareVectorLog(rheemPlan,optimizationContext,true);
             }
@@ -384,18 +387,21 @@ public class Job extends OneTimeExecutable {
 
     private PlanImplementation pickBestExecutionPlanMLearner(Collection<PlanImplementation> executionPlans) {
 
-
+        logger.info("update  exhaustive feature vectors enumeration");
         logGenerator.updateExecutionOperators(optimizationContext.getLocalOperatorContexts());
-        logGenerator.exhaustivePlanPlatformFiller();
+        logger.info("start exhaustive feature vectors enumeration");
+        logGenerator.exhaustivePlanPlatformFiller(1000);
 
         // Load Model
+        logger.info("Loading model for Ml optimizer!");
         LoadModel.loadModel(logGenerator.getExhaustiveVectors());
 
-        // Predict execution time and pick minimuium
-        double[] bestFeatureVector =  MLestimation.getBestVector(logGenerator.getExhaustiveVectors());
+        // Predict execution time and pick minimum
+        logger.info("Pick best Ml optimizer estimates!");
+        Tuple2<double[],Double> bestFeatureVector =  MLestimation.getBestVector(logGenerator.getExhaustiveVectors());
 
         // convert feature vector to execution Plan
-        final PlanImplementation MLplanImplementation = Vector2ExecutionPlan.generate(executionPlans, bestFeatureVector);
+        final PlanImplementation MLplanImplementation = Vector2ExecutionPlan.generate(executionPlans, bestFeatureVector.getField0());
 
         return this.planImplementation = MLplanImplementation;
     }
@@ -408,8 +414,22 @@ public class Job extends OneTimeExecutable {
 
         this.optimizationRound.start("Create Initial Execution Plan");
 
+        List<OperatorAlternative> operatorAlternative = new ArrayList<>();
+        rheemPlan.getSinks().stream().forEach(op-> operatorAlternative.add((OperatorAlternative) op));
+
+        List<OperatorAlternative> newSinksAlternative = new ArrayList<>();
+        OperatorAlternative previousAlternativeOperator= operatorAlternative.get(0);
+        //previousAlternativeOperator.getAlternatives().removeIf(op->op.getContainedOperator().getTargetPlatforms().equals("Java Streams"));
+        previousAlternativeOperator.keepAlternative(1);
+        while(previousAlternativeOperator.getAllInputs().length>=1){
+            previousAlternativeOperator = (OperatorAlternative) previousAlternativeOperator.getInput(0).getOccupant().getOwner();
+            previousAlternativeOperator.keepAlternative(1);
+        }
+
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
+
+        //OperatorAlternative newSinkAlternative = OperatorAlternative.wrap((Operator) operatorAlternative.get(0).getAlternatives().get(0));
 
         final TimeMeasurement enumerateMeasurment = this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
         planEnumerator.setTimeMeasurement(enumerateMeasurment);
@@ -448,7 +468,6 @@ public class Job extends OneTimeExecutable {
         this.planImplementation.logTimeEstimates();
 
         //assert executionPlan.isSane();
-
 
         this.optimizationRound.stop("Create Initial Execution Plan");
         return executionPlan;
