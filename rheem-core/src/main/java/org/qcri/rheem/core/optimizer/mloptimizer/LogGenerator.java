@@ -67,8 +67,19 @@ public class LogGenerator {
     private static int maxOperatorNumber = 19;
     private double estimatedInputCardinality;
     private double estimatedDataQuataSize;
+    public LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES = new LinkedHashMap<String,Integer>(){{
+        put("map", startOpPos);
+        put("filter", startOpPos + 1*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby:reduce", startOpPos +3*opPosStep);
+        put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby:globalmaterializedgroup", startOpPos +6*opPosStep);
+        put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall:union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
+        put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
+        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink", startOpPos +18*opPosStep);
+        put("collect:zipwithid:cache:count", startOpPos + 19*opPosStep);
+        // Below should be added in different position
+        // DAtasetchannel is a flink type channel
+    }};
 
-    public HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    public LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
         put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
@@ -81,7 +92,7 @@ public class LogGenerator {
         put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);
     }};
 
-    public HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    public LinkedHashMap<String,Integer> CHANNEL_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
         put("CollectionChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 0*channelPosStep);
         put("StreamChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 1*channelPosStep);
         put("RddChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 2*channelPosStep);
@@ -91,7 +102,7 @@ public class LogGenerator {
         put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);
     }};
 
-    public HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    public LinkedHashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
         put("collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("collectionsource",startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("objectfilesource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);
         put("Collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
@@ -99,7 +110,7 @@ public class LogGenerator {
         put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
     }};
 
-    static HashMap<String,Integer> OLD_CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
+    static LinkedHashMap<String,Integer> OLD_CONVERSION_OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
         put("JavaCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);put("JavaCollectionSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("JavaObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("JavaObjectFileSource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);put("SparkCollect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("SparkCollectionSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
         put("SparkObjectFileSink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);put("SparkObjectFileSource", startOpPos + (1+maxOperatorNumber)*opPosStep + 11*channelPosStep);
@@ -789,6 +800,44 @@ public class LogGenerator {
     }
 
     /**
+     * print an input feature vector
+     */
+    public String printLog(double[] featureVector) {
+        final String[] outputVector = {""};
+        final int[] count = {0,0};
+        final int[] opPos = {0};
+        NumberFormat nf = new DecimalFormat("##.#");
+        Arrays.stream(featureVector).forEach(d -> {
+            if (count[0]==0) outputVector[0] = outputVector[0].concat("Topologies< ");
+            //if (count[0]==4) outputVector[0] = outputVector[0].concat("> ");
+            if ((count[0]!=0)&&((count[0]-4) % opPosStep==0)&&(opPos[0]<20)) {
+                outputVector[0] = outputVector[0].concat("> "+this.getSetElement(OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES.keySet(),opPos[0])+"< ");
+                opPos[0]++;
+            }
+//                    keySet().stream().reduce((key1,key2)->{
+//                if (count[1]==opPos[0]) return key1;
+//                count[1]++;
+//            }));
+
+            count[0]++;
+            outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
+        });
+        this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
+        return "Current rheem plan feature vector: " + outputVector[0];
+    }
+
+    private String getSetElement(Set<String>set,int pos){
+        int count =0;
+        List<String> indexes = new ArrayList<String>(set);
+        for(String element:indexes){
+            if (count==pos)
+                return element;
+            count++;
+        }
+        return "";
+    }
+
+    /**
      * Logging {@link Shape}'s enumerated vector logs
      */
     public String printEnumeratedLogs() {
@@ -996,6 +1045,25 @@ public class LogGenerator {
                 });
     }
 
+    public Tuple2<double[],Integer> retreiveOperatorPlatform(double[] featureVector, String operatorName) {
+
+        Integer foundIndex=-1;
+        // format operator name
+        String formattedOperatorName=operatorName.toString().split("\\P{Alpha}+")[0]
+                .toLowerCase();
+        int operatorPosition = OPERATOR_VECTOR_POSITION.get(formattedOperatorName);
+
+
+        do{
+            foundIndex++;
+            if (featureVector[operatorPosition+foundIndex]!=0) {
+                featureVector[operatorPosition + foundIndex]--;
+                return new Tuple2(featureVector, foundIndex);
+            }
+        }while(featureVector[operatorPosition+foundIndex]==0);
+        throw new RheemException("Feature vector inconsistent: number of platforms doesn't much operators number!");
+    }
+
     // GETTERS AND SETTERS
     public double[] getVectorLogs() {
         return vectorLogs;
@@ -1053,5 +1121,6 @@ public class LogGenerator {
     public List<double[]> getExhaustiveVectors() {
         return exhaustiveVectors;
     }
+
 
 }
