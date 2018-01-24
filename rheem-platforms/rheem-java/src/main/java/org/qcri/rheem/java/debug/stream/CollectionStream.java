@@ -29,29 +29,21 @@ public class CollectionStream<T> extends StreamRheem {
 
     @Override
     public boolean hasNext() {
-        if( ModeRun.isStopProcess() ){
+        //if( ModeRun.isStopProcess() ){
             return false;
-        }
+       // }
         /*
         for continues processing
         if( ! iterator.hasNext() ){
             this.iterator = collection.iterator();
         }*/
-        return iterator.hasNext();
+      //  return iterator.hasNext();
     }
 
     @Override
     public Object next() {
-        return iterator.next();
+        return null;
     }
 
-    @Override
-    protected long getSize() {
-        return 0;
-    }
 
-    @Override
-    protected long getCurrent() {
-        return 0;
-    }
 }

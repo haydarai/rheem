@@ -14,6 +14,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -51,7 +52,21 @@ public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallback
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        ((JavaChannelInstance) inputs[0]).<T>provideStream().forEach(this.callback);
+
+
+
+      //  ((JavaChannelInstance) inputs[0]).<T>provideStream().forEach(this.callback);
+        try {
+            ((JavaChannelInstance) inputs[0]).<T>provideStream().forEach(this.callback);
+          //  System.out.println(((JavaChannelInstance) inputs[0]).<T>provideStream().count());
+        }catch (Throwable e){
+            e.printStackTrace();
+            System.exit(-1);
+        }
+
+
+
+
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

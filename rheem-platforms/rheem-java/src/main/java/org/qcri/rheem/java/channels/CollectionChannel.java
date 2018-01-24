@@ -1,13 +1,11 @@
 package org.qcri.rheem.java.channels;
 
-import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.java.debug.stream.StreamDebug;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -65,9 +63,9 @@ public class CollectionChannel extends Channel {
         @Override
         @SuppressWarnings("unchecked")
         public <T> Stream<T> provideStream() {
-            if(ModeRun.isDebugMode()){
+            /*if(ModeRun.isDebugMode()){
                 return StreamDebug.getStream(this.collection);
-            }
+            }*/
             return (Stream<T>) this.collection.stream();
         }
 

@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -67,6 +68,8 @@ public class PlanImplementation {
      * {@link OptimizationContext} that provides estimates for the {@link #operators}.
      */
     private final OptimizationContext optimizationContext;
+
+    private ModeRun modeRun;
 
     /**
      * The squashed cost estimate to execute this instance. This will be used to select the best plan!
@@ -1065,5 +1068,12 @@ public class PlanImplementation {
         public int hashCode() {
             return Objects.hash(execOutput, execInputs);
         }
+    }
+
+    public ModeRun getModeRun(){
+        if(this.modeRun == null){
+            this.modeRun = this.optimizationContext.getJob().getModeRun();
+        }
+        return this.modeRun;
     }
 }

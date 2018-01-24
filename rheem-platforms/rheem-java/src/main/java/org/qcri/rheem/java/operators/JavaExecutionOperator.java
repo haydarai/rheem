@@ -12,6 +12,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -63,6 +64,40 @@ public interface JavaExecutionOperator extends ExecutionOperator {
 
         // Manipulate the lineage.
         output.getLineage().addPredecessor(input.getLineage());
+    }
+
+    static void forward(ChannelInstance input, ChannelInstance output, int iteration) {
+        // Do the forward.
+        /*
+        if (output instanceof CollectionChannel.Instance) {
+            ((CollectionChannel.Instance) output).accept(((CollectionChannel.Instance) input).provideCollection());
+        } else if (output instanceof StreamChannel.Instance) {
+            ((StreamChannel.Instance) output).accept(((JavaChannelInstance) input).provideStream());
+        } else {
+            throw new RheemException(String.format("Cannot forward %s to %s.", input, output));
+        }
+
+        // Manipulate the lineage.
+        output.getLineage().addPredecessor(input.getLineage());
+
+
+            Collection<Type> lala = new ArrayList<>();
+            input.<Type>provideStream().forEach(lala::add);
+            ((StreamChannel.Instance)outputs[FINAL_OUTPUT_INDEX]).accept(lala.stream());
+        */
+        if (output instanceof CollectionChannel.Instance) {
+
+
+            ((CollectionChannel.Instance) output).accept(((CollectionChannel.Instance) input).provideCollection());
+
+
+
+        } else if (output instanceof StreamChannel.Instance) {
+            ((StreamChannel.Instance) output).accept(((JavaChannelInstance) input).provideStream());
+        } else {
+            throw new RheemException(String.format("Cannot forward %s to %s.", input, output));
+        }
+
     }
 
 }

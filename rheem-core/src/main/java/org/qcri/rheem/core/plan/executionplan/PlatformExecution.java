@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
@@ -21,9 +22,12 @@ public class PlatformExecution {
 
     private final Platform platform;
 
-    public PlatformExecution(Platform platform) {
+    private ModeRun modeRun;
+
+    public PlatformExecution(Platform platform, ModeRun modeRun) {
         this.platform = platform;
         this.sequenceNumber = SEQUENCE_NUMBER_GENERATOR.getAndIncrement();
+        this.modeRun = modeRun;
     }
 
     void addStage(ExecutionStage stage) {
@@ -40,7 +44,7 @@ public class PlatformExecution {
     }
 
     public ExecutionStage createStage(ExecutionStageLoop executionStageLoop, int sequenceNumber) {
-        return new ExecutionStage(this, executionStageLoop, sequenceNumber);
+        return new ExecutionStage(this, executionStageLoop, sequenceNumber, this.modeRun);
     }
 
     @Override
@@ -54,5 +58,14 @@ public class PlatformExecution {
 
     public void retain(Set<ExecutionStage> retainableStages) {
         this.stages.retainAll(retainableStages);
+    }
+
+    public ModeRun getModeRun() {
+        return modeRun;
+    }
+
+    public PlatformExecution setModeRun(ModeRun modeRun) {
+        this.modeRun = modeRun;
+        return this;
     }
 }

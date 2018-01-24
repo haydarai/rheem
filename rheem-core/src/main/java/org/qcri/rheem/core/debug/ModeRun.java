@@ -4,93 +4,66 @@ package org.qcri.rheem.core.debug;
  * Created by bertty on 10-05-17.
  */
 public class ModeRun {
-    private static       ModeRun moderun    = null;
-    private static final String  DEBUG_MODE = "debug";
-    private static final int     NORMAL     = 0;
-    private static final int     DEBUG      = 1;
+    private static ModeRun NORMAL_MODE;
 
-    private static final int     STOP_PROCESS     = 0;
-    private static final int     PAUSE_PROCESS    = 1;
-    private static final int     CONTINUE_PROCESS = 2;
-
-
-
-    private int mode;
-
-    private int process;
-
-
-
-    private ModeRun(){
-        this.process = CONTINUE_PROCESS;
-        this.mode    = NORMAL;
+    static {
+        NORMAL_MODE = new ModeRun();
     }
 
-    public static ModeRun getInstance(){
-        if(moderun == null){
-            moderun = new ModeRun();
-        }
-        return moderun;
+    private TypeRunMode mode;
+
+    private TypeStatusProcess process;
+
+    public ModeRun(){
+        this.process = TypeStatusProcess.CONTINUE;
+        this.mode    = TypeRunMode.NORMAL;
     }
 
-    private void setMode(String mode){
-        this.mode = NORMAL;
-        if(mode.equalsIgnoreCase(DEBUG_MODE)){
-            this.mode = DEBUG;
-        }
+    public void setMode(TypeRunMode mode){
+        this.mode = mode;
     }
 
-    private int getMode(){
+    public TypeRunMode getMode(){
         return this.mode;
     }
 
-    public static void setModeDebug(){
-        getInstance().setMode(DEBUG_MODE);
+    public boolean isDebugMode(){
+        return this.mode.isDebugMode();
     }
 
-    public static boolean isDebugMode(){
-        return getInstance().getMode() == DEBUG;
+    public boolean isNormalMode(){
+        return this.mode.isNormalMode();
     }
 
-    private void _pauseProcess(){
-        this.process = PAUSE_PROCESS;
+    public void pauseProcess(){
+        this.process = TypeStatusProcess.PAUSE;
     }
 
-    public static void pauseProcess(){
-        getInstance()._pauseProcess();
+    public void stopProcess(){
+        this.process = TypeStatusProcess.STOP;
     }
 
-    private void _stopProcess(){
-        this.process = STOP_PROCESS;
+    public void continueProcess(){
+        this.process = TypeStatusProcess.CONTINUE;
     }
 
-    public static void stopProcess(){
-        getInstance()._stopProcess();
-    }
-
-    private void _continueProcess(){
-        this.process = CONTINUE_PROCESS;
-    }
-
-    public static void continueProcess(){
-        getInstance()._continueProcess();
-    }
-
-    private int getProcess(){
+    private TypeStatusProcess getProcess(){
         return this.process;
     }
 
-    public static boolean isPauseProcess(){
-        return getInstance().getProcess() == PAUSE_PROCESS;
+    public boolean isPauseProcess(){
+        return this.process.isPaused();
     }
 
-    public static boolean isStopProcess(){
-        return getInstance().getProcess() == STOP_PROCESS;
+    public boolean isStopProcess(){
+        return this.process.isStoped();
     }
 
-    public static boolean isContinueProcess(){
-        return getInstance().getProcess() == CONTINUE_PROCESS;
+    public boolean isContinueProcess(){
+        return this.process.isContinues();
     }
 
-
+    public static ModeRun normalInstance(){
+        return NORMAL_MODE;
+    }
 }

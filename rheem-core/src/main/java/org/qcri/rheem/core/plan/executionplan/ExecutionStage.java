@@ -1,12 +1,15 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
@@ -53,11 +56,21 @@ public class ExecutionStage {
      */
     private final int sequenceNumber;
 
+    private ModeRun modeRun;
+
+    private boolean containsSniffer;
+
+    private int numberOfSniffers = 0;
+
+    private int numberOfSniffersActivated = 0;
+
+    private Collection<ChannelInstance> channelDebug = new ArrayList<>();
+
 
     /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
-    ExecutionStage(PlatformExecution platformExecution, ExecutionStageLoop executionStageLoop, int sequenceNumber) {
+    ExecutionStage(PlatformExecution platformExecution, ExecutionStageLoop executionStageLoop, int sequenceNumber, ModeRun modeRun) {
         this.platformExecution = platformExecution;
         this.sequenceNumber = sequenceNumber;
         this.executionStageLoop = executionStageLoop;
@@ -65,6 +78,7 @@ public class ExecutionStage {
             this.executionStageLoop.add(this);
         }
         this.platformExecution.addStage(this);
+        this.modeRun = modeRun;
     }
 
     /**
@@ -92,6 +106,10 @@ public class ExecutionStage {
 
     public void addTask(ExecutionTask task) {
         task.setStage(this);
+        if(task.isSniffer()){
+            this.containsSniffer = true;
+            this.numberOfSniffers++;
+        }
         this.updateLoop(task);
     }
 
@@ -203,6 +221,32 @@ public class ExecutionStage {
                         task -> Arrays.stream(task.getOutputChannels()).filter(Channel::isBetweenStages)
                 ).collect(Collectors.toList());
 
+    }
+
+    public Collection<Channel> getOutboundChannelsOfSniffer(){
+        if( ! this.containsSniffer() ){
+            return null;
+        }
+        return this.getTerminalTasks().stream()
+                .filter(
+                    task -> {
+                        return task.getOperator().isManyOutput();
+                    }
+                )
+                .flatMap(
+                    task -> {
+                        return Arrays.stream(task.getOutputChannels()).filter(Channel::isBetweenStages);
+                    }
+                )
+                .collect(Collectors.toList());
+    }
+
+    public void addChannelInstanceDebug(Collection<ChannelInstance> channelInstances){
+        this.channelDebug.addAll(channelInstances);
+    }
+
+    public Collection<ChannelInstance> getChannelInstanceDebug(){
+        return this.channelDebug;
     }
 
     /**
@@ -353,7 +397,14 @@ public class ExecutionStage {
             final ExecutionTask task = nextTasks.poll();
             assert task.getStage() == this;
             if (allTasks.add(task) && !this.terminalTasks.contains(task)) {
-                Arrays.stream(task.getOutputChannels())
+                Stream<Channel> channelStream;
+                if( ! task.isSniffer() ) {
+                    channelStream = Arrays.stream(task.getOutputChannels());
+                }else{
+                    List<Channel> list = Arrays.asList(task.getOutputChannels());
+                    channelStream = list.stream();
+                }
+                channelStream
                         .flatMap(channel -> channel.getConsumers().stream())
                         .filter(consumer -> consumer.getStage() == this)
                         .forEach(nextTasks::add);
@@ -372,10 +423,27 @@ public class ExecutionStage {
         }
     }
 
-
-    public boolean isSimilar(ExecutionStage other){
-        System.out.println("wenas");
-        return false;
+    public ModeRun getModeRun() {
+        return modeRun;
     }
 
+    public boolean containsSniffer(){
+        return this.containsSniffer;
+    }
+
+    public int getNumberOfSniffers() {
+        return this.numberOfSniffers;
+    }
+
+    public int getNumberOfSniffersActivated() {
+        return this.numberOfSniffersActivated;
+    }
+
+    public void addNumberOfSniffersActivated() {
+        this.numberOfSniffersActivated++;
+    }
+
+    public boolean allSnifferIsActivated(){
+        return this.getNumberOfSniffers() == this.getNumberOfSniffersActivated();
+    }
 }

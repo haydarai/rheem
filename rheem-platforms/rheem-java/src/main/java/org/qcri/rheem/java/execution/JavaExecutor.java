@@ -15,6 +15,7 @@ import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Arrays;
@@ -68,6 +69,7 @@ public class JavaExecutor extends PushExecutorTemplate {
                             producerOperatorContext
                     );
             //Thread.sleep(1000);
+            this.job.killConexionSniffer(task.getOperator());
             executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {

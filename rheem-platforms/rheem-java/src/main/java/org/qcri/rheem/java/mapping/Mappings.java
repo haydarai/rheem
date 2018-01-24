@@ -36,7 +36,13 @@ public class Mappings {
             new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping(),
-            new JSONSourceMapping()
+            new JSONSourceMapping(),
+            new SnifferMapping(),
+            new MultiplexMapping(),
+            new IteratorSinkMapping(),
+            new IteratorSourceMapping()
+            /*,
+            new SocketSinkMapping()*/
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(

@@ -72,7 +72,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         try {
             final String actualInputPath = FileSystems.findActualSingleInputPath(path);
             Stream<?> sequenceFileStream;
-            if(ModeRun.isDebugMode()){
+            if(javaExecutor.getJob().isDebugMode()){
                 sequenceFileStream = StreamDebug.getStream(actualInputPath);
             }else {
                 sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);

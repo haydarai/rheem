@@ -3,8 +3,6 @@ package org.qcri.rheem.spark.execution;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.debug.ModeRun;
-import org.qcri.rheem.core.debug.rheemplan.RheemPlanDebug;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -67,9 +65,9 @@ public class SparkExecutor extends PushExecutorTemplate {
         this.sparkContextReference = this.platform.getSparkContext(job);
         this.sparkContextReference.noteObtainedReference();
         this.sc = this.sparkContextReference.get();
-        if(ModeRun.isDebugMode()){
+        /*if(ModeRun.isDebugMode()){
             RheemPlanDebug.addExecutor(this);
-        }
+        }*/
         if (this.sc.getConf().contains("spark.executor.cores")) {
             this.numDefaultPartitions = 2 * this.sc.getConf().getInt("spark.executor.cores", -1);
         } else {

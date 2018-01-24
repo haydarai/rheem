@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.debug.repository.RepositoryCollection;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -71,6 +72,15 @@ public class JavaReduceByOperator<Type, KeyType>
         final Map<KeyType, Type> reductionResult = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
                 Collectors.groupingBy(keyExtractor, new ReducingCollector<>(reduceFunction))
         );
+        if(operatorContext.getOptimizationContext().getJob().isDebugMode()) {
+            ArrayList<Type> collection = new ArrayList<>();
+
+            collection.addAll(reductionResult.values());
+
+            RepositoryCollection<Type> repo = new RepositoryCollection(collection, this.getType().getDataUnitType().getTypeClass());
+
+            operatorContext.getOptimizationContext().getJob().getDebugContext().addRepository(this.getName(), repo);
+        }
         ((CollectionChannel.Instance) outputs[0]).accept(reductionResult.values());
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);

@@ -150,6 +150,9 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
             throw new IllegalStateException(String.format("%s expected %d inputs, but matched %s with %d inputs.",
                     this, this.getNumRegularInputs(), operator, operator.getNumRegularInputs()));
         }
+        if(operator.isManyOutput()){
+            return;
+        }
         if (this.getNumOutputs() != operator.getNumOutputs()) {
             throw new IllegalStateException("Matched an operator with different numbers of outputs.");
         }

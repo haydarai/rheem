@@ -259,7 +259,8 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         // Create a new PlatformExecution if none.
         if (platformExecution == null) {
             Platform platform = task.getOperator().getPlatform();
-            platformExecution = new PlatformExecution(platform);
+            platformExecution = new PlatformExecution(platform, task.getModeRun());
+
         }
 
         // Create the InterimStage and expand it.
@@ -388,14 +389,44 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                                 // channel.setStageExecutionBarrier(true);
                                 continue;
                             }
+                            System.out.println("the consumer is: "+consumerTask);
                             tasksToSeparate.add(consumerTask);
+
+                        //    if(consumerTask.isDebugMode() ) {
+
+                            if (consumerTask.getOperator().isManyOutput() || consumerTask.isSniffer()) {
+                                tasksToSeparate.remove(consumerTask);
+                                if(consumerTask.isSniffer()){
+                                    final Channel[] previusChannels = consumerTask.getInputChannels();
+                                    for (int i = 0; i < previusChannels.length; i++) {
+                                        final ExecutionTask previusTask = previusChannels[i].getProducer();
+                                        tasksToSeparate.remove(previusTask);
+                                    }
+                                }
+                            }
+                            if(false) {
+                                //TODO: ver si sirve de algo sino borrar
+                                if (consumerTask.isSniffer()) {
+                                    tasksToSeparate.remove(consumerTask);
+                                    final Channel[] previusChannels = consumerTask.getInputChannels();
+                                    for (int i = 0; i < previusChannels.length; i++) {
+                                        final ExecutionTask previusTask = previusChannels[i].getProducer();
+                                        tasksToSeparate.remove(previusTask);
+                                    }
+                                }
+
+                                if (consumerTask.getOperator().isManyOutput()) {
+                                    tasksToSeparate.remove(consumerTask);
+                                    continue;
+                                }
+                            }
+
                         }
                         taskQueue.add(consumerTask);
                     }
                 }
             }
         }
-
         if (!tasksToSeparate.isEmpty()) {
             assert tasksToSeparate.size() < stage.getTasks().size() : String.format(
                     "Cannot separate all tasks from stage with tasks %s.", tasksToSeparate

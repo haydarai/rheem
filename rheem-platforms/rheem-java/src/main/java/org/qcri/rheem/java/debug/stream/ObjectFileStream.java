@@ -11,10 +11,10 @@ import java.io.*;
  */
 public class ObjectFileStream extends StreamRheem {
 
-    private String         path;
+    private String path;
     private BufferedReader bufferedReader;
     private RandomAccessFile randomAccessFile;
-    private String         lineCurrent;
+    private String lineCurrent;
 
     public ObjectFileStream(String name_path) {
         super();
@@ -23,7 +23,7 @@ public class ObjectFileStream extends StreamRheem {
     }
 
 
-    private BufferedReader openFile(){
+    private BufferedReader openFile() {
         try {
             FileSystem fs = FileSystems.getFileSystem(this.path).orElseThrow(
                     () -> new RheemException(String.format("Cannot access file system of %s.", this.path))
@@ -37,7 +37,7 @@ public class ObjectFileStream extends StreamRheem {
         return null;
     }
 
-    private void closeFile(){
+    private void closeFile() {
         try {
             if (this.bufferedReader != null) {
                 this.bufferedReader.close();
@@ -57,13 +57,4 @@ public class ObjectFileStream extends StreamRheem {
         return null;
     }
 
-    @Override
-    protected long getSize() {
-        return 0;
-    }
-
-    @Override
-    protected long getCurrent() {
-        return 0;
-    }
 }

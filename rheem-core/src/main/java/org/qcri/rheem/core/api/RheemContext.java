@@ -2,6 +2,9 @@ package org.qcri.rheem.core.api;
 
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
+import org.qcri.rheem.core.debug.DebugContext;
+import org.qcri.rheem.core.debug.ModeRun;
+import org.qcri.rheem.core.debug.TypeRunMode;
 import org.qcri.rheem.core.monitor.Monitor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -26,6 +29,10 @@ public class RheemContext {
     private CardinalityRepository cardinalityRepository;
 
     private final Configuration configuration;
+
+    private ModeRun modeRun = ModeRun.normalInstance();
+
+    private DebugContext debugContext;
 
     public RheemContext() {
         this(new Configuration());
@@ -164,5 +171,24 @@ public class RheemContext {
             this.cardinalityRepository = new CardinalityRepository(this.configuration);
         }
         return this.cardinalityRepository;
+    }
+
+    public RheemContext changeToDebug(){
+        this.modeRun = new ModeRun();
+        this.modeRun.setMode(TypeRunMode.DEBUG);
+        this.debugContext = new DebugContext(this.modeRun);
+        return this;
+    }
+
+    public boolean isDebugMode(){
+        return this.modeRun.isDebugMode();
+    }
+
+    public ModeRun getModeRun(){
+        return this.modeRun;
+    }
+
+    public DebugContext getDebugContext(){
+        return this.debugContext;
     }
 }

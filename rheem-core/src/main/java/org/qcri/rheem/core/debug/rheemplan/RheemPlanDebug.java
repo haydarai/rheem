@@ -35,7 +35,7 @@ public class RheemPlanDebug extends RheemPlan {
      */
     public RheemPlanDebug(Operator... sinks) {
         super(sinks);
-        ModeRun.getInstance().setModeDebug();
+        //ModeRun.getInstance().setModeDebug();
     }
 
     public void addExecutionPlan(ExecutionPlan executionPlan) {
@@ -75,15 +75,12 @@ public class RheemPlanDebug extends RheemPlan {
     }
 
     public static void addExecutor(Executor executor){
-        System.out.println("adjkdasdjahldahskldhasldhasdhkjlashdljahsdlkjhasldhaskjld");
         executors.add(executor);
     }
 
     public static Executor getLastExecutor(Class type){
         ArrayList<Executor> element = new ArrayList();
         for(Executor executor: executors){
-
-            System.out.println(executor);
             if( type.isInstance(executor)){
                 element.add(executor);
             }

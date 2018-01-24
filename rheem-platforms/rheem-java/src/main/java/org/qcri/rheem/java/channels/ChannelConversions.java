@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.basic.channels.IteratorChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
@@ -60,6 +61,12 @@ public class ChannelConversions {
             () -> new JavaObjectFileSource<>(DataSetType.createDefault(Void.class))
     );
 
+    public static final ChannelConversion ITERATOR_TO_STREAM = new DefaultChannelConversion(
+            IteratorChannel.DESCRIPTOR,
+            StreamChannel.DESCRIPTOR,
+            () -> new JavaIteratorSource<>(Void.class, Void.class)
+    );
+
     public static Collection<ChannelConversion> ALL = Arrays.asList(
             STREAM_TO_COLLECTION,
             STREAM_TO_HDFS_OBJECT_FILE,
@@ -67,13 +74,15 @@ public class ChannelConversions {
             HDFS_OBJECT_FILE_TO_STREAM,
 //            HDFS_TSV_TO_STREAM,
             STREAM_TO_HDFS_TSV,
-            COLLECTION_TO_HDFS_TSV
+            COLLECTION_TO_HDFS_TSV,
+            ITERATOR_TO_STREAM
     );
 
     public static Collection<ChannelConversion> DEBUG = Arrays.asList(
             COLLECTION_TO_HDFS_OBJECT_FILE,
             STREAM_TO_HDFS_OBJECT_FILE,
             HDFS_OBJECT_FILE_TO_STREAM,
-            STREAM_TO_COLLECTION
+            STREAM_TO_COLLECTION,
+            ITERATOR_TO_STREAM
     );
 }

@@ -14,10 +14,7 @@ import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Java implementation of the {@link DoWhileOperator}.
@@ -74,12 +71,20 @@ public class JavaRepeatOperator<Type>
 
         if (this.iterationCounter >= this.getNumIterations()) {
             // final loop output
-            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
+       /*     Collection<Type> lala = new ArrayList<>();
+            input.<Type>provideStream().forEach(lala::add);
+            ((StreamChannel.Instance)outputs[FINAL_OUTPUT_INDEX]).accept(lala.stream());
+       */
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX], this.iterationCounter);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
+       /*     Collection<Type> lala = new ArrayList<>();
+            input.<Type>provideStream().forEach(lala::add);
+            ((StreamChannel.Instance)outputs[ITERATION_OUTPUT_INDEX]).accept(lala.stream());
+        */
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX], this.iterationCounter);
             this.setState(State.RUNNING);
         }
 

@@ -4,8 +4,8 @@ import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.debug.DebugContext;
 import org.qcri.rheem.core.debug.ModeRun;
-import org.qcri.rheem.core.debug.rheemplan.RheemPlanDebug;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.monitor.DisabledMonitor;
 import org.qcri.rheem.core.monitor.FileMonitor;
@@ -25,6 +25,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.*;
+import org.qcri.rheem.core.store.SnifferStore;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -53,6 +54,11 @@ public class Job extends OneTimeExecutable {
      * References the {@link RheemContext} that spawned this instance.
      */
     private final RheemContext rheemContext;
+
+    /**
+     * References the {@link DebugContext} that have this instance.
+     */
+    private DebugContext debugContext;
 
     /**
      * {@link Job}-level {@link Configuration} based on the {@link RheemContext}-level configuration.
@@ -139,6 +145,8 @@ public class Job extends OneTimeExecutable {
 
     private final boolean isProactiveReoptimization;
 
+    private SnifferStore snifferStore;
+
     /**
      * Creates a new instance.
      *
@@ -148,6 +156,7 @@ public class Job extends OneTimeExecutable {
      */
     Job(RheemContext rheemContext, String name, Monitor monitor, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
         this.rheemContext = rheemContext;
+        this.debugContext = this.rheemContext.getDebugContext();
         this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork(this.name);
         this.rheemPlan = rheemPlan;
@@ -245,9 +254,9 @@ public class Job extends OneTimeExecutable {
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
             //add execution a rheem for after will can compare the stages
-            if(ModeRun.isDebugMode()){
+           /* if(ModeRun.isDebugMode()){
                 ((RheemPlanDebug)this.rheemPlan).addExecutionPlan(executionPlan);
-            }
+            }*/
             this.optimizationRound.stop();
 
             // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
@@ -274,6 +283,12 @@ public class Job extends OneTimeExecutable {
         } catch (RheemException e) {
             throw e;
         } catch (Throwable t) {
+            System.err.println("kakakak"+t.getMessage());
+            System.err.println("kakakak"+t.toString());
+            System.err.println("kakakak"+t.getStackTrace().length);
+            System.err.println("kakakak"+t.getStackTrace()[0]);
+            System.err.println("kakakak"+t.getStackTrace()[t.getStackTrace().length-1]);
+
             throw new RheemException("Job execution failed.", t);
         } finally {
             this.stopWatch.stopAll();
@@ -455,10 +470,10 @@ public class Job extends OneTimeExecutable {
             final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
             this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
             //take a plan anterior and processing only stage not finally.
-            if(ModeRun.isDebugMode()){
+            /*if(ModeRun.isDebugMode()){
                 ((RheemPlanDebug)this.rheemPlan).addCrossPlatformExecutor(this.crossPlatformExecutor);
                 ((RheemPlanDebug)this.rheemPlan).reduccionStages();
-            }
+            }*/
         }
 
         if (this.configuration.getOptionalBooleanProperty("rheem.core.debug.skipexecution").orElse(false)) {
@@ -477,9 +492,9 @@ public class Job extends OneTimeExecutable {
                 executionPlan, this.optimizationContext
         );
         executionRound.stop();
-        if(ModeRun.isDebugMode()){
+       /* if(ModeRun.isDebugMode()){
             ((RheemPlanDebug)this.rheemPlan).addPlansExecuted();
-        }
+        }*/
 
         // Return.
         return isExecutionComplete;
@@ -528,7 +543,7 @@ public class Job extends OneTimeExecutable {
                         .forEach(stagedStages::add);
             }
 
-            this.logger.info("Current execution plan:\n{}", executionPlan.toExtensiveString());
+            this.logger.info("Current execution plan: \n{}", executionPlan.toExtensiveString());
         }
     }
 
@@ -837,5 +852,33 @@ public class Job extends OneTimeExecutable {
      */
     public Map<String, Object> getCache() {
         return this.cache;
+    }
+
+    public boolean isDebugMode(){
+        return this.rheemContext.isDebugMode();
+    }
+
+    public ModeRun getModeRun() {
+        return this.rheemContext.getModeRun();
+    }
+
+    public void setSnifferStore(SnifferStore snifferStore){
+        this.snifferStore = snifferStore;
+    }
+
+    public SnifferStore getSnifferStore(){
+        return this.snifferStore;
+    }
+
+    public void killConexionSniffer(ExecutionOperator op){
+        if(isDebugMode()) {
+            if (this.snifferStore.sinkContains(op)) {
+                this.snifferStore.killConexion(op);
+            }
+        }
+    }
+
+    public DebugContext getDebugContext(){
+        return this.debugContext;
     }
 }

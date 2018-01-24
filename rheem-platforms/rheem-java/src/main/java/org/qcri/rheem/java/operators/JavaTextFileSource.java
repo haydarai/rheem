@@ -2,10 +2,10 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.java.debug.stream.StreamDebug;
+import org.qcri.rheem.core.debug.DebugContext;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
@@ -13,6 +13,7 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.StreamChannel;
+import org.qcri.rheem.java.debug.stream.StreamDebug;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.io.BufferedReader;
@@ -60,10 +61,14 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         try {
             final InputStream inputStream = fs.open(url);
             Stream<String> lines;
-            if(!ModeRun.isDebugMode()){
+            if(!javaExecutor.getJob().isDebugMode()){
                 lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
             }else{
-                lines = StreamDebug.getStream(this);
+                DebugContext dc = operatorContext.getOptimizationContext().getJob().getDebugContext();
+
+                lines = StreamDebug.getStream(this, dc);
+
+
             }
             ((StreamChannel.Instance) outputs[0]).accept(lines);
         } catch (IOException e) {

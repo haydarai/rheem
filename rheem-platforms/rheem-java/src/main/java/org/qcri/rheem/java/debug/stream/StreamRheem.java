@@ -23,33 +23,11 @@ public abstract class StreamRheem implements Iterator {
         this.lastElementNecessary = true;
     }
 
-    public static void setNewFinish(int index, long finish){
-        StreamRheem tmp = streams.get(index);
-        tmp.setFinish(finish);
-        finish_in.set(index, finish);
-}
 
-    public static void setNewFinish(int index){
-        setNewFinish(index, streams.get(index).getCurrent());
-    }
 
-    protected void setFinish(long finish){
-        this.lastElementNecessary = true;
-        this.finish = finish;
-        if(finish_in.get(this.index) != this.finish){
-            finish_in.set(this.index, this.finish);
-        }
-    }
 
-    protected void setSize(){
-        this.finish = getSize();
-        finish_in.add(this.finish);
-        this.size = this.finish;
-    }
 
-    protected abstract long getSize();
 
-    protected abstract long getCurrent();
 
 
 }

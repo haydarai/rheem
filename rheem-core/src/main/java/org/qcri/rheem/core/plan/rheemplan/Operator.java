@@ -421,6 +421,14 @@ public interface Operator {
         return this instanceof ExecutionOperator;
     }
 
+    default boolean isSniffer(){
+        return this instanceof SnifferBase;
+    }
+
+    default boolean isManyOutput(){
+        return this instanceof UnaryToManyOperator;
+    }
+
     /**
      * Identify this instance as the head of a loop. It is the only kind of {@link Operator} that can cause
      * data flow cycles.

@@ -11,6 +11,7 @@ import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
+import sun.awt.windows.ThemeReader;
 
 import java.util.*;
 
@@ -44,12 +45,19 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
     private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isRequestEagerExecution) {
-        return this.execute(
+        Tuple<List<ChannelInstance>, PartialExecution> tuple = this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
                 taskActivator.getOperatorContext(),
                 isRequestEagerExecution
         );
+
+        if(this.job.isDebugMode()) {
+            if(taskActivator.getTask().getOperator().isManyOutput()){
+                taskActivator.getTask().getStage().addNumberOfSniffersActivated();
+            }
+        }
+        return tuple;
     }
 
     /**
@@ -150,9 +158,16 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                     this.executionState.add(partialExecution);
                 }
 
+                if(this.executionState.getRunMode().isDebugMode()){
+                    if(task.getOperator().isManyOutput()){
+                        task.getStage().addChannelInstanceDebug(outputChannelInstances);
+                    }
+                }
+
                 // Activate successor ExecutionTasks.
                 this.activateSuccessorTasks(task, outputChannelInstances);
                 outputChannelInstances.stream().filter(Objects::nonNull).forEach(ChannelInstance::disposeIfUnreferenced);
+
             }
         }
 
@@ -180,6 +195,9 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         }
 
         private void activateSuccessorTasks(ExecutionTask task, Collection<ChannelInstance> outputChannelInstances) {
+            if(task.isSniffer()){
+                Collections.reverse((List)outputChannelInstances);
+            }
             for (ChannelInstance outputChannelInstance : outputChannelInstances) {
                 if (outputChannelInstance == null) continue; // Partial results possible (cf. LoopHeadOperator).
 

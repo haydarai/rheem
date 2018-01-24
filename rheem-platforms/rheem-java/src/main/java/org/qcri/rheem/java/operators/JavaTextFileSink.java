@@ -56,21 +56,22 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         final FileSystem fs = FileSystems.requireFileSystem(this.textFileUrl);
         final Function<T, String> formatter = javaExecutor.getCompiler().compile(this.formattingDescriptor);
 
-
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fs.create(this.textFileUrl)))) {
-            input.<T>provideStream().forEach(
-                    dataQuantum -> {
-                        try {
-                            writer.write(formatter.apply(dataQuantum));
-                            writer.write('\n');
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(fs.create(this.textFileUrl)))) {
+                input.<T>provideStream().forEach(
+                        dataQuantum -> {
+                            try {
+                                writer.write(this.getName()+" "+formatter.apply(dataQuantum));
+                                writer.write('\n');
+                                writer.flush();
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
                         }
-                    }
-            );
-        } catch (IOException e) {
-            throw new RheemException("Writing failed.", e);
-        }
+                );
+            } catch (IOException e) {
+                throw new RheemException("Writing failed.", e);
+            }
+
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

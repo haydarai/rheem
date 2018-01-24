@@ -2,6 +2,8 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.debug.ModeRun;
+import org.qcri.rheem.core.debug.SnifferMakerConexion;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
@@ -11,6 +13,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +105,10 @@ public class CrossPlatformExecutor implements ExecutionState {
      */
     private final ArrayList<Thread> parallelExecutionThreads = new ArrayList<>();
 
+    private ArrayList<Tuple<Thread, ExecutionStage>> parallelExecutionDebug;
+
+    private final ArrayList<ExecutionStage> runningStageDebug = new ArrayList<>();
+
     /**
      * Keeps track of the completed {@link ParallelExecutionThread}s created during parallel execution.
      */
@@ -144,6 +151,12 @@ public class CrossPlatformExecutor implements ExecutionState {
         new ArrayList<>(this.pendingStageActivators.keySet()).stream()
                 .filter(stage -> !this.allStages.contains(stage))
                 .forEach(this.pendingStageActivators::remove);
+
+        if(job.isDebugMode() && job.getSnifferStore() == null) {
+            SnifferMakerConexion snifferMakerConexion = new SnifferMakerConexion(allStages);
+            snifferMakerConexion.makeConexion();
+            job.setSnifferStore(snifferMakerConexion.getSnifferStore());
+        }
 
         // Create StageActivators for all ExecutionStages.
         for (ExecutionStage stage : this.allStages) {
@@ -192,12 +205,29 @@ public class CrossPlatformExecutor implements ExecutionState {
      */
     private boolean tryToActivate(StageActivator activator) {
         if (activator.updateInputChannelInstances()) {
+            if(activator.isDebugMode()){
+                if( this.runningStageDebug.contains(activator.getStage()) ){
+                    return false;
+                }
+            }
+            /*
+<ExecutionStage[T[JavaIteratorSource[convert out2@JavaMultiplex[multiplex]]]] ( 827084938 ) #####  org.qcri.rheem.core.platform.CrossPlatformExecutor$StageActivator@797badd3 >
+<ExecutionStage[T[JavaIteratorSource[convert out1@JavaMultiplex[multiplex]]]] ( 306206744 ) #####  org.qcri.rheem.core.platform.CrossPlatformExecutor$StageActivator@77be656f >
+<ExecutionStage[T[JavaIteratorSource[convert out0@JavaMultiplex[multiplex]]]] ( 1816089958 ) #####  org.qcri.rheem.core.platform.CrossPlatformExecutor$StageActivator@19dc67c2 >
+
+<ExecutionStage[T[JavaIteratorSource[convert out1@JavaMultiplex[multiplex]]]] ( 306206744 ) #####  org.qcri.rheem.core.platform.CrossPlatformExecutor$StageActivator@7a3d4eac >
+<ExecutionStage[T[JavaIteratorSource[convert out0@JavaMultiplex[multiplex]]]] ( 1816089958 ) #####  org.qcri.rheem.core.platform.CrossPlatformExecutor$StageActivator@348ac55d >
+<ExecutionStage[T[JavaIteratorSource[convert out2@JavaMultiplex[multiplex]]]] ( 827084938 ) #####  org.qcri.rheem.core.platform.CrossPlatformExecutor$StageActivator@51c9cf45 >
+            * */
             logger.info("Activating {}.", activator.getStage());
             // Activate the activator by moving it.
             this.pendingStageActivators.remove(activator.getStage());
-            assert this.activatedStageActivators.stream().noneMatch(a -> a.getStage().equals(activator.getStage())) :
-                    String.format("Must not activate %s twice.", activator.getStage());
-            this.activatedStageActivators.add(activator);
+            synchronized (this.activatedStageActivators){
+                assert this.activatedStageActivators.stream().noneMatch(a -> a.getStage().equals(activator.getStage())) :
+                        String.format("Must not activate %s twice.", activator.getStage());
+
+                this.activatedStageActivators.add(activator);
+            }
             activator.noteActivation();
             return true;
         }
@@ -267,6 +297,89 @@ public class CrossPlatformExecutor implements ExecutionState {
         CrossPlatformExecutor.this.logger.info("Parallel execution ended!");
     }
 
+    @Override
+    public ModeRun getRunMode() {
+        return this.job.getModeRun();
+    }
+
+    /**
+     * Run parallel threads executing activated {@link ExecutionStage}s but only when the stage is depends of the
+     * multiplexOperator, because that stage is neccessary running in parallel
+     */
+    private void runDebugExecution(boolean isBreakpointsDisabled){
+        int numActiveStages = this.activatedStageActivators.size();
+        this.parallelExecutionDebug = new ArrayList<>();
+        ArrayList<StageActivator> snifferStages = new ArrayList<>();
+        // Create execution threads
+
+        for (int i = 1; i <= numActiveStages ; ++i) {
+            StageActivator current_activator_stage = this.activatedStageActivators.peek();
+            System.out.println("WEAS ACTIVADAS: "+current_activator_stage);
+
+            Thread thread = this.createThreadDebug(current_activator_stage, i, isBreakpointsDisabled);
+
+            if(current_activator_stage.getStage().containsSniffer()) {
+                snifferStages.add(current_activator_stage);
+            }
+
+            this.parallelExecutionThreads.add(thread);
+        }
+
+        System.out.println("SIZE:     :::::::::"+snifferStages.size());
+        while(snifferStages.size() > 0){
+            try{
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            Collection<StageActivator> candidates_remove = new ArrayList<>();
+            int outputs_sniffer = 0;
+            for(StageActivator stage_with_sniffer: snifferStages){
+                System.out.println("ACTIVADAS: ::::::."+ stage_with_sniffer);
+                if(stage_with_sniffer.getStage().allSnifferIsActivated()){
+                    for(ChannelInstance channelInstance: stage_with_sniffer.getStage().getChannelInstanceDebug()) {
+                        this.register(channelInstance);
+                    }
+                    this.tryToActivateSuccessorsDebug(stage_with_sniffer);
+                    candidates_remove.add(stage_with_sniffer);
+
+                    do {
+                        StageActivator stage_after_sniffer = this.activatedStageActivators.peek();
+                        System.out.println("POST SNIFFER::::::::"+stage_after_sniffer.stage);
+                        createThreadDebug(stage_after_sniffer, outputs_sniffer++, isBreakpointsDisabled);
+                        this.runningStageDebug.add(stage_after_sniffer.getStage());
+                    }while(this.activatedStageActivators.size() > 0);
+
+                }
+            }
+            snifferStages.removeAll(candidates_remove);
+
+        }
+
+        for(int k =0; k < this.parallelExecutionThreads.size(); k++){
+            Thread watings =this.parallelExecutionThreads.get(k);
+            try{
+                watings.join();
+            }catch (InterruptedException e) {
+                CrossPlatformExecutor.this.logger.error("Thread Interrupted!", e);
+            }
+        }
+
+        this.parallelExecutionDebug.clear();
+        CrossPlatformExecutor.this.logger.info("Parallel execution ended!");
+    }
+
+
+    private Thread createThreadDebug(StageActivator current_activator_stage, int i, boolean isBreakpointsDisabled){
+        // TODO: Better pass the stage to the thread rather than letting the thread retrieve the stage itself (to avoid concurrency issues).
+        Thread thread = new Thread(new ParallelExecutionThread(isBreakpointsDisabled, "T" + String.valueOf(i), this));
+        // Start thread execution
+        thread.setName( "stage numero "+i+" "+ current_activator_stage.getStage());
+        thread.start();
+        return thread;
+    }
+
     /**
      * Activate and execute {@link ExecutionStage}s as far as possible.
      */
@@ -279,15 +392,18 @@ public class CrossPlatformExecutor implements ExecutionState {
         do {
             // Execute and activate as long as possible.
             while (!this.activatedStageActivators.isEmpty()) {
-                // Check if there is multiple activated stages to start parallelization
-                if (this.activatedStageActivators.size() > 1 &&
-                        this.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
-                    // Run multiple threads for each independant stage
-                    this.runParallelExecution(isBreakpointsDisabled);
-                } else {
-                    final StageActivator stageActivator = this.activatedStageActivators.poll();
-                    // Execute one single ExecutionStage
-                    this.executeSingleStage(isBreakpointsDisabled, stageActivator);
+                if(!this.job.isDebugMode()) {
+                    if (this.activatedStageActivators.size() > 1 &&
+                            this.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
+                        // Run multiple threads for each independant stage
+                        this.runParallelExecution(isBreakpointsDisabled);
+                    } else {
+                        final StageActivator stageActivator = this.activatedStageActivators.poll();
+                        // Execute one single ExecutionStage
+                        this.executeSingleStage(isBreakpointsDisabled, stageActivator);
+                    }
+                }else{
+                    this.runDebugExecution(isBreakpointsDisabled);
                 }
             }
 
@@ -333,6 +449,7 @@ public class CrossPlatformExecutor implements ExecutionState {
      * @return whether the {@link ExecutionStage} was really executed
      */
     private void execute(StageActivator stageActivator) {
+
         final ExecutionStage stage = stageActivator.getStage();
         final OptimizationContext optimizationContext = stageActivator.getOptimizationContext();
 
@@ -344,7 +461,9 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Have the execution done.
         CrossPlatformExecutor.this.logger.info("Having {} execute {}:\n{}", executor, stage, stage.getPlanAsString("> "));
+
         long startTime = System.currentTimeMillis();
+
         executor.execute(stage, optimizationContext, this);
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime, true));
@@ -358,6 +477,11 @@ public class CrossPlatformExecutor implements ExecutionState {
     }
 
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
+        if(stage.getModeRun().isDebugMode()){
+            Platform platform = stage.getPlatformExecution().getPlatform();
+            final Executor executor = platform.getExecutorFactory().create(this.job);
+            return executor;
+        }
         return this.executors.computeIfAbsent(
                 stage.getPlatformExecution().getPlatform(),
                 platform -> {
@@ -400,6 +524,37 @@ public class CrossPlatformExecutor implements ExecutionState {
             final StageActivator activator = this.getOrCreateActivator(
                     successorStage,
                     () -> this.determineNextOptimizationContext(processedStageActivator, successorStage)
+            );
+            this.tryToActivate(activator);
+        }
+    }
+
+
+    private void tryToActivateSuccessorsDebug(StageActivator snifferStage) {
+        final ExecutionStage processedStage = snifferStage.getStage();
+
+        // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
+        final Collection<Channel> outboundChannels = processedStage.getOutboundChannelsOfSniffer();
+        Set<ExecutionStage> successorStages = new HashSet<>(processedStage.getNumberOfSniffers());
+
+        for (Channel outboundChannel : outboundChannels) {
+            for (ExecutionTask consumer : outboundChannel.getConsumers()) {
+                System.out.println("CONSUMER::::::::"+consumer);
+                if (this.getChannelInstance(outboundChannel, consumer.isFeedbackInput(outboundChannel)) != null) {
+                    final ExecutionStage consumerStage = consumer.getStage();
+                    // We must be careful: outbound Channels still can have consumers within the producer's ExecutionStage.
+                    if (consumerStage != processedStage && !consumerStage.isInFinishedLoop()) {
+                        successorStages.add(consumerStage);
+                    }
+                }
+            }
+        }
+
+        // Try to activate follow-up stages.
+        for (ExecutionStage successorStage : successorStages) {
+            final StageActivator activator = this.getOrCreateActivator(
+                    successorStage,
+                    () -> this.determineNextOptimizationContext(snifferStage, successorStage)
             );
             this.tryToActivate(activator);
         }
@@ -509,6 +664,11 @@ public class CrossPlatformExecutor implements ExecutionState {
     public void register(ChannelInstance channelInstance) {
         final ExecutionStageLoop loop = getExecutionStageLoop(channelInstance.getChannel());
         if (loop == null) {
+            if(this.getRunMode().isDebugMode()) {
+                if(this.channelInstances.containsKey(channelInstance)){
+                    return;
+                }
+            }
             final ChannelInstance oldChannelInstance = this.channelInstances.put(channelInstance.getChannel(), channelInstance);
             channelInstance.noteObtainedReference();
             if (oldChannelInstance != null) {
@@ -817,6 +977,22 @@ public class CrossPlatformExecutor implements ExecutionState {
         public void noteActivation() {
             if (this.stage.isLoopHead()) this.loopContext.activateNextIteration();
         }
+
+        public boolean containsSniffer(){
+            return this.stage.containsSniffer();
+        }
+
+        public boolean previusContainsSniffer(){
+            for(ExecutionStage previus : this.stage.getPredecessors()){
+                if(previus.containsSniffer())
+                    return true;
+            }
+            return false;
+        }
+
+        public boolean isDebugMode(){
+            return this.stage.getModeRun().isDebugMode();
+        }
     }
 
 
@@ -1044,7 +1220,6 @@ public class CrossPlatformExecutor implements ExecutionState {
          */
         @Override
         public void run() {
-
             StageActivator stageActivator;
             this.crossPlatformExecutor.logger.info("Thread " + String.valueOf(this.threadId) + " started");
             // Loop until there is no activated stage or only one thread running

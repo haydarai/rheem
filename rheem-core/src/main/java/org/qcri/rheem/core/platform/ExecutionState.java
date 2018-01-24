@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 
@@ -53,4 +54,11 @@ public interface ExecutionState {
      * @return the {@link PartialExecution}s
      */
     Collection<PartialExecution> getPartialExecutions();
+
+    /**
+     * Retrive the RunMode of the ExecutionState
+     *
+     * @return the {@link ModeRun}
+     */
+    ModeRun getRunMode();
 }

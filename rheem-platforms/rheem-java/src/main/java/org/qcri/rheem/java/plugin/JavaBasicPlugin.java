@@ -26,9 +26,9 @@ public class JavaBasicPlugin implements Plugin {
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
-        if(ModeRun.isDebugMode()){
-            return ChannelConversions.DEBUG;
-        }
+        //if(ModeRun.isDebugMode()){
+         //   return ChannelConversions.DEBUG;
+       // }
         return ChannelConversions.ALL;
     }
 

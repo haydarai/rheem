@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -253,7 +254,11 @@ public class ExecutionTaskFlowCompiler
     }
 
     private ExecutionTask getOrCreateExecutionTask(ExecutionOperator executionOperator) {
-        return this.executionTasks.computeIfAbsent(executionOperator, ExecutionTask::new);
+        return this.executionTasks.computeIfAbsent(executionOperator,
+                ope -> {
+                    return new ExecutionTask(ope, getModeRun());
+                }
+        );
     }
 
     @Override
@@ -508,5 +513,9 @@ public class ExecutionTaskFlowCompiler
             return this.getTargetActivator().executionTask.getOperator().getInput(this.inputIndex);
         }
 
+    }
+
+    public ModeRun getModeRun(){
+        return this.planImplementation.getModeRun();
     }
 }

@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -38,14 +39,25 @@ public class ExecutionTask {
      */
     private ExecutionStage stage;
 
-    public ExecutionTask(ExecutionOperator operator) {
-        this(operator, operator.getNumInputs(), operator.getNumOutputs());
+    private ModeRun modeRun;
+
+    public ExecutionTask(ExecutionOperator operator){
+        this(operator, ModeRun.normalInstance());
+    }
+
+    public ExecutionTask(ExecutionOperator operator, ModeRun modeRun) {
+        this(operator, operator.getNumInputs(), operator.getNumOutputs(), modeRun);
     }
 
     public ExecutionTask(ExecutionOperator operator, int numInputChannels, int numOutputChannels) {
+        this(operator, numInputChannels, numOutputChannels, ModeRun.normalInstance());
+    }
+
+    public ExecutionTask(ExecutionOperator operator, int numInputChannels, int numOutputChannels, ModeRun modeRun) {
         this.operator = operator;
         this.inputChannels = new Channel[numInputChannels];
         this.outputChannels = new Channel[numOutputChannels];
+        this.modeRun = modeRun;
     }
 
     public ExecutionOperator getOperator() {
@@ -230,4 +242,15 @@ public class ExecutionTask {
         return this.operator.getPlatform();
     }
 
+    public boolean isSniffer(){
+        return this.operator.isSniffer();
+    }
+
+    public ModeRun getModeRun(){
+        return this.modeRun;
+    }
+
+    public boolean isDebugMode(){
+        return this.modeRun.isDebugMode();
+    }
 }

@@ -27,9 +27,9 @@ public class SparkBasicPlugin implements Plugin {
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
-        if(ModeRun.isDebugMode()){
+      /*  if(ModeRun.isDebugMode()){
             return ChannelConversions.DEBUG;
-        }
+        }*/
         return ChannelConversions.ALL;
     }
 

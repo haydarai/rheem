@@ -36,7 +36,8 @@ public class Mappings {
             new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping(),
-            new JSONSourceMapping()
+            new JSONSourceMapping(),
+            new SnifferMapping()
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
