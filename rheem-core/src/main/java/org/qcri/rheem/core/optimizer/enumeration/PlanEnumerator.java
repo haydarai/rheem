@@ -341,7 +341,6 @@ public class PlanEnumerator {
         if (branchEnumeration == null) {
             return;
         }
-
         this.postProcess(branchEnumeration, currentOptimizationCtx);
     }
 

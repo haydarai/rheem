@@ -624,6 +624,12 @@ public class PlanImplementation {
         }
     }
 
+    double getMLCostEstimate(boolean isIncludeOverhead) {
+        //build feature vector
+        // send it to ML
+        // get the estimates
+        return 4;
+    }
     /**
      * Retrieves the cost estimate for this instance.
      *

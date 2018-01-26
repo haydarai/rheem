@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -15,6 +18,8 @@ import java.util.List;
  * Load saved learned model
  */
 public class LoadModel {
+    public static final URI MODEL_LOADING_LOCATION = createUri("/loadModel.py");
+
     private static final Logger logger = LoggerFactory.getLogger(LoadModel.class);
 
     private static Configuration configuration = new Configuration();
@@ -36,7 +41,7 @@ public class LoadModel {
 
         storeVector(featureVectors,0);
 
-//        // save features vectors
+//      save features vectors
 //        featureVectors.stream()
 //                .forEach(f -> {
 //                    storeVector(f, 0);
@@ -44,8 +49,12 @@ public class LoadModel {
 
         // run model loader in python
 
+//        String[] cmd = {
+//                "python",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
+//        };
+
         String[] cmd = {
-                "python",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
+                "python", String.valueOf(Paths.get(MODEL_LOADING_LOCATION))
         };
 
         try {
@@ -53,7 +62,7 @@ public class LoadModel {
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String s = br.readLine();
             logger.info(s);
-            System.out.println(s);
+            //System.out.println(s);
             p.waitFor();
             p.destroy();
         } catch (IOException e) {
@@ -97,8 +106,15 @@ public class LoadModel {
                 writer.write(Long.toString(0));
                 writer.write("\n");
             }
-
-
+            // rewrite in this case
+            if(featureVectors.size()==1)
+                for(double[] logs:featureVectors){
+                    for(int i=0;i<logs.length;i++){
+                        writer.write( nf.format( logs[i]) + " ");
+                    }
+                    writer.write(Long.toString(0));
+                    writer.write("\n");
+                }
             writer.close();
         } catch (IOException e) {
             throw new RheemException("could not stream vectors to ML model!");
@@ -130,6 +146,15 @@ public class LoadModel {
 //        List<InputField> inputFields = evaluator.getInputFields();
 //        System.out.println(inputFields);
 //    }
+
+    public static URI createUri(String resourcePath) {
+        try {
+            return Thread.currentThread().getClass().getResource(resourcePath).toURI();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Illegal URI.", e);
+        }
+
+    }
     public static void main(String[] args){
         String[] cmd = {
                 "python",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")

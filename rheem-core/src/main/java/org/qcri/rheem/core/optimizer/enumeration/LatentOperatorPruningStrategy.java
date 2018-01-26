@@ -2,6 +2,10 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.mloptimizer.LoadModel;
+import org.qcri.rheem.core.optimizer.mloptimizer.LogGenerator;
+import org.qcri.rheem.core.optimizer.mloptimizer.MLestimation;
+import org.qcri.rheem.core.optimizer.mloptimizer.api.Tuple2;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.Platform;
@@ -9,6 +13,7 @@ import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +26,7 @@ import java.util.stream.Collectors;
  */
 public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
 
+    private static Configuration configuration = new Configuration();
     private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
 
     @Override
@@ -37,6 +43,8 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
                 planEnumeration.getPlanImplementations().stream()
                         .collect(Collectors.groupingBy(LatentOperatorPruningStrategy::getInterestingProperties))
                         .values();
+
+        // get the best plan for each grouped plan!
         final List<PlanImplementation> bestPlans = competingPlans.stream()
                 .map(this::selectBestPlanNary)
                 .collect(Collectors.toList());
@@ -58,15 +66,41 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
 
     private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation) {
         assert !planImplementation.isEmpty();
-        return planImplementation.stream()
-                .reduce(this::selectBestPlanBinary)
-                .orElseThrow(() -> new RheemException("No plan was selected."));
+        if (configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer",false)) {
+            return selectBestLearnedPlan(planImplementation);
+        } else {
+            // stream in the case of cost optimizer
+            return planImplementation.stream()
+                    .reduce(this::selectBestPlanBinary)
+                    .orElseThrow(() -> new RheemException("No plan was selected."));
+        }
     }
 
+    private PlanImplementation selectBestLearnedPlan(List<PlanImplementation> planImplementations) {
+        LogGenerator logGenerator = new LogGenerator();
+
+        // add operators
+        //logGenerator.
+
+        List<Tuple<PlanImplementation,double[]>> tupleIplementationFeatureVector = new ArrayList<>();
+        planImplementations.stream()
+                .forEach(planImplementation-> {
+                    tupleIplementationFeatureVector.add(new Tuple<>(planImplementation,logGenerator.addPruningFeatureLog(planImplementation)));
+                });
+
+        // Load Model
+        LoadModel.loadModel(logGenerator.getPruningFeatureLogs());
+
+        Tuple2<double[],Double> bestFeatureVector =  MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
+
+        return tupleIplementationFeatureVector.stream().filter(t1->t1.field1==bestFeatureVector.getField0()).findAny().orElse(null).field0;
+    }
     private PlanImplementation selectBestPlanBinary(PlanImplementation p1,
                                                     PlanImplementation p2) {
-        final double t1 = p1.getSquashedCostEstimate(true);
-        final double t2 = p2.getSquashedCostEstimate(true);
+
+        final double   t1 = p1.getSquashedCostEstimate(true);
+        final double   t2 = p2.getSquashedCostEstimate(true);
+
         final boolean isPickP1 = t1 <= t2;
         if (logger.isDebugEnabled()) {
             if (isPickP1) {

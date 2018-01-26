@@ -332,8 +332,8 @@ public class ProfilingRunner{
             //cleanUp.stop();
         }*/
         job.getOptimizationContext().getLocalOperatorContexts();
-        shape.updateChannels(job.getPlanImplementation().getJunctions());
-        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
+        //shape.updateChannels(job.getPlanImplementation().getJunctions());
+        shape.updateExecutionOperators(job.getOptimizationContext().getLocalOperatorContexts());
         shape.printLog();
         job = null;
     }

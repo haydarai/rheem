@@ -560,9 +560,13 @@ public class Configuration {
 
     private static void bootstrapMlOptimizerProperties(Configuration configuration) {
         configuration.setProperty("rheem.core.optimizer.mloptimizer.modelLocation", StringUtils.join(
-                Arrays.asList(System.getProperty("user.home"), ".rheem", "loadModel.py"),
+                Arrays.asList("/loadModel.py"),
                 File.separator
         ));
+//        configuration.setProperty("rheem.core.optimizer.mloptimizer.modelLocation", StringUtils.join(
+//                Arrays.asList(System.getProperty("user.home"), ".rheem", "loadModel.py"),
+//                File.separator
+//        ));
 
         configuration.setProperty("rheem.core.optimizer.mloptimizer.saveVectorLocation", StringUtils.join(
                 Arrays.asList(System.getProperty("user.home"), ".rheem", "mlModelVectors.txt"),

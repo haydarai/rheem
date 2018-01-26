@@ -5,6 +5,7 @@ package org.qcri.rheem.core.optimizer.mloptimizer;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.enumeration.PlanImplementation;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.*;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -707,7 +708,7 @@ public class LogGenerator {
         }
     }
 
-    public void exhaustivePlanPlatformFiller(int exhaustivePlatformVectorsMaxBuffer){
+    public void exhaustivePlanPlatformFiller(long exhaustivePlatformVectorsMaxBuffer){
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
         //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
         exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1),DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
@@ -731,7 +732,7 @@ public class LogGenerator {
      * @param newPlatform
      * @param startOperatorIndex
      */
-    public void exhaustivePlanPlatformFiller(double[] vectorLog, String[] platformVector, String newPlatform,String replacePlatform, int startOperatorIndex, int exhaustivePlatformVectorsMaxBuffer){
+    public void exhaustivePlanPlatformFiller(double[] vectorLog, String[] platformVector, String newPlatform,String replacePlatform, int startOperatorIndex, long exhaustivePlatformVectorsMaxBuffer){
         // if no generated plan fill it with equal values (all oerators in first platform java)
 
         // clone input vectorLog
@@ -822,7 +823,7 @@ public class LogGenerator {
             count[0]++;
             outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
         });
-        this.logger.info("Current rheem plan feature vector: " + outputVector[0]);
+        this.logger.info("Best plan feature plan: " + outputVector[0]);
         return "Current rheem plan feature vector: " + outputVector[0];
     }
 
@@ -957,6 +958,7 @@ public class LogGenerator {
     }
 
     private List<String> executionOperatorNames = new ArrayList<>();
+
     /**
      * update with execution executionOperator informations (plateform, output cardinality)
      * @param localOperatorContexts
@@ -974,6 +976,17 @@ public class LogGenerator {
                         if(operator.isExecutionOperator()){
                             executionOperatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
                                     .toLowerCase().replace("java","").replace("spark","").replace("flink","");
+
+                            // update platform
+                            String platform = null;
+                            if(operator.toString().toLowerCase().contains("java"))
+                                platform="Java Streams";
+                            else if(operator.toString().toLowerCase().contains("spark"))
+                                platform="Apache Spark";
+                            else if (operator.toString().toLowerCase().contains("flink"))
+                                platform="Apache Flink";
+                            if (!platform.isEmpty())
+                                updateOperatorPlatform(executionOperatorName[0],platform,null,vectorLogs);
                         } else {
                             Set<Platform> platform = operator.getTargetPlatforms();
                             executionOperatorName[0] = operator.toString().split("\\P{Alpha}+")[0].toLowerCase();
@@ -1064,6 +1077,7 @@ public class LogGenerator {
         throw new RheemException("Feature vector inconsistent: number of platforms doesn't much operators number!");
     }
 
+
     // GETTERS AND SETTERS
     public double[] getVectorLogs() {
         return vectorLogs;
@@ -1123,4 +1137,29 @@ public class LogGenerator {
     }
 
 
+    public List<double[]> getPruningFeatureLogs() {
+        return pruningFeatureLogs;
+    }
+
+    private List<double[]> pruningFeatureLogs= new ArrayList<>();
+    public double[] addPruningFeatureLog(PlanImplementation planImplementation) {
+        //cache current vector log
+        double[] cachedVectorLogs = vectorLogs.clone();
+
+        // reinitialize vector log;
+        vectorLogs = new double[VECTOR_SIZE];
+        double[] pruningFeatureLog = new double[VECTOR_SIZE];
+
+        // update with execution operators
+        updateExecutionOperators(planImplementation.getOptimizationContext().getLocalOperatorContexts());
+
+        pruningFeatureLog = vectorLogs.clone();
+        pruningFeatureLogs.add(pruningFeatureLog);
+
+        // return the cached vector log
+        vectorLogs = cachedVectorLogs;
+
+        // return the pruning pruning
+        return pruningFeatureLog;
+    }
 }

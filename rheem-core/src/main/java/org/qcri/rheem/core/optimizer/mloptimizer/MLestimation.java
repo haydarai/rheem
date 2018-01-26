@@ -62,7 +62,8 @@ public class MLestimation {
 
             while((line = bufferedReader.readLine()) != null) {
                 estimates.add(Double.valueOf(line));
-                System.out.println(line);
+                //System.out.println(line);
+                //System.out.println(line);
             }
 
             // Always close files.

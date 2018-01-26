@@ -389,7 +389,7 @@ public class Job extends OneTimeExecutable {
         logger.info("update  exhaustive feature vectors enumeration");
         logGenerator.updateExecutionOperators(optimizationContext.getLocalOperatorContexts());
         logger.info("start exhaustive feature vectors enumeration");
-        logGenerator.exhaustivePlanPlatformFiller(1000);
+        logGenerator.exhaustivePlanPlatformFiller(this.configuration.getLongProperty("rheem.core.optimizer.mloptimizer.exhaustiveVectorMaxBuffer",1000));
 
         // Load Model
         logger.info("Loading model for Ml optimizer!");
@@ -403,9 +403,10 @@ public class Job extends OneTimeExecutable {
         //final PlanImplementation MLplanImplementation = Vector2ExecutionPlan.generate(executionPlans, bestFeatureVector.getField0());
 
         //
+        //if(is instanceof OperatorAlternative)
         keepMLearnedAlternatives(bestFeatureVector.getField0());
 
-        logger.info("Best plan feature vector: \n");
+        logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
         logGenerator.printLog(bestFeatureVector.getField0());
         return this.createPlanEnumerator();
 
@@ -420,18 +421,13 @@ public class Job extends OneTimeExecutable {
 
         this.optimizationRound.start("Create Initial Execution Plan");
 
-        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
-            // pick best execution plan using ml optimizer
-            this.pickBestExecutionPlanMLearner();
-        //keepMLearnedAlternatives();
+//        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
+//            // pick best execution plan using ml optimizer
+//            this.pickBestExecutionPlanMLearner();
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
 
-        //OperatorAlternative newSinkAlternative = OperatorAlternative.wrap((Operator) operatorAlternative.get(0).getAlternatives().get(0));
-
-        //OperatorAlternative operator = (OperatorAlternative) rheemPlan.getSinks().stream().reduce((sink1, sink2) -> sink1.getContainer().getContainedOperator()).orElseThrow(()->new RheemException(""));
-        //Operator operator2 = (Operator) operator.getAlternatives().get(0).getContainedOperator();
         final TimeMeasurement enumerateMeasurment = this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
         planEnumerator.setTimeMeasurement(enumerateMeasurment);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
@@ -471,6 +467,10 @@ public class Job extends OneTimeExecutable {
         return executionPlan;
     }
 
+    /**
+     * Keep  learned  {@link OperatorAlternative.Alternative} to be used to build the plan implementation
+     * @param featureVector
+     */
     private void keepMLearnedAlternatives(double[] featureVector) {
         double[] currentFeatureVector = featureVector.clone();
         List<OperatorAlternative> previousAlternativeOperators = new ArrayList<>();
