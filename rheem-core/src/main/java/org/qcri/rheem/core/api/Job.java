@@ -509,16 +509,26 @@ public class Job extends OneTimeExecutable {
                     // update the previous operator
                     previousAlternativeOperator[0] = (OperatorAlternative) iterable.previous();
 
-                    // Add previous operator
-                    Arrays.stream(previousAlternativeOperator[0].getAllInputs()).forEach(input->{
-                        if(input.getOccupant().getOwner() instanceof LoopSubplan){
-                            LoopHeadAlternative tmpLoopHeadAlternative = (LoopHeadAlternative) ((LoopSubplan) input.getOccupant().getOwner()).getLoopHead();
-                            iterable.add(tmpLoopHeadAlternative);
+                    if(previousAlternativeOperator[0] instanceof LoopHeadAlternative) {
+                        LoopHeadAlternative tmploopHeadAlternative2 = (LoopHeadAlternative) previousAlternativeOperator[0];
+                        // check if the list has already the current head
+                        if((loopHeadAlternativeQueue.isEmpty())||(!loopHeadAlternativeQueue.peek().equals(loopHeadAlternative))){
+
+                            tmploopHeadAlternative2.getLoopBodyInputs().stream().forEach(input3->iterable.add(input3.getOccupant().getOwner()));
+                            // add the head to the queue
+                            loopHeadAlternativeQueue.push(tmploopHeadAlternative2);
                         }
-                        else
-                            iterable.add((OperatorAlternative) input.getOccupant().getOwner());
-                        });
-                    }
+                    } else
+                        // Add previous operator
+                        Arrays.stream(previousAlternativeOperator[0].getAllInputs()).forEach(input->{
+                            if(input.getOccupant().getOwner() instanceof LoopSubplan){
+                                LoopHeadAlternative tmpLoopHeadAlternative = (LoopHeadAlternative) ((LoopSubplan) input.getOccupant().getOwner()).getLoopHead();
+                                iterable.add(tmpLoopHeadAlternative);
+                            }
+                            else
+                                iterable.add((OperatorAlternative) input.getOccupant().getOwner());
+                            });
+                        }
                 }
             else
                 // Add previous operator
