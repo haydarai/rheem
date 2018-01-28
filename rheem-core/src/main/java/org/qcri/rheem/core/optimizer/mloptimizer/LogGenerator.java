@@ -13,7 +13,6 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,7 +121,7 @@ public class LogGenerator {
 
     }};
 
-    public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark"));
+    public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Apache Spark"));
 
     public static LinkedHashMap<String,Integer> PLATFORMVECTORPOSITION = new LinkedHashMap<String,Integer>(){{
         put("Java Streams",0);
@@ -711,7 +710,11 @@ public class LogGenerator {
     public void exhaustivePlanPlatformFiller(long exhaustivePlatformVectorsMaxBuffer){
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
         //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
-        exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1),DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
+        if (DEFAULT_PLATFORMS.size()>1)
+            exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1),DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
+        else
+            // case of single platform
+            exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], null,DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
 
         for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
             int finalI = i;
@@ -752,6 +755,10 @@ public class LogGenerator {
             exhaustivePlanPlatformFiller(newVectorLog,newPlatformLog, newPlatform, replacePlatform, startOperatorIndex, exhaustivePlatformVectorsMaxBuffer);
             return;
         }
+
+        // exit if new Platform is null
+        if (newPlatform==null)
+            return;
 
         // exit if @var{exhaustivePlatformVector} has reached buffer
         if((exhaustivePlatformVectorsMaxBuffer!=-1)&&(exhaustivePlatformVectorsMaxBuffer<exhaustivePlatformVectors.size()))
@@ -1226,14 +1233,14 @@ public class LogGenerator {
             if (localOperatorContexts.get(operator).getOperator().isSource() && (localOperatorContexts.get(operator).getOperator() instanceof UnarySource)) {
                 this.setEstimatedInputCardinality(averageOutputCardinality);
                 UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
-                double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
-                // avoid having infinity
-                if (averageOutputCardinality != 0)
-                    this.setEstimatedDataQuataSize(fileSize / averageOutputCardinality);
-                else
-                    this.setEstimatedDataQuataSize(fileSize / 1);
-                if (this.estimatedInputCardinality!=0)
-                    this.setcardinalities(this.estimatedInputCardinality, this.estimatedDataQuataSize);
+//                double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+//                // avoid having infinity
+//                if (averageOutputCardinality != 0)
+//                    this.setEstimatedDataQuataSize(fileSize / averageOutputCardinality);
+//                else
+//                    this.setEstimatedDataQuataSize(fileSize / 1);
+//                if (this.estimatedInputCardinality!=0)
+//                    this.setcardinalities(this.estimatedInputCardinality, this.estimatedDataQuataSize);
             }
         }
     }

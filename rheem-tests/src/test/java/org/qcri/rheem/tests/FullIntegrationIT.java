@@ -14,7 +14,6 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
