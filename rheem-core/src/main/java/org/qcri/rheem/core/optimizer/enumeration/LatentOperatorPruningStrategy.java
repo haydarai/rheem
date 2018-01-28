@@ -28,6 +28,7 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
 
     private static Configuration configuration = new Configuration();
     private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
+    private static LogGenerator logGenerator = new LogGenerator();
 
     @Override
     public void configure(Configuration configuration) {
@@ -77,8 +78,9 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
     }
 
     private PlanImplementation selectBestLearnedPlan(List<PlanImplementation> planImplementations) {
-        LogGenerator logGenerator = new LogGenerator();
+        logGenerator.reinitializeLog(true);
 
+        //logGenerator =new LogGenerator();
         // add operators
         //logGenerator.
 

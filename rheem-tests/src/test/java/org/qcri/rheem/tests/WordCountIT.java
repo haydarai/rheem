@@ -460,6 +460,7 @@ public class WordCountIT {
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(Spark.basicPlugin());
         rheemContext.register(Java.basicPlugin());
+        //rheemContext.register(Flink.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 

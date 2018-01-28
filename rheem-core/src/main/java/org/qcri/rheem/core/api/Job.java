@@ -3,6 +3,7 @@ package org.qcri.rheem.core.api;
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
+import org.antlr.v4.codegen.model.Loop;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.monitor.DisabledMonitor;
@@ -387,7 +388,7 @@ public class Job extends OneTimeExecutable {
     private PlanEnumerator pickBestExecutionPlanMLearner() {
 
         logger.info("update  exhaustive feature vectors enumeration");
-        logGenerator.updateExecutionOperators(optimizationContext.getLocalOperatorContexts());
+        logGenerator.updateExecutionOperators(optimizationContext.getLocalOperatorContexts(), false);
         logger.info("start exhaustive feature vectors enumeration");
         logGenerator.exhaustivePlanPlatformFiller(this.configuration.getLongProperty("rheem.core.optimizer.mloptimizer.exhaustiveVectorMaxBuffer",1000));
 
@@ -421,9 +422,10 @@ public class Job extends OneTimeExecutable {
 
         this.optimizationRound.start("Create Initial Execution Plan");
 
-//        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"))
-//            // pick best execution plan using ml optimizer
-//            this.pickBestExecutionPlanMLearner();
+        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")&&
+                (configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer.exhaustivePruning")))
+            // pick best execution plan using ml optimizer
+            this.pickBestExecutionPlanMLearner();
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
@@ -473,23 +475,71 @@ public class Job extends OneTimeExecutable {
      */
     private void keepMLearnedAlternatives(double[] featureVector) {
         double[] currentFeatureVector = featureVector.clone();
+        rheemPlan.collectReachableTopLevelSources();
         List<OperatorAlternative> previousAlternativeOperators = new ArrayList<>();
         rheemPlan.getSinks().stream().forEach(op-> previousAlternativeOperators.add((OperatorAlternative) op));
 
         ListIterator iterable = previousAlternativeOperators.listIterator();
 
-        OperatorAlternative previousAlternativeOperator;
+        final OperatorAlternative[] previousAlternativeOperator = new OperatorAlternative[1];
         iterable.next();
 
+        Stack<LoopHeadAlternative> loopHeadAlternativeQueue = new Stack<>();
+
         while(iterable.hasPrevious()) {
-            previousAlternativeOperator = (OperatorAlternative) iterable.previous();
+            previousAlternativeOperator[0] = (OperatorAlternative) iterable.previous();
+
+//            // Handle the case of loop head alternative
+            if(previousAlternativeOperator[0] instanceof LoopHeadAlternative) {
+                LoopHeadAlternative loopHeadAlternative = (LoopHeadAlternative) previousAlternativeOperator[0];
+                // add body operators
+                //loopHeadAlternative.getLoopBodyInputs().stream().forEach(input3->iterable.add(input3.getOccupant().getOwner()));
+            }
+            else
+                // Add previous operator
+                Arrays.stream(previousAlternativeOperator[0].getAllInputs()).forEach(input->{
+                    if(input.getOccupant().getOwner() instanceof LoopSubplan){
+                        LoopHeadAlternative loopHeadAlternative = (LoopHeadAlternative) ((LoopSubplan) input.getOccupant().getOwner()).getLoopHead();
+                        // check if the list has already the current head
+                        if((loopHeadAlternativeQueue.isEmpty())||(!loopHeadAlternativeQueue.peek().equals(loopHeadAlternative))){
+                            iterable.add(loopHeadAlternative);
+
+                            // get contained operator name
+//                            double[] tmpFeatureVector = featureVector.clone();
+//                            Operator operator = loopHeadAlternative.getAlternatives().get(0).getContainedOperator();
+//                            String operatorName = operator.toString();
+//                            Tuple2<double[],Integer> retreiveOperatorPlatform = logGenerator.retreiveOperatorPlatform(tmpFeatureVector,operatorName);
+//                            tmpFeatureVector = retreiveOperatorPlatform.getField0();
+//                            List<String> platforms = new ArrayList<>(LogGenerator.PLATFORMVECTORPOSITION.keySet());
+//                            previousAlternativeOperator[0].keepAlternative(platforms.get(retreiveOperatorPlatform.getField1()));
+
+                            loopHeadAlternative.getLoopBodyInputs().stream().forEach(input3->iterable.add(input3.getOccupant().getOwner()));
+                            // add the head to the queue
+                            loopHeadAlternativeQueue.push(loopHeadAlternative);
+
+                            //previousAlternativeOperator[0] = (OperatorAlternative) iterable.previous();
+
+                        }
+                        else{
+                            // add the InitInput of loopSubplan
+                            loopHeadAlternative.getLoopInitializationInputs().stream().forEach(input2-> iterable.add( input2.getOccupant().getOwner()));
+                            // pop the head from the queue
+                            loopHeadAlternativeQueue.pop();
+                            // update the previous operator
+                            previousAlternativeOperator[0] = (OperatorAlternative) iterable.previous();
+                        }
+                    }
+                    else
+                        iterable.add((OperatorAlternative) input.getOccupant().getOwner());
+                    });
+
             // get contained operator name
-            Operator operator = previousAlternativeOperator.getAlternatives().get(0).getContainedOperator();
+            Operator operator = previousAlternativeOperator[0].getAlternatives().get(0).getContainedOperator();
             String operatorName = operator.toString();
             Tuple2<double[],Integer> retreiveOperatorPlatform = logGenerator.retreiveOperatorPlatform(currentFeatureVector,operatorName);
             currentFeatureVector = retreiveOperatorPlatform.getField0();
-            Arrays.stream(previousAlternativeOperator.getAllInputs()).forEach(input->iterable.add((OperatorAlternative) input.getOccupant().getOwner()));
-            previousAlternativeOperator.keepAlternative(2-retreiveOperatorPlatform.getField1());
+            List<String> platforms = new ArrayList<>(LogGenerator.PLATFORMVECTORPOSITION.keySet());
+            previousAlternativeOperator[0].keepAlternative(platforms.get(retreiveOperatorPlatform.getField1()));
         }
     }
 

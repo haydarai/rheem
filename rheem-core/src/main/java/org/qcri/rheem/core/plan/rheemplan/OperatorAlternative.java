@@ -76,13 +76,20 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
     }
 
-    public void keepAlternative(int index) {
-        Alternative firstAlternative = this.alternatives.get(0);
-        Alternative indexAlternative = this.alternatives.get(index);
-        this.alternatives.clear();
-        this.alternatives.add(firstAlternative);
-        this.alternatives.add(indexAlternative);
-        //this.alternatives.removeIf(op->op.getContainedOperator().getTargetPlatforms().equals(platform));
+    public void keepAlternative(String platform) {
+//        Alternative firstAlternative = this.alternatives.get(0);
+//        Alternative indexAlternative = this.alternatives.get(index);
+//        this.alternatives.clear();
+//        this.alternatives.add(firstAlternative);
+//        this.alternatives.add(indexAlternative);
+        this.alternatives.removeIf(op->{
+            if (op.getContainedOperator() instanceof ExecutionOperator){
+                ExecutionOperator executionOperator = (ExecutionOperator)op.getContainedOperator();
+                if(executionOperator.getPlatform().getName()==platform) return false;
+                else return true;
+            } else
+                return false;
+        });
     }
 
     /**

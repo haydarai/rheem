@@ -80,7 +80,7 @@ public class Shape {
         put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);
         // Below should be added in different position
         // DAtasetchannel is a flink type channel
-        put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);
+        put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);put("broadcast", startOpPos + 19*opPosStep);
     }};
 
     public HashMap<String,Integer> CHANNEL_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -1101,6 +1101,12 @@ public class Shape {
                     if(operator.isExecutionOperator()){
                         executionOperatorName[0]=operator.toString().split("\\P{Alpha}+")[0]
                                 .toLowerCase().replace("java","").replace("spark","").replace("flink","");
+                        ExecutionOperator executionOperator = (ExecutionOperator) operator;
+                        // update platform
+                        String platform = executionOperator.getPlatform().getName();
+
+                        if (!platform.isEmpty())
+                            updateOperatorPlatform(executionOperatorName[0],platform,null,vectorLogs);
                     } else {
                         Set<Platform> platform = operator.getTargetPlatforms();
                         executionOperatorName[0] = operator.toString().split("\\P{Alpha}+")[0].toLowerCase();

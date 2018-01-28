@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.mloptimizer;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.Tuple2;
+import org.qcri.rheem.core.util.Tuple;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -19,12 +20,12 @@ import java.util.ListIterator;
 public class MLestimation {
 
     private static Configuration configuration = new Configuration();
-    private static List<Double>  estimates = new ArrayList<>();
 
     public static Tuple2<double[],Double> getBestVector(List<double[]> featureVectors){
 
+        // reinitialize the estimates
         // Load output estimates
-        retreiveEstimates();
+        List<Double>  estimates = retreiveEstimates();
 
         // pick best (minimum) estimate
         int minIndex;
@@ -39,12 +40,19 @@ public class MLestimation {
                 minIndex = itr.previousIndex();
             }
         }
-        return new Tuple2(featureVectors.get(minIndex),min);
+        Tuple2 result = new Tuple2();
+        try{
+            result = new Tuple2(featureVectors.get(minIndex),min);
+        } catch (Exception e){
+            e.getStackTrace();
+        }
+        return result;
     }
 
     // Load estimated times
-    public static void retreiveEstimates() {
+    public static List<Double> retreiveEstimates() {
 
+        List<Double>  estimates = new ArrayList<>() ;
         // The name of the file to open.
         String fileName = configuration.getStringProperty("rheem.core.optimizer.mloptimizer.loadEstimatesLocation");
 
@@ -77,5 +85,6 @@ public class MLestimation {
             // Or we could just do this:
             // ex.printStackTrace();
         }
+        return estimates;
     }
 }
