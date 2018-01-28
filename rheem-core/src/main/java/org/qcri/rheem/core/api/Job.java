@@ -494,32 +494,16 @@ public class Job extends OneTimeExecutable {
                 // check if the list has already the current head
                 if((loopHeadAlternativeQueue.isEmpty())||(!loopHeadAlternativeQueue.peek().equals(loopHeadAlternative))){
 
-                    // get contained operator name
-//                            double[] tmpFeatureVector = featureVector.clone();
-//                            Operator operator = loopHeadAlternative.getAlternatives().get(0).getContainedOperator();
-//                            String operatorName = operator.toString();
-//                            Tuple2<double[],Integer> retreiveOperatorPlatform = logGenerator.retreiveOperatorPlatform(tmpFeatureVector,operatorName);
-//                            tmpFeatureVector = retreiveOperatorPlatform.getField0();
-//                            List<String> platforms = new ArrayList<>(LogGenerator.PLATFORMVECTORPOSITION.keySet());
-//                            previousAlternativeOperator[0].keepAlternative(platforms.get(retreiveOperatorPlatform.getField1()));
-
                     loopHeadAlternative.getLoopBodyInputs().stream().forEach(input3->iterable.add(input3.getOccupant().getOwner()));
                     // add the head to the queue
                     loopHeadAlternativeQueue.push(loopHeadAlternative);
-
-                    //previousAlternativeOperator[0] = (OperatorAlternative) iterable.previous();
-
                 }
                 else{
                     // add the InitInput of loopSubplan
-                    //Operator operator = loopHeadAlternative.getContainer().getContainedOperator();
                     Operator operator2 = loopHeadAlternative.getInnermostLoop();
 
                     iterable.add(loopHeadAlternative.getInnermostLoop().getInput(0).getOccupant().getOwner());
-//                    loopHeadAlternative.getLoopInitializationInputs().stream().forEach(input2-> {
-//                        if(input2.getOccupant()!=null)
-//                            iterable.add( input2.getOccupant().getOwner());
-//                    });
+
                     // pop the head from the queue
                     loopHeadAlternativeQueue.pop();
                     // update the previous operator
@@ -533,11 +517,9 @@ public class Job extends OneTimeExecutable {
                         }
                         else
                             iterable.add((OperatorAlternative) input.getOccupant().getOwner());
-                    });
+                        });
+                    }
                 }
-                // add body operators
-                //loopHeadAlternative.getLoopBodyInputs().stream().forEach(input3->iterable.add(input3.getOccupant().getOwner()));
-            }
             else
                 // Add previous operator
                 Arrays.stream(previousAlternativeOperator[0].getAllInputs()).forEach(input->{
