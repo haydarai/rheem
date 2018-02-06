@@ -34,7 +34,7 @@ public class LogGenerator {
 
     //TODO: Add a vectorlog nested class for more readablilty purposes
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private final Configuration config = new Configuration();
+    private final Configuration configuration = new Configuration();
     // subshapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
     private List<Shape> subShapes = new ArrayList<>();
     private List<Topology> allTopologies = new ArrayList<>();
@@ -74,10 +74,14 @@ public class LogGenerator {
         put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby:globalmaterializedgroup", startOpPos +6*opPosStep);
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall:union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
-        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink", startOpPos +18*opPosStep);
-        put("collect:zipwithid:cache:count:broadcast", startOpPos + 19*opPosStep);
+        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink:collectionsink", startOpPos +18*opPosStep);
+        put("collect:zipwithid:cache:count:broadcast:repeatexpanded:mappartitions:sample", startOpPos + 19*opPosStep);
         // Below should be added in different position
         // DAtasetchannel is a flink type channel
+    }};
+
+    public LinkedHashMap<String,Integer> SOURCE_SINK_OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES = new LinkedHashMap<String,Integer>(){{
+        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink", startOpPos +18*opPosStep);
     }};
 
     public LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
@@ -89,8 +93,10 @@ public class LogGenerator {
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
         put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);
         // Below should be added in different position
-        // DAtasetchannel is a flink type channel
+        // Datasetchannel is a flink type channel
         put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);put("broadcast", startOpPos + 19*opPosStep);
+        put("repeatexpanded", startOpPos + 19*opPosStep);put("mappartitions", startOpPos + 19*opPosStep);put("shufflepartitionsample", startOpPos + 19*opPosStep);
+        put("sample", startOpPos + 19*opPosStep);
     }};
 
     public LinkedHashMap<String,Integer> CHANNEL_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
@@ -99,7 +105,7 @@ public class LogGenerator {
         put("RddChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 2*channelPosStep);
         put("FileChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 3*channelPosStep);
         // Below should be added in different position
-        // DAtasetchannel is a flink type channel
+        // Datasetchannel is a flink type channel
         put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);
     }};
 
@@ -122,7 +128,10 @@ public class LogGenerator {
 
     }};
 
-    public static final List<String> DEFAULT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark","Apache Flink"));
+    public static final List<String> DEFUALT_PLATFORMS = new ArrayList<>(Arrays.asList("Java Streams","Apache Spark","Apache Flink"));
+
+
+    private static List<String> enabledPlatforms = new ArrayList<>();
 
     public static LinkedHashMap<String,Integer> PLATFORMVECTORPOSITION = new LinkedHashMap<String,Integer>(){{
         put("Java Streams",0);
@@ -135,7 +144,10 @@ public class LogGenerator {
      * Prepare vector log topologies
      * @param ispreExecution
      */
-    public void prepareVectorLog(RheemPlan rheemPlan, OptimizationContext optimizationContext, boolean ispreExecution){
+    public void prepareVectorLog(RheemPlan rheemPlan, Configuration Configuration, boolean ispreExecution){
+
+        // set platforms
+        Configuration.getPlatformProvider().provideAll().stream().forEach(p-> enabledPlatforms.add(p.getName()));
 
         // collect sinks
         Collection<Operator> sinks = rheemPlan.getSinks();
@@ -178,7 +190,7 @@ public class LogGenerator {
                                 String[] operatorName = tuple.getField0().split("\\P{Alpha}+");
                                 // remove platform prefix from operator
                                 operatorName[0] = operatorName[0].toLowerCase().replace("java","").replace("spark","").replace("flink","");
-                                if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+                                if( configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
                                     // Handle the case of 2D generated logs
 
                                     // add topoliges to 2d vector log
@@ -216,7 +228,7 @@ public class LogGenerator {
                 });
         averageSelectivityComplexity(tmpVectorLogs1D);
 
-        if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+        if( configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
             // set shape's 2D vector log
             this.setVectorLogs2D(tmpVectorLogs2D.clone());
             // set shapes 1D vector log as the first row of the 2D vector log; as we will update the channels only for the first row
@@ -282,8 +294,14 @@ public class LogGenerator {
                     // update predecessorOperators in case of multiple inputs
                     tmpPredecessorOperators.stream()
                             .forEach(operator -> {
-                                if(tmpPredecessorOperators.indexOf(operator)>=1)
+                                // do not add existing loop head
+                                if((tmpPredecessorOperators.indexOf(operator)>=1))
+                                    if(loopHeads.isEmpty()) {
                                     iterpredecessorOperators.add(operator);
+                                    } else if(operator!=loopHeads.peek()) {
+                                    iterpredecessorOperators.add(operator);
+                                    }
+
                             });
 
                     // update predecessor with the first input executionOperator
@@ -305,8 +323,15 @@ public class LogGenerator {
                         // update predecessorOperators in case of multiple inputs
                         tmpPredecessorOperators2.stream()
                                 .forEach(operator -> {
-                                    if(tmpPredecessorOperators2.indexOf(operator)>=1)
-                                        iterpredecessorOperators.add(operator);
+                                    // do not add existing loop head
+                                    if((tmpPredecessorOperators2.indexOf(operator)>=1))
+                                        if(loopHeads.isEmpty()) {
+                                            iterpredecessorOperators.add(operator);
+                                        } else if(operator!=loopHeads.peek()) {
+                                            iterpredecessorOperators.add(operator);
+                                        }
+//                                    if(tmpPredecessorOperators2.indexOf(operator)>=1)
+//                                        iterpredecessorOperators.add(operator);
                                 });
                         // Handle broadcast case
                         predecessorOperator = tmpPredecessorOperators2.get(0);
@@ -337,8 +362,8 @@ public class LogGenerator {
                     newShape.getJunctureTopologies().add(newJunctureTopology);
                     newShape.getAllTopologies().add(newJunctureTopology);
 
-                    // add executionOperator to new topology
-                    newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+//                    // add executionOperator to new topology
+//                    newJunctureTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
 
                     // update current and predecessor operatorNames
                     currentOperator = predecessorOperator;
@@ -351,8 +376,15 @@ public class LogGenerator {
                     // update predecessorOperators in case of multiple inputs
                     tmpPredecessorOperators.stream()
                             .forEach(operator -> {
-                                if(tmpPredecessorOperators.indexOf(operator)>=1)
-                                    iterpredecessorOperators.add(operator);
+                                // do not add existing loop head
+                                if((tmpPredecessorOperators.indexOf(operator)>=1))
+                                    if(loopHeads.isEmpty()) {
+                                        iterpredecessorOperators.add(operator);
+                                    } else if(operator!=loopHeads.peek()) {
+                                        iterpredecessorOperators.add(operator);
+                                    }
+//                                if(tmpPredecessorOperators.indexOf(operator)>=1)
+//                                    iterpredecessorOperators.add(operator);
                             });
 
                     // update predecessor with the first input executionOperator
@@ -368,29 +400,39 @@ public class LogGenerator {
                 //DONE: add loop handling
                 if (predecessorOperator instanceof LoopHeadOperator) {
                     LoopTopology newLoopTopology = new LoopTopology();
-                    if (currentOperator.isSink()) {
-                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
-                        // add current topology as a sink topology
-                        newShape.setSinkTopology(newLoopTopology);
 
-                    }
-                    newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                    newShape.getLoopTopologies().add(newLoopTopology);
-                    newShape.getAllTopologies().add(newLoopTopology);
-
-                    // add executionOperator to new topology
-                    newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-
-                    // update current and predecessor operatorNames
-                    currentOperator = predecessorOperator;
-
-                    // check if the predecessor loop has been visited before (if no we visit iterIn"1" otherwise
-                    // we visit InitIn"0")
+                    // First check if head is already added
                     if ((loopHeads.isEmpty()) || (loopHeads.peek() != predecessorOperator)) {
                         // Add current loopHead
                         loopHeads.add((LoopHeadOperator) predecessorOperator);
+
+                        if (currentOperator.isSink()) {
+                            newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(currentOperator.toString(), new OperatorProfilerBase(currentOperator)));
+                            // add current topology as a sink topology
+                            newShape.setSinkTopology(newLoopTopology);
+
+                        }
+                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+                        newShape.getLoopTopologies().add(newLoopTopology);
+                        newShape.getAllTopologies().add(newLoopTopology);
+
+//                        // add executionOperator to new topology
+//                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+
+                        // update current and predecessor operatorNames
+                        currentOperator = predecessorOperator;
+
+                        // check if the predecessor loop has been visited before (if no we visit iterIn"1" otherwise
+                        // we visit InitIn"0")
+
+                        // if convergence input 1 exists
+                        if(predecessorOperator.getNumInputs()>=3)
+                            iterpredecessorOperators.add(predecessorOperator.getInput(2).getOccupant().getOwner());
+
                         // Get the IterIn
                         predecessorOperator = predecessorOperator.getInput(1).getOccupant().getOwner();
+
+
                     } else {
                         // remove current loopHead
                         loopHeads.pop();
@@ -398,11 +440,11 @@ public class LogGenerator {
                         predecessorOperator = predecessorOperator.getInput(0).getOccupant().getOwner();
                     }
 
-                    if (predecessorOperator.isSource()) {
-                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
-                        newShape.getSourceTopologies().add(newLoopTopology);
-                        //addSourceTopology(predecessorOp erator, newPipelineTopology);
-                    }
+//                    if (predecessorOperator.isSource()) {
+//                        newLoopTopology.getNodes().add(new Tuple2<String, OperatorProfiler>(predecessorOperator.toString(), new OperatorProfilerBase(predecessorOperator)));
+//                        newShape.getSourceTopologies().add(newLoopTopology);
+//                        //addSourceTopology(predecessorOp erator, newPipelineTopology);
+//                    }
                 }
             }
         }
@@ -551,7 +593,7 @@ public class LogGenerator {
     }
 
     public void setcardinalities(double inputCardinality, double dataQuantaSize) {
-        if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+        if( configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
             vectorLogs2D[0][VECTOR_SIZE - 2] = inputCardinality;
             vectorLogs2D[0][VECTOR_SIZE - 1] = dataQuantaSize;
         }
@@ -652,16 +694,16 @@ public class LogGenerator {
     private String getOperatorPlatform(String operator, double[] logVector) {
         // get executionOperator position
 //        int opPos = getOperatorVectorPosition(operator);
-//        for (String platform : DEFAULT_PLATFORMS) {
+//        for (String platform : enabledPlatforms) {
 //            if (logVector[opPos + getPlatformVectorPosition(platform)] == 2)
 //                return platform;
 //            // check the case of flink
 //            else if(((int)logVector[opPos + getPlatformVectorPosition(platform)]) % 10 == 2)
-//                return DEFAULT_PLATFORMS.get(2);
+//                return enabledPlatforms.get(2);
 //        }
 //        return null;
         int opPos = getOperatorVectorPosition(operator);
-        for (String platform : DEFAULT_PLATFORMS) {
+        for (String platform : enabledPlatforms) {
             if (logVector[opPos + getPlatformVectorPosition(platform)] >= 1)
                 return platform;
             // check the case of flink
@@ -681,7 +723,7 @@ public class LogGenerator {
         resetAllOperatorPlatforms();
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
         exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], platforms.get(1), platforms.get(0), 0, -1);
-        for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
+        for(int i = 2; i< enabledPlatforms.size(); i++){
             int finalI = i;
             exhaustivePlatformVectors.stream()
                     .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, platforms.get(finalI),platforms.get(finalI-1), 0, -1));
@@ -692,41 +734,41 @@ public class LogGenerator {
 
         resetAllOperatorPlatforms();
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
-        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
-        exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), DEFAULT_PLATFORMS.get(0), 0, 1000);
+        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], enabledPlatforms.get(1), 0, -1);
+        exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], enabledPlatforms.get(1), enabledPlatforms.get(0), 0, 1000);
 
-        for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
+        for(int i = 2; i< enabledPlatforms.size(); i++){
             int finalI = i;
             ArrayList<String[]> exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
             //for(String[] platformVector:exhaustivePlatformVectorsCopy){
             for(int j=0; j<exhaustivePlatformVectorsCopy.size();j++){
-                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), DEFAULT_PLATFORMS.get(finalI),DEFAULT_PLATFORMS.get(finalI-1), 0, -1);
+                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), enabledPlatforms.get(finalI), enabledPlatforms.get(finalI-1), 0, -1);
             }
             exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
 //            exhaustivePlatformVectors.stream()
-//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(finalI), 0, -1));
+//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, enabledPlatforms.get(finalI), 0, -1));
         }
     }
 
     public void exhaustivePlanPlatformFiller(long exhaustivePlatformVectorsMaxBuffer){
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
-        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
-        if (DEFAULT_PLATFORMS.size()>1)
-            exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1),DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
+        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], enabledPlatforms.get(1), 0, -1);
+        if (enabledPlatforms.size()>1)
+            exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], enabledPlatforms.get(1), enabledPlatforms.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
         else
             // case of single platform
-            exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], null,DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
+            exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], null, enabledPlatforms.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
 
-        for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
+        for(int i = 2; i< enabledPlatforms.size(); i++){
             int finalI = i;
             ArrayList<String[]> exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
             //for(String[] platformVector:exhaustivePlatformVectorsCopy){
             for(int j=0; j<exhaustivePlatformVectorsCopy.size();j++){
-                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), DEFAULT_PLATFORMS.get(finalI),DEFAULT_PLATFORMS.get(finalI-1), 0, exhaustivePlatformVectorsMaxBuffer);
+                exhaustivePlanPlatformFiller(this.exhaustiveVectors.get(j), exhaustivePlatformVectorsCopy.get(j), enabledPlatforms.get(finalI), enabledPlatforms.get(finalI-1), 0, exhaustivePlatformVectorsMaxBuffer);
             }
             exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
 //            exhaustivePlatformVectors.stream()
-//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(finalI), 0, -1));
+//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, enabledPlatforms.get(finalI), 0, -1));
         }
     }
     /**
@@ -747,8 +789,8 @@ public class LogGenerator {
         if (exhaustiveVectors.isEmpty()){
             int iteration=0;
             for(String operator: operatorNames){
-                updateOperatorPlatform(operator,DEFAULT_PLATFORMS.get(0),null,newVectorLog);
-                updatePlatformVector(iteration,DEFAULT_PLATFORMS.get(0),newPlatformLog);
+                updateOperatorPlatform(operator, enabledPlatforms.get(0),null,newVectorLog);
+                updatePlatformVector(iteration, enabledPlatforms.get(0),newPlatformLog);
                 iteration++;
             }
             exhaustiveVectors.add(newVectorLog.clone());
@@ -831,7 +873,7 @@ public class LogGenerator {
             count[0]++;
             outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
         });
-        this.logger.info("Best plan feature plan: " + outputVector[0]);
+        //this.logger.info("Best plan feature plan: " + outputVector[0]);
         return "Current rheem plan feature vector: " + outputVector[0];
     }
 
@@ -933,7 +975,7 @@ public class LogGenerator {
         channelNames.add(channelName[0]);
         // Each channel has 4 encoding digits as follow (number, consumer, producer, conversion)
         int channelStartPosition = getJunctureVectorPosition(channelName[0]);
-        if( config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+        if( configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
             // add the channel log to the first row
             vectorLogs2D[0][channelStartPosition]+=1;
         }
@@ -1011,7 +1053,7 @@ public class LogGenerator {
 
                             //Arrays.stream(localOperatorContexts.get(operator).getInputCardinalities()).forEach(incard1->incard1.getAverageEstimate());
                             // update shape's vector log with output cardinality
-                            if(config.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
+                            if(configuration.getBooleanProperty("rheem.profiler.generate2dLogs",false)){
                                 double finalAverageOutputCardinality = averageOutputCardinality;
                                 double finalAverageInputCardinality = averageInputCardinality;
                                 operatorNamesPostExecution2d.stream()
@@ -1050,12 +1092,15 @@ public class LogGenerator {
                             if(localOperatorContexts.get(operator).getOperator().isSource()&&(localOperatorContexts.get(operator).getOperator() instanceof UnarySource)){
                                 this.setEstimatedInputCardinality(averageOutputCardinality);
                                 UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
-                                double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
-                                // avoid having infinity
-                                if (averageOutputCardinality!=0)
-                                    this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
-                                else
-                                    this.setEstimatedDataQuataSize(fileSize/1);
+                                if(textFileSource.getInputUrl()!=null){
+                                    double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+                                    // avoid having infinity
+                                    if (averageOutputCardinality!=0)
+                                        this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                                    else
+                                        this.setEstimatedDataQuataSize(fileSize/1);
+                                }
+
                                 this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
                             }
                         }
@@ -1100,21 +1145,41 @@ public class LogGenerator {
         this.vectorLogs2D = vectorLogs2D;
     }
 
-    public void reinitializeLog(boolean keepInputCardinality) {
+    public void reinitializeLog(boolean keepInputCardinality, boolean keepSourceSink) {
         operatorNames = new ArrayList<>();
         operatorNames2d = new ArrayList<>();
         operatorNamesPostExecution2d = new ArrayList<>();
         pruningFeatureLogs = new ArrayList<>();
         double inputcardinality = 0,dataQuantaSize = 0;
+        double[] vectorLogsSnapshot = new double[VECTOR_SIZE];
+        double[][] vectorLogs2DSnapshot = new double[10][VECTOR_SIZE];
+        if((keepSourceSink)||(keepInputCardinality)){
+            vectorLogsSnapshot = vectorLogs.clone();
+            vectorLogs2DSnapshot = vectorLogs2D.clone();
+
+        }
         if(keepInputCardinality){
             inputcardinality = vectorLogs[VECTOR_SIZE - 2];
             dataQuantaSize = vectorLogs[VECTOR_SIZE - 1];
         }
+
+        // RESET VECTORLOGS
         vectorLogs2D = new double[10][VECTOR_SIZE];
         vectorLogs = new double[VECTOR_SIZE];
         
         if(keepInputCardinality)
-            this.setcardinalities(inputcardinality,dataQuantaSize);
+            this.setcardinalities(vectorLogsSnapshot[VECTOR_SIZE - 2],vectorLogsSnapshot[VECTOR_SIZE - 1]);
+        if(keepSourceSink){
+            double[] finalVectorLogsSnapshot = vectorLogsSnapshot;
+            double[][] finalVectorLogs2DSnapshot = vectorLogs2DSnapshot;
+            SOURCE_SINK_OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES.values().stream().forEach(operatorPosition -> {
+                for(int count=operatorPosition+4;count<=operatorPosition+opPosStep;count++) {
+                    vectorLogs[count] = finalVectorLogsSnapshot[count];
+                    vectorLogs2D[0][count] = finalVectorLogs2DSnapshot[0][count];
+                }
+            });
+        }
+
     }
 
     public double getEstimatedInputCardinality() {
@@ -1159,12 +1224,50 @@ public class LogGenerator {
         //cache current vector log
         double[] cachedVectorLogs = vectorLogs.clone();
 
+
+        double[] vectorLogsSnapshot = new double[VECTOR_SIZE];
+        double[][] vectorLogs2DSnapshot = new double[10][VECTOR_SIZE];
+        vectorLogsSnapshot = vectorLogs.clone();
+        vectorLogs2DSnapshot = vectorLogs2D.clone();
+
         // save input cardinalies and dataquanta size
         double inputcardinality = vectorLogs[VECTOR_SIZE - 2];
         double dataQuantaSize = vectorLogs[VECTOR_SIZE - 1];
 
         // reinitialize vector log;
         vectorLogs = new double[VECTOR_SIZE];
+
+
+
+        // RESET VECTORLOGS
+        vectorLogs2D = new double[10][VECTOR_SIZE];
+        vectorLogs = new double[VECTOR_SIZE];
+
+        //TODO: keep topologies and operator topologies
+
+        double[] finalVectorLogsSnapshot = vectorLogsSnapshot;
+        double[][] finalVectorLogs2DSnapshot = vectorLogs2DSnapshot;
+//        SOURCE_SINK_OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES.values().stream().forEach(operatorPosition -> {
+//            for(int count=operatorPosition+4;count<=operatorPosition+opPosStep;count++) {
+//                vectorLogs[count] = finalVectorLogsSnapshot[count];
+//                vectorLogs2D[0][count] = finalVectorLogs2DSnapshot[0][count];
+//            }
+//        });
+
+        // kkep topologies too
+
+        vectorLogs[0]=finalVectorLogsSnapshot[0];
+        vectorLogs[1]=finalVectorLogsSnapshot[1];
+        vectorLogs[2]=finalVectorLogsSnapshot[2];
+        vectorLogs[4]=finalVectorLogsSnapshot[3];
+
+        OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES.values().stream().forEach(operatorPosition -> {
+            for(int count=operatorPosition+4;count<=operatorPosition+6;count++) {
+                vectorLogs[count] = finalVectorLogsSnapshot[count];
+                vectorLogs2D[0][count] = finalVectorLogs2DSnapshot[0][count];
+            }
+        });
+
 
         // set input cardinalies and dataquanta size
         this.setcardinalities(inputcardinality,dataQuantaSize);
@@ -1234,15 +1337,22 @@ public class LogGenerator {
             if (localOperatorContexts.get(operator).getOperator().isSource() && (localOperatorContexts.get(operator).getOperator() instanceof UnarySource)) {
                 this.setEstimatedInputCardinality(averageOutputCardinality);
                 UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
-                double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
-                // avoid having infinity
-                if (averageOutputCardinality != 0)
-                    this.setEstimatedDataQuataSize(fileSize / averageOutputCardinality);
-                else
-                    this.setEstimatedDataQuataSize(fileSize / 1);
+                if(textFileSource.getInputUrl()!=null){
+                    double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+                    // avoid having infinity
+                    if (averageOutputCardinality!=0)
+                        this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                    else
+                        this.setEstimatedDataQuataSize(fileSize/1);
+                }
                 if (this.estimatedInputCardinality!=0)
                     this.setcardinalities(this.estimatedInputCardinality, this.estimatedDataQuataSize);
             }
         }
+    }
+
+    public void reinitializepruningLogs() {
+        // reuntialize pruning vector logs
+        this.pruningFeatureLogs = new ArrayList<>();
     }
 }

@@ -571,11 +571,13 @@ public class PlanEnumerator {
             }
         }
 
-        this.prune(concatenatedEnumeration);
+        if(!getConfiguration().getBooleanProperty("rheem.core.optimizer.mloptimizer.exhaustivePruning"))
+            this.prune(concatenatedEnumeration);
 
+        //count++;
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }
-
+//private static int count = 0;
     /**
      * Sends activations to relevant {@link #enumerationActivators} or {@link #concatenationActivators}.
      *

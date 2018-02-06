@@ -112,7 +112,7 @@ public class WordCountIT {
 
         Shape shape = Shape.createShape(sink);
         shape.exhaustivePlanPlatformFiller();
-        //shape.exhaustivePlanPlatformFiller(shape.getVectorLogs(),new String[Shape.MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], Shape.DEFAULT_PLATFORMS.get(1),0,-1);
+        //shape.exhaustivePlanPlatformFiller(shape.getVectorLogs(),new String[Shape.MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], Shape.PLATFORMS.get(1),0,-1);
         // Have Rheem execute the plan.
         RheemPlan rheemPlan = new RheemPlan(sink);
         Job job = rheemContext.createJob(null,rheemPlan);
@@ -281,7 +281,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         //rheemContext.execute(rheemPlan);
         Shape shape = Shape.createShape(sink);
-        //shape.exhaustivePlanPlatformFiller(shape.getVectorLogs(),Shape.DEFAULT_PLATFORMS.get(1),0);
+        //shape.exhaustivePlanPlatformFiller(shape.getVectorLogs(),Shape.PLATFORMS.get(1),0);
         //shape.printEnumeratedLogs();
         // Have Rheem execute the plan.
         RheemPlan rheemPlan = new RheemPlan(sink);
@@ -409,8 +409,8 @@ public class WordCountIT {
         // Assignment mode: none.
 
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
-        textFileSource.addTargetPlatform(Spark.platform());
-        textFileSource.addTargetPlatform(Java.platform());
+        //textFileSource.addTargetPlatform(Spark.platform());
+        //textFileSource.addTargetPlatform(Java.platform());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
@@ -459,8 +459,8 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(Spark.basicPlugin());
-        rheemContext.register(Java.basicPlugin());
         //rheemContext.register(Flink.basicPlugin());
+        rheemContext.register(Java.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 

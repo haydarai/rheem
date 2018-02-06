@@ -251,9 +251,8 @@ public class Job extends OneTimeExecutable {
             // if ml learning model is used the the vector log preparation happen before inflation and hyperplan generation
             if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
                 logger.info("rheem plan to feature vector convesion.");
-
-                // exhaustive enumerate all
-                logGenerator.prepareVectorLog(rheemPlan,optimizationContext,true);
+                // prepare vector log
+                logGenerator.prepareVectorLog(rheemPlan,rheemContext.getConfiguration(),true);
             }
             // Prepare the #rheemPlan for the optimization.
             this.optimizationRound.start();
@@ -407,7 +406,8 @@ public class Job extends OneTimeExecutable {
         keepMLearnedAlternatives(bestFeatureVector.getField0());
 
         logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
-        logGenerator.printLog(bestFeatureVector.getField0());
+        this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));
+        //logGenerator.printLog(bestFeatureVector.getField0());
         return this.createPlanEnumerator();
 
         //return this.planImplementation = MLplanImplementation;
@@ -421,10 +421,13 @@ public class Job extends OneTimeExecutable {
 
         this.optimizationRound.start("Create Initial Execution Plan");
 
-        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")&&
-                (configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer.exhaustivePruning")))
-            // pick best execution plan using ml optimizer
-            this.pickBestExecutionPlanMLearner();
+//        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")&&
+//                (configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer.exhaustivePruning")))
+//            // pick best execution plan using ml optimizer
+//            this.pickBestExecutionPlanMLearner();
+
+        // update pruning logGenerator
+        this.optimizationContext.getPruningStrategies().forEach(strategy -> strategy.setLog(logGenerator));
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
@@ -533,13 +536,14 @@ public class Job extends OneTimeExecutable {
             else
                 // Add previous operator
                 Arrays.stream(previousAlternativeOperator[0].getAllInputs()).forEach(input->{
-                    if(input.getOccupant().getOwner() instanceof LoopSubplan){
-                        LoopHeadAlternative loopHeadAlternative = (LoopHeadAlternative) ((LoopSubplan) input.getOccupant().getOwner()).getLoopHead();
-                        iterable.add(loopHeadAlternative);
-                    }
-                    else
-                        iterable.add((OperatorAlternative) input.getOccupant().getOwner());
-                    });
+                    if(input.getOccupant()!=null)
+                        if(input.getOccupant().getOwner() instanceof LoopSubplan){
+                            LoopHeadAlternative loopHeadAlternative = (LoopHeadAlternative) ((LoopSubplan) input.getOccupant().getOwner()).getLoopHead();
+                            iterable.add(loopHeadAlternative);
+                        }
+                        else
+                            iterable.add((OperatorAlternative) input.getOccupant().getOwner());
+                        });
 
             // get contained operator name
             Operator operator = previousAlternativeOperator[0].getAlternatives().get(0).getContainedOperator();
@@ -557,13 +561,45 @@ public class Job extends OneTimeExecutable {
                                                      Set<Channel> openChannels,
                                                      Set<ExecutionStage> executedStages) {
 
-        final PlanImplementation bestPlanImplementation = executionPlans.stream()
-                .reduce((p1, p2) -> {
-                    final double t1 = p1.getSquashedCostEstimate();
-                    final double t2 = p2.getSquashedCostEstimate();
-                    return t1 < t2 ? p1 : p2;
-                })
-                .orElseThrow(() -> new RheemException("Could not find an execution plan."));
+        // trivial
+        if(executionPlans.size()==1)
+            return this.planImplementation = executionPlans.stream().reduce((p1,p2)->p1).get();
+        PlanImplementation bestPlanImplementation;
+        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
+            logGenerator.reinitializepruningLogs();
+
+            //logGenerator =new LogGenerator();
+            // add operators
+            //logGenerator.
+
+            List<Tuple2<PlanImplementation,double[]>> tupleIplementationFeatureVector = new ArrayList<>();
+            executionPlans.stream()
+                    .forEach(planImplementation-> {
+                        tupleIplementationFeatureVector.add(new Tuple2<>(planImplementation,logGenerator.addPruningFeatureLog(planImplementation)));
+                    });
+
+            // Load Model
+            LoadModel.loadModel(logGenerator.getPruningFeatureLogs());
+
+            // Predict execution time and pick minimum
+            logger.info("Pick best Ml optimizer estimates!");
+            Tuple2<double[],Double> bestFeatureVector =  MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
+
+            logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
+            this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));
+
+
+            bestPlanImplementation = tupleIplementationFeatureVector.stream().filter(t1->t1.field1==bestFeatureVector.getField0()).findAny().orElse(null).field0;
+        }
+        else{
+            bestPlanImplementation = executionPlans.stream()
+                    .reduce((p1, p2) -> {
+                        final double t1 = p1.getSquashedCostEstimate();
+                        final double t2 = p2.getSquashedCostEstimate();
+                        return t1 < t2 ? p1 : p2;
+                    })
+                    .orElseThrow(() -> new RheemException("Could not find an execution plan."));
+        }
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
         return this.planImplementation = bestPlanImplementation;
     }

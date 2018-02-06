@@ -39,7 +39,7 @@ import java.util.stream.Stream;
 public class FlinkIntegrationIT {
 
     private static final String JAVA  = "JAVA";
-    private static final String FLINK = "JAVA";
+    private static final String FLINK = "FLINK";
     private static final String BOTH  = "BOTH";
 
     private RheemContext makeContext(String plugin){
@@ -66,6 +66,7 @@ public class FlinkIntegrationIT {
         // Verify the plan result.
         final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         Assert.assertEquals(lines, collector);
+        System.out.println(lines.size()+ collector.size());
     }
 
 

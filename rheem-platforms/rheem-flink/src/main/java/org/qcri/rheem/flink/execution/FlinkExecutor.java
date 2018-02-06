@@ -12,6 +12,7 @@ import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.compiler.FunctionCompiler;
 import org.qcri.rheem.flink.operators.FlinkExecutionOperator;
+import org.qcri.rheem.flink.operators.FlinkLocalCallbackSink;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
 
 import java.util.Arrays;
@@ -111,8 +112,13 @@ public class FlinkExecutor extends PushExecutorTemplate {
             }else {
                 try {
                     // avoid to run execute when no sink is present as it raises an exception for Flin executor
-                    if(task.getOperator().isSink())
-                        this.fee.execute();
+                    if(task.getOperator().isSink()) {
+//                        this.fee.execute();
+
+//                        if(task.getOperator() instanceof FlinkLocalCallbackSink){
+//                            ((FlinkLocalCallbackSink)task.getOperator()).convert();
+//                        }
+                    }
                 } catch (Exception e) {
                     throw new RheemException(e);
                 }
@@ -120,6 +126,8 @@ public class FlinkExecutor extends PushExecutorTemplate {
         }
         return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);
     }
+
+
 
     @Override
     public void dispose() {

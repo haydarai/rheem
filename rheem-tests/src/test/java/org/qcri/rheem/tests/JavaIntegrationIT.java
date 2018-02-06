@@ -20,6 +20,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.Java;
+import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
@@ -330,6 +331,7 @@ public class JavaIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        rheemContext.with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
     }

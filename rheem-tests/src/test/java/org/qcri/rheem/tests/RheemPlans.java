@@ -759,7 +759,7 @@ public class RheemPlans {
         noCommaOperator.setName("Filter comma");
         UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
         unionOperator.setName("Union");
-        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createCollectingSink(new ArrayList<>(),String.class);
         stdoutSink.setName("Print");
         SortOperator<String, String> sortOperator = new SortOperator<>(r->r, String.class, String.class);
         sortOperator.setName("Sort");

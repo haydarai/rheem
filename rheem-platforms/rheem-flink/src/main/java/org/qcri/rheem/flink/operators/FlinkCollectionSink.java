@@ -2,6 +2,8 @@ package org.qcri.rheem.flink.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
+import org.apache.flink.api.java.io.PrintingOutputFormat;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -19,10 +21,7 @@ import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 import org.qcri.rheem.java.channels.CollectionChannel;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 /**
@@ -45,9 +44,26 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
 
         final DataSet<Type> dataSetInput = input.provideDataSet();
 
+//        List<Type> collection = new ArrayList<Type>();
+//        dataSetInput.output(new LocalCollectionOutputFormat<Type>(collection));
+//        output.accept(collection);
+
         output.accept(dataSetInput.filter(a -> true).setParallelism(1).collect());
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+//        final List<Type> collectedRdd = (List<Type>) dataSetInput.collect();
+//        output.accept(collectedRdd);
+        //FlinkExecutor.get.execute();
+            //this.collector.add();
+            //this.collection.addAll(dataSetInput.filter(a -> true).setParallelism(1).collect());
+            //final String path = "/root/anis/data/lala";
+            //final String path = "/home/migiwara/tmp";
+
+            //inputDataSet.write(new RheemFileOutputFormat<Type>(path), path, FileSystem.WriteMode.OVERWRITE);
+
+
+            //inputDataSet.filter(a -> true).setParallelism(1).output(new LocalCollectionOutputFormat<Type>(this.collector));
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
 
     }
 

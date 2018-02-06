@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
 
     private static Configuration configuration = new Configuration();
-    private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
+    private static Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
     private static LogGenerator logGenerator = new LogGenerator();
 
     @Override
@@ -50,6 +50,11 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
                 .map(this::selectBestPlanNary)
                 .collect(Collectors.toList());
         planEnumeration.getPlanImplementations().retainAll(bestPlans);
+    }
+
+    @Override
+    public void setLog(LogGenerator loggenerator) {
+        logGenerator = loggenerator;
     }
 
     /**
@@ -78,7 +83,7 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
     }
 
     private PlanImplementation selectBestLearnedPlan(List<PlanImplementation> planImplementations) {
-        logGenerator.reinitializeLog(true);
+        logGenerator.reinitializepruningLogs();
 
         //logGenerator =new LogGenerator();
         // add operators

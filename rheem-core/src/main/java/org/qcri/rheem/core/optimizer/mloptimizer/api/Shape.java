@@ -816,12 +816,12 @@ public class Shape {
     private String getOperatorPlatform(String operator, double[] logVector) {
         // get executionOperator position
 //        int opPos = getOperatorVectorPosition(operator);
-//        for (String platform : DEFAULT_PLATFORMS) {
+//        for (String platform : PLATFORMS) {
 //            if (logVector[opPos + getPlatformVectorPosition(platform)] == 2)
 //                return platform;
 //            // check the case of flink
 //            else if(((int)logVector[opPos + getPlatformVectorPosition(platform)]) % 10 == 2)
-//                return DEFAULT_PLATFORMS.get(2);
+//                return PLATFORMS.get(2);
 //        }
 //        return null;
         int opPos = getOperatorVectorPosition(operator);
@@ -856,7 +856,7 @@ public class Shape {
 
         resetAllOperatorPlatforms();
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
-        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
+        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], PLATFORMS.get(1), 0, -1);
         exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), DEFAULT_PLATFORMS.get(0), 0, 1000);
 
         for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
@@ -868,13 +868,13 @@ public class Shape {
             }
             exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
 //            exhaustivePlatformVectors.stream()
-//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(finalI), 0, -1));
+//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, PLATFORMS.get(finalI), 0, -1));
         }
     }
 
     public void exhaustivePlanPlatformFiller(int exhaustivePlatformVectorsMaxBuffer){
         // call exhaustive plan filler with new Platform: :spark" as currrently tested with only two platforms (java, spark)
-        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1), 0, -1);
+        //exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], PLATFORMS.get(1), 0, -1);
         exhaustivePlanPlatformFiller(this.getVectorLogs(), new String[MAXIMUM_OPERATOR_NUMBER_PER_SHAPE], DEFAULT_PLATFORMS.get(1),DEFAULT_PLATFORMS.get(0), 0, exhaustivePlatformVectorsMaxBuffer);
 
         for(int i=2;i<DEFAULT_PLATFORMS.size();i++){
@@ -886,7 +886,7 @@ public class Shape {
             }
             exhaustivePlatformVectorsCopy = (ArrayList) exhaustivePlatformVectors.clone();
 //            exhaustivePlatformVectors.stream()
-//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, DEFAULT_PLATFORMS.get(finalI), 0, -1));
+//                    .forEach(platformVector-> exhaustivePlanPlatformFiller(vectorLogsWithResetPlatforms, platformVector, PLATFORMS.get(finalI), 0, -1));
         }
     }
         /**
@@ -1166,12 +1166,14 @@ public class Shape {
                         if(localOperatorContexts.get(operator).getOperator().isSource()&&(localOperatorContexts.get(operator).getOperator() instanceof UnarySource)){
                             this.setEstimatedInputCardinality(averageOutputCardinality);
                             UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
-                            double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
-                            // avoid having infinity
-                            if (averageOutputCardinality!=0)
-                                this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
-                            else
-                                this.setEstimatedDataQuataSize(fileSize/1);
+                            if(textFileSource.getInputUrl()!=null){
+                                double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+                                // avoid having infinity
+                                if (averageOutputCardinality!=0)
+                                    this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);
+                                else
+                                    this.setEstimatedDataQuataSize(fileSize/1);
+                            }
                             this.setcardinalities(this.estimatedInputCardinality,this.estimatedDataQuataSize);
                         }
                     }

@@ -53,14 +53,17 @@ public class LoadModel {
 //                "python",configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation")
 //        };
 
-        String[] cmd = {
-                "python", String.valueOf(Paths.get(MODEL_LOADING_LOCATION))
-        };
 
         try {
+            String[] cmd = {
+                    configuration.getStringProperty("rheem.core.optimizer.mloptimizer.loadModelEnvironment.python.path","python"), String.valueOf(Paths.get(MODEL_LOADING_LOCATION))
+            };
+
             Process p = Runtime.getRuntime().exec(cmd);
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String s = br.readLine();
+            if(s==null)
+                throw new RheemException("Loaded model didn't run properly! {command: "+ cmd +"}");
             logger.info(s);
             //System.out.println(s);
             p.waitFor();
@@ -106,15 +109,6 @@ public class LoadModel {
                 writer.write(Long.toString(0));
                 writer.write("\n");
             }
-            // rewrite in this case
-            if(featureVectors.size()==1)
-                for(double[] logs:featureVectors){
-                    for(int i=0;i<logs.length;i++){
-                        writer.write( nf.format( logs[i]) + " ");
-                    }
-                    writer.write(Long.toString(0));
-                    writer.write("\n");
-                }
             writer.close();
         } catch (IOException e) {
             throw new RheemException("could not stream vectors to ML model!");
