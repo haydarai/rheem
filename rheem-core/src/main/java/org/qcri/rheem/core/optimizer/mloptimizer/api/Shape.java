@@ -6,6 +6,7 @@ package org.qcri.rheem.core.optimizer.mloptimizer.api;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.mloptimizer.LogGenerator;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -18,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.function.LongToDoubleFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +44,10 @@ public class Shape {
     private List<LoopTopology> loopTopologies = new ArrayList<>();
     private static Stack<LoopHeadOperator> loopHeads = new Stack();
 
+    private int averageSelectivity = 1;
+    private int averageComplexity = 1;
+    private int numberOperators = 0;
+
     //private final int VECTOR_SIZE = 105;
     //private final int VECTOR_SIZE = 146;
     //private final int VECTOR_SIZE = 194;
@@ -50,6 +57,7 @@ public class Shape {
 
     double[] vectorLogsWithResetPlatforms= new double[VECTOR_SIZE];
     private int topologyNumber;
+    private List<String> existingPlatforms = new ArrayList<>();
     private List<String> operatorNames = new ArrayList<>();
     private List<String> channelNames = new ArrayList<>();
 
@@ -62,18 +70,15 @@ public class Shape {
     private static int opPosStep = 10;
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
+    private static int maxChannelNumber = 5;
 
     private double estimatedInputCardinality;
     private double estimatedDataQuataSize;
 
-
-
-
-
     public HashMap<String,Integer> OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
-        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
+        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("materializedgroupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
@@ -1087,8 +1092,14 @@ public class Shape {
     /**
      * update with execution executionOperator informations (plateform, output cardinality)
      * @param localOperatorContexts
+     * @param updatePlatform
      */
-    public void updateExecutionOperators(Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts) {
+    public void updateExecutionOperators(Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts, boolean updatePlatform) {
+
+        // First clear already contained platforms
+        existingPlatforms.clear();
+
+        // Loop through all operators
         localOperatorContexts.keySet().stream()
             .forEach(operator -> {
                 // Composite operators discard
@@ -1105,13 +1116,16 @@ public class Shape {
                         // update platform
                         String platform = executionOperator.getPlatform().getName();
 
-                        if (!platform.isEmpty())
+                        // update platform
+                        existingPlatforms.add(platform);
+                        if ((!platform.isEmpty())&&(updatePlatform))
                             updateOperatorPlatform(executionOperatorName[0],platform,null,vectorLogs);
                     } else {
                         Set<Platform> platform = operator.getTargetPlatforms();
                         executionOperatorName[0] = operator.toString().split("\\P{Alpha}+")[0].toLowerCase();
                         // update platform
-                        platform.stream().forEach(p->updateOperatorPlatform(executionOperatorName[0],p.getName(),null,vectorLogs) );
+                        if (updatePlatform)
+                            platform.stream().forEach(p->updateOperatorPlatform(executionOperatorName[0],p.getName(),null,vectorLogs) );
                     }
 
                     if (localOperatorContexts.get(operator).getOutputCardinalities().length!=0){
@@ -1224,5 +1238,105 @@ public class Shape {
 
     public void setEstimatedDataQuataSize(double estimatedDataQuataSize) {
         this.estimatedDataQuataSize = estimatedDataQuataSize;
+    }
+
+    // Get the vector logs metadata
+    public String getVectorMetadata() {
+
+        final String[] outputVector = {""};
+        final int[] count = {0,0};
+        final int[] opPos = {0};
+        NumberFormat nf = new DecimalFormat("##.#");
+        Arrays.stream(vectorLogs).forEach(d -> {
+            if (count[0]==0) outputVector[0] = outputVector[0].concat("Topologies< ");
+            //if (count[0]==4) outputVector[0] = outputVector[0].concat("> ");
+            if ((count[0]!=0)&&((count[0]-startOpPos) % opPosStep==0)&&(opPos[0]<=maxOperatorNumber+1)) {
+                outputVector[0] = outputVector[0].concat("> "+this.getSetElement(LogGenerator.OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES.keySet(),opPos[0])+"< ");
+                opPos[0]++;
+            }
+            // Handle channels printing
+            if ((count[0]!=0)&&(opPos[0]>maxOperatorNumber+1)&&(opPos[0]<=maxChannelNumber+maxOperatorNumber+1)&&((count[0]-4) % channelPosStep==0)) {
+                outputVector[0] = outputVector[0].concat("> "+this.getSetElement(CHANNEL_VECTOR_POSITION.keySet(),opPos[0]-maxOperatorNumber-2)+"< ");
+                opPos[0]++;
+            }
+            // Handle channels printing
+            if ((count[0]!=0)&&(opPos[0]>maxOperatorNumber+1)&&(opPos[0]>maxChannelNumber+maxOperatorNumber+1)&&((count[0]-4) % channelPosStep==0)) {
+                outputVector[0] = outputVector[0].concat("> "+this.getSetElement(CONVERSION_OPERATOR_VECTOR_POSITION.keySet(),opPos[0]-maxOperatorNumber-2-maxChannelNumber)+"< ");
+                opPos[0]++;
+            }
+
+//                    keySet().stream().reduce((key1,key2)->{
+//                if (count[1]==opPos[0]) return key1;
+//                count[1]++;
+//            }));
+
+            count[0]++;
+            outputVector[0] = outputVector[0].concat( nf.format( d) + " ");
+        });
+        //this.logger.info("Best plan feature plan: " + outputVector[0]);
+        return outputVector[0];    }
+
+
+    private String getSetElement(Set<String>set,int pos){
+        int count =0;
+        List<String> indexes = new ArrayList<String>(set);
+        for(String element:indexes){
+            if (count==pos)
+                return element;
+            count++;
+        }
+        return "";
+    }
+
+    /**
+     * Return a descriptive name of the shape's distinctive features in the following format:{@dPipelines@dJuntures@dLoops@dDuplicate@TopologyNumber@averageSelectivity@AverageComplexity@Operators}
+     * @return
+     */
+    public String getDescriptionName() {
+        final String[] descriptionName = {String.format("%dP%dJ%dL%dD_Sel%d_Compx%d_Operators",pipelineTopologies.size(),junctureTopologies.size(),loopTopologies.size(),1,averageSelectivity,averageComplexity)};
+
+        // order the lists
+        java.util.Collections.sort(operatorNames);
+        java.util.Collections.sort(existingPlatforms);
+
+
+        Map<String,Long> wordcountNames = operatorNames.stream()
+                //.map(names->new Tuple2<>(names,1))
+                .map(names->new SimpleEntry<>(names,1))
+                .collect(
+                    Collectors.groupingBy(SimpleEntry::getKey,Collectors.counting())
+                );
+                //);
+                //.reduce((t1,t2)->new Tuple2<Integer, String>(t1.getField0()+t2.getField0(),t1.getField1()));
+        wordcountNames.forEach((opName,opReccurence)->{
+            //
+
+            descriptionName[0]=descriptionName[0].concat("_"+opName);
+            descriptionName[0]=descriptionName[0].concat(opReccurence.toString());
+        });
+
+        // Add platforms
+        // count per platform
+//        existingPlatforms.stream()
+//                .forEach(p->{
+//                    descriptionName[0]=descriptionName[0].concat("_"+p.replace(" ",""));
+//                });
+
+        Map<String,Long> wordcountPlatforms = existingPlatforms.stream()
+                //.map(names->new Tuple2<>(names,1))
+                .map(p->new SimpleEntry<>(p.replace(" ",""),1))
+                .collect(
+                        Collectors.groupingBy(SimpleEntry::getKey,Collectors.counting())
+                );
+
+
+        wordcountPlatforms.forEach((platName,platReccurence)->{
+            //
+
+            descriptionName[0]=descriptionName[0].concat("_"+platName);
+            descriptionName[0]=descriptionName[0].concat(platReccurence.toString());
+        });
+
+        return descriptionName[0];
     }
 }

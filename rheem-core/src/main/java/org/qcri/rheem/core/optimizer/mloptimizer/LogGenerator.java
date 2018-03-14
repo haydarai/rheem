@@ -66,12 +66,13 @@ public class LogGenerator {
     private static int opPosStep = 10;
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
+    private static int maxChannelNumber = 5;
     private double estimatedInputCardinality;
     private double estimatedDataQuataSize;
-    public LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES = new LinkedHashMap<String,Integer>(){{
+    public static LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES = new LinkedHashMap<String,Integer>(){{
         put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby:reduce", startOpPos +3*opPosStep);
-        put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby:globalmaterializedgroup", startOpPos +6*opPosStep);
+        put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby:globalmaterializedgroup:materializedgroupby", startOpPos +6*opPosStep);
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall:union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink:collectionsink", startOpPos +18*opPosStep);
@@ -87,7 +88,7 @@ public class LogGenerator {
     public LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
         put("Map", startOpPos);put("map", startOpPos);
         put("filter", startOpPos + 1*opPosStep);put("FlatMap", startOpPos +2*opPosStep);put("flatmap", startOpPos +2*opPosStep);put("reduceby", startOpPos +3*opPosStep);
-        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
+        put("reduce", startOpPos +3*opPosStep);put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby", startOpPos +6*opPosStep);put("materializedgroupby", startOpPos +6*opPosStep);put("globalmaterializedgroup", startOpPos +6*opPosStep);
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
@@ -107,6 +108,7 @@ public class LogGenerator {
         // Below should be added in different position
         // Datasetchannel is a flink type channel
         put("DataSetChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);
+        put("BroadcastChannel", startOpPos + (1+maxOperatorNumber)*opPosStep + 4*channelPosStep);
     }};
 
     public LinkedHashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
@@ -115,6 +117,7 @@ public class LogGenerator {
         put("Collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
         put("collectionsink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
         put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
+        put("broadcast", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
     }};
 
     static LinkedHashMap<String,Integer> OLD_CONVERSION_OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
@@ -861,8 +864,18 @@ public class LogGenerator {
         Arrays.stream(featureVector).forEach(d -> {
             if (count[0]==0) outputVector[0] = outputVector[0].concat("Topologies< ");
             //if (count[0]==4) outputVector[0] = outputVector[0].concat("> ");
-            if ((count[0]!=0)&&((count[0]-4) % opPosStep==0)&&(opPos[0]<20)) {
+            if ((count[0]!=0)&&((count[0]-startOpPos) % opPosStep==0)&&(opPos[0]<=maxOperatorNumber+1)) {
                 outputVector[0] = outputVector[0].concat("> "+this.getSetElement(OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES.keySet(),opPos[0])+"< ");
+                opPos[0]++;
+            }
+            // Handle channels printing
+            if ((count[0]!=0)&&(opPos[0]>maxOperatorNumber+1)&&(opPos[0]<=maxChannelNumber+maxOperatorNumber+1)&&((count[0]-4) % channelPosStep==0)) {
+                outputVector[0] = outputVector[0].concat("> "+this.getSetElement(CHANNEL_VECTOR_POSITION.keySet(),opPos[0]-maxOperatorNumber-2)+"< ");
+                opPos[0]++;
+            }
+            // Handle channels printing
+            if ((count[0]!=0)&&(opPos[0]>maxOperatorNumber+1)&&(opPos[0]>maxChannelNumber+maxOperatorNumber+1)&&((count[0]-4) % channelPosStep==0)) {
+                outputVector[0] = outputVector[0].concat("> "+this.getSetElement(CONVERSION_OPERATOR_VECTOR_POSITION.keySet(),opPos[0]-maxOperatorNumber-2-maxChannelNumber)+"< ");
                 opPos[0]++;
             }
 //                    keySet().stream().reduce((key1,key2)->{
@@ -966,7 +979,7 @@ public class LogGenerator {
         try{
             return CONVERSION_OPERATOR_VECTOR_POSITION.get(conversionOperator);
         } catch (Exception e){
-            throw new RheemException(String.format("couldn't find channel log vector offset %s",conversionOperator));
+            throw new RheemException(String.format("couldn't find conversion operator log vector offset %s",conversionOperator));
         }
     }
 
@@ -1286,6 +1299,7 @@ public class LogGenerator {
                     }
                 });
 
+        // add junction logs
         planImplementation.getJunctions().values().stream()
                 .forEach(junction->this.addJunctionLog(junction));
 
@@ -1302,7 +1316,22 @@ public class LogGenerator {
         return pruningFeatureLog;
     }
 
-    private void addJunctionLog(Junction exectionOperator) {
+    private void addJunctionLog(Junction junction) {
+        // add junctions
+        junctions.add(junction);
+
+        // handle conversion tastks
+        junction.getConversionTasks().stream()
+                .forEach( conversionOperator-> {
+                    executionTasks.add(conversionOperator);
+                    addConversionOperator(conversionOperator);
+                    addChannelLog(conversionOperator.getOutputChannel(0));
+                });
+
+        // add output channels
+        junction.getTargetChannels().stream().
+                forEach(outChannel->addChannelLog(outChannel));
+
     }
 
     private void addExecutionOperatorLog(ExecutionOperator operator, Map<Operator, OptimizationContext.OperatorContext> localOperatorContexts) {

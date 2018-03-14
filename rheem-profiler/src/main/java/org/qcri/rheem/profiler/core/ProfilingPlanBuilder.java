@@ -441,7 +441,7 @@ public class ProfilingPlanBuilder implements Serializable {
     private static Tuple2<String,OperatorProfiler> sinkNodeFill(DataSetType type, String plateform){
         // we currently support use the collection source
         String operator = profilingConfig.getSinkExecutionOperators().get(0);
-        Tuple2<String,OperatorProfiler> returnNode =new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, plateform,1,1)) ;
+        Tuple2<String,OperatorProfiler> returnNode =new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, configuration.getStringProperty("rheem.profiler.sinkPlatform",plateform),1,1)) ;
         returnNode.getField1().setUDFcomplexity(1);
         return returnNode;
     }
@@ -464,7 +464,7 @@ public class ProfilingPlanBuilder implements Serializable {
      */
     private static Tuple2<String,OperatorProfiler> randomUnaryNodeFill(DataSetType type, String plateform){
         int rnd = (int)(Math.random() * profilingConfig.getUnaryExecutionOperators().size());
-        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        int udfRnd = profilingConfig.getUdfsComplexity().get( (int)(Math.random() * profilingConfig.getUdfsComplexity().size()));
         String operator = profilingConfig.getUnaryExecutionOperators().get(rnd);
         Tuple2<String,OperatorProfiler> returnNode = new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, plateform,1,udfRnd));
         returnNode.getField1().setUDFcomplexity(udfRnd);
@@ -488,7 +488,7 @@ public class ProfilingPlanBuilder implements Serializable {
      */
     private static Tuple2<String,OperatorProfiler> binaryNodeFill(DataSetType type, String plateform){
         int rnd = (int)(Math.random() * profilingConfig.getBinaryExecutionOperators().size());
-        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        int udfRnd = profilingConfig.getUdfsComplexity().get( (int)(Math.random() * profilingConfig.getUdfsComplexity().size()));
         String operator = profilingConfig.getBinaryExecutionOperators().get(rnd);
         return new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, plateform,1,udfRnd));
     }
@@ -510,7 +510,7 @@ public class ProfilingPlanBuilder implements Serializable {
      */
     private static Tuple2<String,OperatorProfiler> loopNodeFill(DataSetType type, String plateform){
         int rnd = (int)(Math.random() * profilingConfig.getLoopExecutionOperators().size());
-        int udfRnd = 1 + (int)(Math.random() * profilingConfig.getUdfsComplexity().size());
+        int udfRnd = profilingConfig.getUdfsComplexity().get( (int)(Math.random() * profilingConfig.getUdfsComplexity().size()));
         String operator = profilingConfig.getLoopExecutionOperators().get(rnd);
         return new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, plateform,1,udfRnd));
     }

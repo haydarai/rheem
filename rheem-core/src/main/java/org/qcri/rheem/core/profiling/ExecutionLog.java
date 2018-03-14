@@ -266,4 +266,74 @@ public class ExecutionLog implements AutoCloseable {
         writer.write("\n>\n");
         writer.close();
     }
+
+    public void storeVectorMetadata(String vectorMetadata, long executionTime) throws IOException {
+        try {
+            File file = new File(configuration.getStringProperty("rheem.profiler.logs.metadata.planVector_1D"));
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+            this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+
+//            // create 2Dlog file directory
+//            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
+//            //file2dLog.mkdir();
+//            if (!parentFile.exists() && !file2dLog.getParentFile().mkdirs()) {
+//                throw new RheemException("Could not initialize 2d log repository.");
+//            }
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
+        }
+
+        writer.write( vectorMetadata);
+
+        writer.write(Long.toString(executionTime));
+        writer.write("\n");
+        writer.close();
+    }
+
+    public void storeSyntheticLogs(String descriptionName, double[] logs, long executionTime) throws IOException {
+        NumberFormat nf;
+        try {
+            nf = new DecimalFormat("#");
+            // Extract description Name from synthetic log
+            if(configuration.getBooleanProperty("rheem.profiler.generate.syntheticLog.url.extractfromSyntheticLogs",false)){
+                descriptionName="";
+                for(int i=0;i<logs.length-3;i++){
+                    if(logs[i]/10<1)
+                        descriptionName = descriptionName.concat( nf.format( logs[i]) );
+                }
+            }
+            File file = new File(configuration.getStringProperty("rheem.profiler.generate.syntheticLog.url") + descriptionName + ".log");
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+            this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+
+//            // create 2Dlog file directory
+//            File file2dLog = new File(configuration.getStringProperty("rheem.core.log.2Dlogs"));
+//            //file2dLog.mkdir();
+//            if (!parentFile.exists() && !file2dLog.getParentFile().mkdirs()) {
+//                throw new RheemException("Could not initialize 2d log repository.");
+//            }
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
+        }
+
+        nf = new DecimalFormat("##.#");
+
+        for(int i=0;i<logs.length;i++){
+            writer.write( nf.format( logs[i]) + " ");
+        }
+
+        writer.write(Long.toString(executionTime));
+        writer.write("\n");
+        writer.close();
+    }
 }

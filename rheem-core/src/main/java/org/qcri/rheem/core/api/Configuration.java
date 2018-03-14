@@ -591,12 +591,24 @@ public class Configuration {
                 File.separator
         ));
 
+        configuration.setProperty("rheem.profiler.logs.metadata.planVector_1D", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector_1D_metadata.log"),
+                File.separator
+        ));
+
         configuration.setProperty("rheem.profiler.logs.planVector_2D", StringUtils.join(
                 Arrays.asList(System.getProperty("user.home"), ".rheem", "planVector_2D.log"),
                 File.separator
         ));
 
+        configuration.setProperty("rheem.profiler.generate.syntheticLog.url", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "syntheticLog", ""),
+                File.separator
+        ));
+
         configuration.setProperty("rheem.profiler.generate2dLogs", "false");
+        configuration.setProperty("rheem.profiler.generate.syntheticLogs", "false");
+
 
         configuration.setProperty("rheem.profiler.logs.errors", StringUtils.join(
                 Arrays.asList(System.getProperty("user.home"), ".rheem", "profiling_errors.log"),

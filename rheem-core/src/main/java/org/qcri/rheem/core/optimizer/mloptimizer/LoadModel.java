@@ -13,6 +13,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Load saved learned model
@@ -56,15 +57,21 @@ public class LoadModel {
 
         try {
             String[] cmd = {
-                    configuration.getStringProperty("rheem.core.optimizer.mloptimizer.loadModelEnvironment.python.path","python"), String.valueOf(Paths.get(MODEL_LOADING_LOCATION))
+                    configuration.getStringProperty("rheem.core.optimizer.mloptimizer.loadModelEnvironment.python.path","python"), String.valueOf(Paths.get(MODEL_LOADING_LOCATION)), configuration.getStringProperty("rheem.core.optimizer.mloptimizer.model")
             };
 
             Process p = Runtime.getRuntime().exec(cmd);
+            BufferedReader brError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String s = br.readLine();
-            if(s==null)
-                throw new RheemException("Loaded model didn't run properly! {command: "+ cmd +"}");
-            logger.info(s);
+            Stream<String> stream = br.lines();
+            Stream<String> errorStream = brError.lines();
+
+            errorStream.forEach(s->logger.warn(s));
+//            if(errorStream.count()!=0)
+//                throw new RheemException("Loaded model didn't run properly! {command: "+ cmd +"}");
+            stream.forEach(s->logger.info(s));
+
+
             //System.out.println(s);
             p.waitFor();
             p.destroy();

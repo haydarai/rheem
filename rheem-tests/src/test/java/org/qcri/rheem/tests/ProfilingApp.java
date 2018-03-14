@@ -20,8 +20,8 @@ public class ProfilingApp {
     public static void main(String[] args) {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;
-        String platform="";
-        int maxNodeNumber = 10;
+        String platform="spark,java";
+        int maxNodeNumber = 5;
 
         if (args.length==1)
             profileTesting=args[0];

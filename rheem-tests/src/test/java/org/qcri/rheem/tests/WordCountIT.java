@@ -121,7 +121,7 @@ public class WordCountIT {
 
         // update the shape channels
         shape.updateChannels(job.getPlanImplementation().getJunctions());
-        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
+        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts(), true);
         shape.printLog();
 
         shape.printEnumeratedLogs();
@@ -385,7 +385,7 @@ public class WordCountIT {
 
         // update the shape channels
         shape.updateChannels(job.getPlanImplementation().getJunctions());
-        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts());
+        shape.updateExecutionOperators(job.getPlanImplementation().getOptimizationContext().getLocalOperatorContexts(), true);
         shape.printLog();
         shape.clone();
 
