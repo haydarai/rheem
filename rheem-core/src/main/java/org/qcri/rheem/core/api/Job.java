@@ -406,8 +406,7 @@ public class Job extends OneTimeExecutable {
         keepMLearnedAlternatives(bestFeatureVector.getField0());
 
         logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
-        this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));
-        //logGenerator.printLog(bestFeatureVector.getField0());
+        logGenerator.printLog(bestFeatureVector.getField0());
         return this.createPlanEnumerator();
 
         //return this.planImplementation = MLplanImplementation;

@@ -7,9 +7,43 @@ import java.util.List;
 import java.util.Stack;
 
 /**
- * Created by migiwara on 08/07/17.
+ * Contains generic methods and variable shared among {@link Topology}s
  */
 public class TopologyBase implements Topology {
+
+    /**
+     * The below variable saves the the layer of the topology (i.e. for how many number of nodes "in termes of pipelines pipelines" is connected to)
+     * PS: first nodeNumber implementation was having this purpose too as well as the number of number of nodes that is
+     * updated after instantiation
+     */
+    protected int topologyNumber;
+
+    /**
+     * Number of nodes in the topology
+     */
+    protected int nodeNumber = -1;
+
+    /**
+     * Nodes inside a Topology
+     */
+    //private LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> nodes;
+    private Stack<Tuple2<String,OperatorProfiler>> nodes = new Stack<>();
+
+    /**
+     * Optional name. Helpful for debugging.
+     */
+    private String name;
+
+    /**
+     * platforms associated to the topology (it will contain the same order of platforms as the topology inner node connection)
+     */
+    private List<String> platforms = new Stack<>();
+
+    /**
+     * is true when the topology is a part of a loop body
+     */
+    private Boolean isLoopBody = false;
+
 
 
     @Override
@@ -64,37 +98,6 @@ public class TopologyBase implements Topology {
         return true;
     }
 
-
-    /**
-     * This important variable saves the the layer of the topology (i.e. for how many number of nodes "in termes of pipelines pipelines" is connected to)
-     * PS: first nodeNumber implementation was having this purpose too as well as the number of number of nodes that is
-     * updated after instantiation
-     */
-    protected int topologyNumber;
-
-    /**
-     * Number of nodes in the topology
-     */
-    protected int nodeNumber = -1;
-
-    /**
-     * Nodes inside a Topology
-     */
-    //private LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> nodes;
-    private Stack<Tuple2<String,OperatorProfiler>> nodes = new Stack<>();
-
-    /**
-     * Optional name. Helpful for debugging.
-     */
-    private String name;
-
-    /**
-     * is true when the topology is a part of a loop body
-     */
-    private Boolean isLoopBody = false;
-
-
-
     /**
      * true if the topology is a source topology
      *//*
@@ -131,7 +134,14 @@ public class TopologyBase implements Topology {
         return this.nodes;
     }
 
+    // Replace
     public void setNodes(Stack nodes) {
+        // reset  nodes platforms
+        platforms.clear();
+        Stack<Tuple2<String,OperatorProfiler>> newNodes =nodes;
+        // Not sure whether the order of platform is ensured below
+        newNodes.stream().forEach(n->this.addPlatform(n.getField1().getExecutionOperator().getPlatform().getName()));
+        // replace with new nodes
         this.nodes = nodes;
     }
 
@@ -260,7 +270,13 @@ public class TopologyBase implements Topology {
         //Clone the nodenumber
         copiedTopology.setNodeNumber(this.nodeNumber);
         copiedTopology.setName(this.getName());
-        return copiedTopology;
+
+        //clone platforms
+        Topology finalCopiedTopology = copiedTopology;
+        this.getPlatforms().forEach(p -> {
+            finalCopiedTopology.addPlatform((String)p);
+        });
+        return finalCopiedTopology;
     }
 
 
@@ -271,6 +287,10 @@ public class TopologyBase implements Topology {
     public void setBooleanBody(Boolean booleanBody) {
         isLoopBody = booleanBody;
     }
+
+    public void addPlatform(String platform){ this.platforms.add(platform);}
+
+    public List getPlatforms(){return this.platforms;};
 
     /*@Override
     public boolean isSink() {

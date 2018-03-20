@@ -43,7 +43,6 @@ public class ProfilingPlanBuilder implements Serializable {
 
     /**
      * Used to stop loop body connection from going into an endless loop
-     *
      */
     private static LoopTopology currentLoop;
 
@@ -110,6 +109,8 @@ public class ProfilingPlanBuilder implements Serializable {
                                         platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
                                         // TODO: fill the nodes with the executionOperator list
                                         t.getNodes().push(randomUnaryNodeFill(type, platform));
+                                        t.addPlatform(platform);
+
                                     }
                             }
 
@@ -120,6 +121,7 @@ public class ProfilingPlanBuilder implements Serializable {
                                 platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
                                 // check if the nodes are not already filled in the source or sink
                                 t.getNodes().push(binaryNodeFill(type, platform));
+                                t.addPlatform(platform);
                             }
 
                             // Fill the loop topologies
@@ -135,6 +137,8 @@ public class ProfilingPlanBuilder implements Serializable {
                                         platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
                                     }
                                 t.getNodes().push(loopNodeFill(type, platform));
+                                t.addPlatform(platform);
+
                             }
 
                             // Fill the sinks
@@ -182,7 +186,6 @@ public class ProfilingPlanBuilder implements Serializable {
 
         // Start with the sink executionOperator
         Topology sinkTopology = shape.getSinkTopology();
-
 
         // Check the dataType
         checkDataType(shape, type);
@@ -398,6 +401,7 @@ public class ProfilingPlanBuilder implements Serializable {
         String plateform = profilingConfig.getProfilingPlateform().get(0);
         // add the first source node
         topology.getNodes().push(sourceNodeFill(type, plateform));
+        topology.addPlatform(plateform);
 
         // exit in the case of a loop
         if (topology.isLoop())
@@ -409,6 +413,7 @@ public class ProfilingPlanBuilder implements Serializable {
             PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
             plateform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
             topology.getNodes().push(randomUnaryNodeFill(type, plateform));
+            topology.addPlatform(plateform);
         }
     }
 
@@ -423,10 +428,14 @@ public class ProfilingPlanBuilder implements Serializable {
             //Add the first unary nodes
             for(int i=1;i<=topology.getNodeNumber();i++)
                 topology.getNodes().push(randomUnaryNodeFill(type, plateform));
+                topology.addPlatform(plateform);
             // Add the last sink node
             topology.getNodes().push(sinkNodeFill(type, plateform));
+            topology.addPlatform(plateform);
+
         } else{
             topology.getNodes().push( sinkNodeFill(type, plateform));
+            topology.addPlatform(plateform);
         }
 
     }

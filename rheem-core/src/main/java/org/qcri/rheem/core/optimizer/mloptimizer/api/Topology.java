@@ -197,4 +197,6 @@ public interface Topology {
      */
     void setName(String name);
 
+    void addPlatform(String platform);
+
 }

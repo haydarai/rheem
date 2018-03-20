@@ -18,9 +18,8 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.function.LongToDoubleFunction;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -152,7 +151,7 @@ public class Shape {
      * generate a clone of the current Shape
      */
 
-    // TODO: is not well optimized
+    // TODO: need maintainablility: whenever you add new variable to topology you have to
     public Shape clone(){
         Shape newShape = new Shape(this.sinkTopology.createCopy(this.getSinkTopology().getTopologyNumber()), new Configuration());
         newShape.populateShape(newShape.getSinkTopology());
@@ -165,8 +164,10 @@ public class Shape {
      */
 
     public void resetAllNodes(){
-        for(Topology t:allTopologies)
+        for(Topology t:allTopologies){
             t.setNodes(new Stack<>());
+        }
+
     }
 
 
