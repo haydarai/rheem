@@ -72,6 +72,11 @@ public class Job extends OneTimeExecutable {
     private final RheemPlan profilingRheemPlan;
 
     /**
+     * Best feature plan representation
+     */
+    private static Tuple2<double[],Double> bestFeatureVector;
+
+    /**
      * {@link OptimizationContext} for the {@link #rheemPlan}.
      */
     private DefaultOptimizationContext optimizationContext;
@@ -301,6 +306,12 @@ public class Job extends OneTimeExecutable {
             }
 
             this.stopWatch.start("Post-processing");
+
+            // Update best feature plan vector with corrected cardinalities
+
+            //if !bestFeatureVector.equals(null)
+
+//            }
             if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
                 this.logExecution();
             }
@@ -582,7 +593,7 @@ public class Job extends OneTimeExecutable {
 
             // Predict execution time and pick minimum
             logger.info("Pick best Ml optimizer estimates!");
-            Tuple2<double[],Double> bestFeatureVector =  MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
+            bestFeatureVector =  MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
 
             logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
             this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));

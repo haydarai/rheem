@@ -77,7 +77,6 @@ public class ProfilingApp {
 
                     ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
                     //System.out.println(result.toCsvString())
-
                 }
         }
     }

@@ -155,6 +155,7 @@ public class ProfilingPlanBuilder implements Serializable {
 
                             // Reset shape
                             shape.resetAllNodes();
+                            
                             //planProfiler
                             planProfilers.add(planProfiler);
                         }
