@@ -1,4 +1,4 @@
-package org.qcri.rheem.tests;
+package org.qcri.rheem.profiler.generators;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
@@ -13,10 +13,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Tests log generation of rheem profiler.
+ * Generate profiling Logs
+ *
  */
-public class ProfilingApp {
 
+public class LogGenerator {
     public static void main(String[] args) {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;
