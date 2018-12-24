@@ -20,6 +20,8 @@ This approach aims at freeing data engineers and software developers from the bu
 
 **Requirements.**
 Rheem is built with Java 8 and Scala 2.11. However, to execute Rheem it is sufficient to have Java 8 installed. If you want to build Rheem yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Rheem might have further requirements.
+- To use the ML optimizer you need to add the following requirements: 
+    - Python 3.5.x, Keras, Tensorflow.
 
 **Get Rheem.**
 Rheem is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
@@ -77,6 +79,8 @@ You can find the most relevant settings in the following:
   * `rheem.core.optimizer.instrumentation (= org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Rheem plans; other options are `org.qcri.rheem.core.profiling.NoInstrumentationStrategy` and `org.qcri.rheem.core.profiling.FullInstrumentationStrategy`
   * `rheem.core.optimizer.reoptimize (= false)`: whether to progressively optimize Rheem plans
   * `rheem.basic.tempdir (= file:///tmp)`: where to store temporary files, in particular for inter-platform communication
+* ML (Machine learned costs)
+  * `rheem.core.optimizer.mloptimizer(= false)`: enable ML learned costs to perform plan execution estimates
 * Java Streams
   * `rheem.java.cpu.mhz (= 2700)`: clock frequency of processor the JVM runs on in MHz
   * `rheem.java.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to JVM in ms/MB

@@ -1,5 +1,6 @@
 package org.qcri.rheem.tests;
 
+import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.OperatorProfiler;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.Shape;
@@ -17,6 +18,7 @@ import java.util.stream.Collectors;
  */
 public class ProfilingApp {
 
+//    @Test
     public static void main(String[] args) {
         //String profileTesting = "single_operator_profiling";
         String profileTesting;

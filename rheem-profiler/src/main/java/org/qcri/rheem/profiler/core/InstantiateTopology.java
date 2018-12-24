@@ -14,7 +14,7 @@ import java.util.Stack;
  * The filling starts with the {@link Topology} connected with the sink then fills the connected {@link Topology}s with associated number
  * of nodes
  */
-public class InstantiateTopology {
+public class  InstantiateTopology {
 
 
 
@@ -40,6 +40,7 @@ public class InstantiateTopology {
     /**
      * Method that instantiates all generated Topologies
      * @param sinkTopologies
+     *
      * @return
      */
     public static TopologyInstance instantiateTopology(List<Topology> sinkTopologies, int nodeNumber){

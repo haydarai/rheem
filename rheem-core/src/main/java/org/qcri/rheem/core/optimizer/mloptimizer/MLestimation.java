@@ -78,7 +78,7 @@ public class MLestimation {
             bufferedReader.close();
         }
         catch(FileNotFoundException ex) {
-            throw new RheemException("could not find estimates from loaded ML model!");
+            throw new RheemException("could not find estimation ML model output!");
         }
         catch(IOException ex) {
             throw new RheemException("could not read estimates from loaded ML model!");
