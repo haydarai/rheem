@@ -64,7 +64,7 @@ def main():
     # load the model from disk
     if(model=="forest"):
         # load the model from disk
-        filename = os.path.join(currentDirPath, "ForestModel.sav")
+        filename = os.path.join(currentDirPath, "model-forest.sav")
         print("Loading model: "+filename)
         model = pickle.load(open(filename, 'rb'))
     elif(model=="nn"):
