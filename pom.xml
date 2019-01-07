@@ -15,6 +15,7 @@
         <hadoop.version>2.6.0</hadoop.version>
         <graphchi.version>0.2.2</graphchi.version>
         <antlr.version>4.5.3</antlr.version>
+        <json.version>20180130</json.version>
         <external.platforms.scope>provided</external.platforms.scope>
     </properties>
 
@@ -514,7 +515,7 @@
             <dependency>
                 <groupId>org.json</groupId>
                 <artifactId>json</artifactId>
-                <version>20160212</version>
+                <version>${json.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>
@@ -534,7 +535,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.4</version>
+                <version>2.6</version>
             </dependency>
             <dependency>
                 <groupId>net.openhft</groupId>
