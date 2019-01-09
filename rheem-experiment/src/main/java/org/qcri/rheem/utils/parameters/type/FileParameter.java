@@ -7,4 +7,8 @@ public class FileParameter implements RheemParameter {
     public FileParameter(String path) {
         this.path = path;
     }
+
+    public String getPath(){
+        return this.path;
+    }
 }

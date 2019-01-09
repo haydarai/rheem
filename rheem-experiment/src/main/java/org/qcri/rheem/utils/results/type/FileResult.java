@@ -8,4 +8,8 @@ public class FileResult implements RheemResult {
     public FileResult(String path) {
         this.path = path;
     }
+
+    public String getPath(){
+        return this.path;
+    }
 }

@@ -56,7 +56,9 @@ public class WordCount extends RheemExperiment {
 
         UDFs udfs = new UDFs();
         //todo add the UDFS
-
+        udfs.addUDF("flatmap", null);
+        udfs.addUDF("getKey", null);
+        udfs.addUDF("reduce", null);
 
         Implementation implementation;
         switch (platform){

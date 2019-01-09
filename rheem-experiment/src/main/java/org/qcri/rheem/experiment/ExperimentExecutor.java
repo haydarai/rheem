@@ -36,8 +36,18 @@ public class ExperimentExecutor extends ExperimentController {
             experiment.addOptions(executor.opts);
             executor.generateCommandLine();
             Implementation implementation = experiment.buildImplementation(executor);
+            long start = System.currentTimeMillis();
             RheemResults results = implementation.executePlan();
-          //  results.show();
+            long finish = System.currentTimeMillis();
+            System.err.println(
+                String.format(
+                    "the time for the experiment %s in the platform %s was %d ms",
+                    name_experiment,
+                    executor.getValue("platform"),
+                    (finish - start)
+                )
+            );
+            //  results.show();
         }else{
             throw new ExperimentException(
                 String.format(
