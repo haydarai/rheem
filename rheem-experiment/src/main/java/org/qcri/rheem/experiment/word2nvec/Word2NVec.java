@@ -48,6 +48,16 @@ public class Word2NVec extends RheemExperiment{
         );
         output_file_option.setRequired(true);
         options.addOption(min_occurs_option);
+
+        Option neighborhoodReach_option = new Option(
+                "nr",
+                "neighborhood-reach",
+                true,
+                "min Word Occurrences for use as parameters in Word2NVec"
+        );
+        neighborhoodReach_option.setRequired(true);
+        options.addOption(neighborhoodReach_option);
+
     }
 
     @Override
@@ -58,6 +68,7 @@ public class Word2NVec extends RheemExperiment{
         parameters.addParameter("input", new FileParameter(controller.getValue("input_file")));
 
         parameters.addParameter("min", new VariableParameter<Integer>(controller.getIntValue("minWordOccurrences")));
+        parameters.addParameter("neighborhoodReach", new VariableParameter<Integer>(controller.getIntValue("nr")));
 
         RheemResults results = new RheemResults();
 

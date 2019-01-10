@@ -28,6 +28,7 @@ final public class Word2NVecRheemImplementation extends RheemImplementation {
         String input = ((FileParameter)parameters.getParameter("input")).getPath();
         String output = ((FileResult)results.getContainerOfResult("output")).getPath();
         int minWordOccurrences = ((VariableParameter<Integer>)parameters.getParameter("min")).getVariable();
+        int neighborhoodReach = ((VariableParameter<Integer>)parameters.getParameter("neighborhoodReach")).getVariable();
 
         TextFileSource source = new TextFileSource(input);
         source.setName("read corpus[1]");
@@ -96,6 +97,7 @@ final public class Word2NVecRheemImplementation extends RheemImplementation {
         zipWithIdOperator.connectTo(0, convert, 0);
 
 
+        TextFileSource source2 = new TextFileSource(input);
 
 
 
