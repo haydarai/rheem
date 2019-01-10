@@ -1,4 +1,6 @@
 package org.qcri.rheem.utils.udf.type;
 
-public interface UDF {
+import java.io.Serializable;
+
+public interface UDF extends Serializable {
 }

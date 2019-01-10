@@ -1,11 +1,18 @@
 package org.qcri.rheem.experiment;
 
+import org.qcri.rheem.experiment.enviroment.EnviromentExecution;
+import org.qcri.rheem.experiment.enviroment.FlinkEnviroment;
+import org.qcri.rheem.experiment.enviroment.JavaEnviroment;
+import org.qcri.rheem.experiment.enviroment.RheemEnviroment;
+import org.qcri.rheem.experiment.enviroment.SparkEnviroment;
 import org.qcri.rheem.utils.parameters.RheemParameters;
 import org.qcri.rheem.utils.results.RheemResults;
 import org.qcri.rheem.utils.results.type.RheemResult;
 import org.qcri.rheem.utils.udf.UDFs;
 
-public abstract class Implementation {
+import java.io.Serializable;
+
+public abstract class Implementation implements Serializable {
 
     public static final String FLINK = "flink";
     public static final String SPARK = "spark";
@@ -14,6 +21,7 @@ public abstract class Implementation {
 
 
     protected final String platform;
+    protected EnviromentExecution enviroment;
     protected RheemParameters parameters;
     protected RheemResults results;
     protected UDFs udfs;
@@ -41,9 +49,16 @@ public abstract class Implementation {
     private boolean validate(String name_platform){
         switch (name_platform.toLowerCase()) {
             case FLINK:
+                this.enviroment = new FlinkEnviroment();
+                return true;
             case SPARK:
+                this.enviroment = new SparkEnviroment();
+                return true;
             case JAVA :
+                this.enviroment = new JavaEnviroment();
+                return true;
             case RHEEM:
+                this.enviroment = new RheemEnviroment();
                 return true;
             default:
                 return false;

@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
-            <version>${json.version}</version>
+            <version>20180130</version>
         </dependency>
         <!-- End Dependency of Json-->
         <!-- Rheem dependencies START -->
@@ -42,11 +42,24 @@
             <artifactId>rheem-core</artifactId>
             <version>0.4.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-spark_2.11</artifactId>
+            <version>0.4.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-flink</artifactId>
+            <version>0.4.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
         <!-- Rheem dependencies END -->
         <!-- Spark dependencies START -->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.compat.version}</artifactId>
+            <scope></scope>
             <exclusions>
                 <exclusion>
                     <groupId>org.xerial.snappy</groupId>
@@ -62,7 +75,6 @@
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
             <version>1.1.2.1</version>
-            <scope>${external.platforms.scope}</scope>
         </dependency>
         <!-- Spark dependencies END -->
         <!-- Flink dependencies START -->
@@ -109,19 +121,25 @@
             <artifactId>flink-hadoop-compatibility_${scala.compat.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-spark_2.11</artifactId>
-            <version>0.4.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-flink</artifactId>
-            <version>0.4.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
         <!-- Flink dependencies END -->
+        <!-- Hadoop dependencies START -->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>${hadoop.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-client</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <!-- Hadoop dependencies END -->
     </dependencies>
 
 </project>

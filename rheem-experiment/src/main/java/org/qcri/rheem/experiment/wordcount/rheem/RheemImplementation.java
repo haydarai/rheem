@@ -7,6 +7,7 @@ import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.experiment.Implementation;
+import org.qcri.rheem.experiment.enviroment.RheemEnviroment;
 import org.qcri.rheem.flink.Flink;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.platform.JavaPlatform;
@@ -80,25 +81,7 @@ public class RheemImplementation extends Implementation {
 
         RheemPlan plan = new RheemPlan(sink);
 
-        RheemContext rheemContext = new RheemContext();
-        String platforms = "java,spark,flink";
-
-        for (String platform : platforms.split(",")) {
-            switch (platform) {
-                case "java":
-                    rheemContext.register(Java.basicPlugin());
-                    break;
-                case "spark":
-                    rheemContext.register(Spark.basicPlugin());
-                    break;
-                case "flink":
-                    rheemContext.register(Flink.basicPlugin());
-                    break;
-                default:
-                    System.err.format("Unknown platform: \"%s\"\n", platform);
-                    System.exit(3);
-            }
-        }
+        RheemContext rheemContext = ((RheemEnviroment)this.enviroment).getEnviroment();
 
         rheemContext.execute(plan, ReflectionUtils.getDeclaringJar(RheemImplementation.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
 

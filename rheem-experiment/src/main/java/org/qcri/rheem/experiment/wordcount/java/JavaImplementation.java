@@ -36,7 +36,7 @@ public class JavaImplementation extends Implementation {
                     )
                     .flatMap(line -> Arrays.stream(line.split("\\W+")))
                     .filter(word -> !word.isEmpty())
-                    .map(word -> new Tuple2<String, Integer>(word, 1))
+                    .map(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1))
                     .collect(
                         toMap(
                             tuple -> tuple.getField0(),

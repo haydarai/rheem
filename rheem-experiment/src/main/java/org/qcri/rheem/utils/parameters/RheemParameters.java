@@ -3,9 +3,10 @@ package org.qcri.rheem.utils.parameters;
 import org.qcri.rheem.experiment.ExperimentException;
 import org.qcri.rheem.utils.parameters.type.RheemParameter;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class RheemParameters {
+public class RheemParameters implements Serializable {
 
     private HashMap<String, RheemParameter> parameters;
 

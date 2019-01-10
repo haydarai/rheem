@@ -1,4 +1,6 @@
 package org.qcri.rheem.utils.results.type;
 
-public interface RheemResult {
+import java.io.Serializable;
+
+public interface RheemResult extends Serializable {
 }

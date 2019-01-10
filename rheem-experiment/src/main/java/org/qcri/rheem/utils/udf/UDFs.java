@@ -3,9 +3,10 @@ package org.qcri.rheem.utils.udf;
 import org.qcri.rheem.experiment.ExperimentException;
 import org.qcri.rheem.utils.udf.type.UDF;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class UDFs {
+public class UDFs implements Serializable {
 
     private HashMap<String, UDF> map_UDF;
 

@@ -1,4 +1,6 @@
 package org.qcri.rheem.utils.parameters.type;
 
-public interface RheemParameter {
+import java.io.Serializable;
+
+public interface RheemParameter extends Serializable {
 }
