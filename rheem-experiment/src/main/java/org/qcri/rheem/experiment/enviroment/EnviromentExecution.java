@@ -1,6 +1,8 @@
 package org.qcri.rheem.experiment.enviroment;
 
-public abstract class EnviromentExecution<T> {
+import java.io.Serializable;
+
+public abstract class EnviromentExecution<T> implements Serializable {
 
     public abstract T getEnviroment();
 

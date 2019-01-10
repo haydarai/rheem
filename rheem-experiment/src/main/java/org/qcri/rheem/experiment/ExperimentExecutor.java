@@ -3,8 +3,7 @@ package org.qcri.rheem.experiment;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.qcri.rheem.experiment.wordcount.WordCount;
-import org.qcri.rheem.utils.results.RheemResults;
-import org.qcri.rheem.utils.results.type.RheemResult;
+import org.qcri.rheem.experiment.utils.results.RheemResults;
 
 import java.util.HashMap;
 

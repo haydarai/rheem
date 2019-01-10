@@ -5,10 +5,9 @@ import org.qcri.rheem.experiment.enviroment.FlinkEnviroment;
 import org.qcri.rheem.experiment.enviroment.JavaEnviroment;
 import org.qcri.rheem.experiment.enviroment.RheemEnviroment;
 import org.qcri.rheem.experiment.enviroment.SparkEnviroment;
-import org.qcri.rheem.utils.parameters.RheemParameters;
-import org.qcri.rheem.utils.results.RheemResults;
-import org.qcri.rheem.utils.results.type.RheemResult;
-import org.qcri.rheem.utils.udf.UDFs;
+import org.qcri.rheem.experiment.utils.parameters.RheemParameters;
+import org.qcri.rheem.experiment.utils.results.RheemResults;
+import org.qcri.rheem.experiment.utils.udf.UDFs;
 
 import java.io.Serializable;
 
@@ -65,6 +64,13 @@ public abstract class Implementation implements Serializable {
         }
     }
 
-    public abstract RheemResults executePlan();
+    public RheemResults executePlan(){
+        preExecutePlan();
+        doExecutePlan();
+        return postExecutePlan();
+    }
 
+    protected abstract void preExecutePlan();
+    protected abstract void doExecutePlan();
+    protected abstract RheemResults postExecutePlan();
 }
