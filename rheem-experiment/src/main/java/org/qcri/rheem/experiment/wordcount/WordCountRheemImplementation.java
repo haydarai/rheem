@@ -12,7 +12,7 @@ import org.qcri.rheem.experiment.utils.udf.UDFs;
 
 import java.util.Arrays;
 
-public class WordCountRheemImplementation extends RheemImplementation {
+final public class WordCountRheemImplementation extends RheemImplementation {
 
     public WordCountRheemImplementation(String platform, RheemParameters parameters, RheemResults result, UDFs udfs) {
         super(platform, parameters, result, udfs);

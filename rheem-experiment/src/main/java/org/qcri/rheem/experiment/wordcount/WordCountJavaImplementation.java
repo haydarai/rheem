@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 
-public class WordCountJavaImplementation extends JavaImplementation {
+final public class WordCountJavaImplementation extends JavaImplementation {
 
     public WordCountJavaImplementation(String platform, RheemParameters parameters, RheemResults result, UDFs udfs) {
         super(platform, parameters, result, udfs);
@@ -27,24 +27,27 @@ public class WordCountJavaImplementation extends JavaImplementation {
     protected void doExecutePlan() {
         try {
             Files.write(
-                    Paths.get(((FileResult)results.getContainerOfResult("output")).getPath()),
-                    Files.lines(
-                            Paths.get(
-                                    ((FileParameter) parameters.getParameter("input")).getPath()
-                            )
+                Paths.get(((FileResult)results.getContainerOfResult("output")).getPath()),
+                Files.lines(
+                    Paths.get(
+                        ((FileParameter) parameters.getParameter("input")).getPath()
                     )
-                            .flatMap(line -> Arrays.stream(line.split("\\W+")))
-                            .filter(word -> !word.isEmpty())
-                            .map(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1))
-                            .collect(
-                                    toMap(
-                                            tuple -> tuple.getField0(),
-                                            tuple -> tuple.getField1(),
-                                            (value1, value2) -> value1 + value2
-                                    )
-                            ).entrySet().stream()
-                            .map(entry ->  String.format("%s %d", entry.getKey(), entry.getValue())
-                            ).collect(Collectors.toList())
+                )
+                .flatMap(line -> Arrays.stream(line.split("\\W+")))
+                .filter(word -> !word.isEmpty())
+                .map(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1))
+                .collect(
+                    toMap(
+                        tuple -> tuple.getField0(),
+                        tuple -> tuple.getField1(),
+                        (value1, value2) -> value1 + value2
+                    )
+                ).entrySet().stream()
+                .map(
+                    entry ->  String.format("%s %d", entry.getKey(), entry.getValue())
+                ).collect(
+                        Collectors.toList()
+                )
             );
         } catch (IOException e) {
             e.printStackTrace();

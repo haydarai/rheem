@@ -15,7 +15,7 @@ import scala.Tuple2;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class WordCountSparkImplementation extends SparkImplementation {
+final public class WordCountSparkImplementation extends SparkImplementation {
 
     public WordCountSparkImplementation(String platform, RheemParameters parameters, RheemResults result, UDFs udfs) {
         super(platform, parameters, result, udfs);

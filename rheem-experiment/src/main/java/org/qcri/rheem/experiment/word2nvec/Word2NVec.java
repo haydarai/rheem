@@ -8,6 +8,7 @@ import org.qcri.rheem.experiment.Implementation;
 import org.qcri.rheem.experiment.RheemExperiment;
 import org.qcri.rheem.experiment.utils.parameters.RheemParameters;
 import org.qcri.rheem.experiment.utils.parameters.type.FileParameter;
+import org.qcri.rheem.experiment.utils.parameters.type.VariableParameter;
 import org.qcri.rheem.experiment.utils.results.RheemResults;
 import org.qcri.rheem.experiment.utils.results.type.FileResult;
 import org.qcri.rheem.experiment.utils.udf.UDFs;
@@ -37,6 +38,16 @@ public class Word2NVec extends RheemExperiment{
         );
         output_file_option.setRequired(true);
         options.addOption(output_file_option);
+
+
+        Option min_occurs_option = new Option(
+                "min",
+                "minWordOccurrences",
+                true,
+                "min Word Occurrences for use as parameters in Word2NVec"
+        );
+        output_file_option.setRequired(true);
+        options.addOption(min_occurs_option);
     }
 
     @Override
@@ -45,6 +56,8 @@ public class Word2NVec extends RheemExperiment{
         RheemParameters parameters = new RheemParameters();
 
         parameters.addParameter("input", new FileParameter(controller.getValue("input_file")));
+
+        parameters.addParameter("min", new VariableParameter<Integer>(controller.getIntValue("minWordOccurrences")));
 
         RheemResults results = new RheemResults();
 
