@@ -59,7 +59,7 @@ public class TPCH extends RheemExperiment {
 
         results.addContainerOfResult("output", new FileResult(controller.getValue("output_file")));
 
-        String query = controller.getValue("query").toLowerCase();
+        String query = controller.getValue("query").toUpperCase();
 
         Query query_implementation;
         switch (query){

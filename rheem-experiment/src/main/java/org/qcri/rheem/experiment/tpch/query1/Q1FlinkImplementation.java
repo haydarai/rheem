@@ -19,7 +19,7 @@ final public class Q1FlinkImplementation extends FlinkImplementation {
 
     @Override
     protected void doExecutePlan() {
-        String input = ((FileParameter) parameters.getParameter("input")).getPath();
+        String input = ((FileParameter) parameters.getParameter("lineitem")).getPath();
         String output =((FileResult) results.getContainerOfResult("output")).getPath();
 
         String start_string = ((VariableParameter<String>)parameters.getParameter("date_min")).getVariable();

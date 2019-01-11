@@ -55,13 +55,15 @@ public class Entity {
     }
 
     public static int dateValue(String date){
-        Matcher matcher = pattern.matcher(date);
+        /*Matcher matcher = pattern.matcher(date);
         String[] values = new String[3];
         int i = 0;
         while (matcher.find()){
             values[i] = matcher.group();
             i++;
-        }
+        }*/
+        String[] values = date.split("-");
+
         return Integer.parseInt(values[0])*365
                 + Integer.parseInt(values[1])*30
                 + Integer.parseInt(values[2]);

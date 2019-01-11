@@ -2,6 +2,12 @@ package org.qcri.rheem.experiment;
 
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
+import org.qcri.rheem.experiment.crocopr.Crocopr;
+import org.qcri.rheem.experiment.kmeans.Kmeans;
+import org.qcri.rheem.experiment.sgd.SGD;
+import org.qcri.rheem.experiment.simwords.SimWords;
+import org.qcri.rheem.experiment.tpch.TPCH;
+import org.qcri.rheem.experiment.word2nvec.Word2NVec;
 import org.qcri.rheem.experiment.wordcount.WordCount;
 import org.qcri.rheem.experiment.utils.results.RheemResults;
 
@@ -16,12 +22,12 @@ public class ExperimentExecutor extends ExperimentController {
     public ExperimentExecutor(String... args) {
         super(args);
         experiments = new HashMap<>();
-        experiments.put("crocopr", new WordCount());
-        experiments.put("kmeans", new WordCount());
-        experiments.put("sgd", new WordCount());
-        experiments.put("simwords", new WordCount());
-        experiments.put("tpch", new WordCount());
-        experiments.put("word2nvec", new WordCount());
+        experiments.put("crocopr", new Crocopr());
+        experiments.put("kmeans", new Kmeans());
+        experiments.put("sgd", new SGD());
+        experiments.put("simwords", new SimWords());
+        experiments.put("tpch", new TPCH());
+        experiments.put("word2nvec", new Word2NVec());
         experiments.put("wordcount", new WordCount());
     }
 
