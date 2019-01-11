@@ -27,8 +27,8 @@ fi
 
 . ./execute.sh \
         -exn ${NAME} \
-        -q "Q1" \
         -plat ${PLATFORM} \
+        -q "Q1" \
         -lineitem hdfs://10.4.4.32:8300/data/${NAME}/lineitem/${SIZE} \
         -orders hdfs://10.4.4.32:8300/data/${NAME}/orders/${SIZE} \
         -customer hdfs://10.4.4.32:8300/data/${NAME}/customer/${SIZE} \
