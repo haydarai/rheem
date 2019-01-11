@@ -2,6 +2,7 @@ package org.qcri.rheem.experiment.tpch.entities;
 
 import org.qcri.rheem.experiment.ExperimentException;
 
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,4 +67,8 @@ public class Entity {
                 + Integer.parseInt(values[2]);
     }
 
+    @Override
+    public String toString() {
+        return Arrays.toString(fields);
+    }
 }

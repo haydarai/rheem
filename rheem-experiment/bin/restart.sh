@@ -2,7 +2,7 @@
 
 PLATFORM=$1
 CLEAN_CLUSTER=$2
-KILL=$3
+
 #if not define SPARK_HOME
 if [ -z "${SPARK_HOME}" ]; then
     SPARK_HOME=/data/platform/code/processing/spark/spark-2.4.0-bin-hadoop2.6
@@ -19,58 +19,47 @@ if [ -z "${FLINK_HOME}" ]; then
 fi
 
 
-if [ "${KILL}" = "kill" ]; then
+#restart spark
+result=$(echo ${PLATFORM} | grep "spark")
+if [ -n "${result}" ]; then
+   echo "restart spark"
    current_path=$(pwd)
    cd $SPARK_HOME
    . $SPARK_HOME/sbin/stop-all.sh
+   . $SPARK_HOME/sbin/start-all.sh
+   cd $current_path
+fi
+
+#restart flink
+result=$(echo ${PLATFORM} | grep "flink")
+if [ -n "${result}" ]; then
+   echo "restart flink"
+   current_path=$(pwd)
    cd $FLINK_HOME/bin
    . $FLINK_HOME/bin/stop-cluster.sh
+   . $FLINK_HOME/bin/start-cluster.sh
    cd $current_path
-
-else
-    #restart spark
-    result=$(echo ${PLATFORM} | grep "spark")
-    if [ -n "${result}" ]; then
-       echo "restart spark"
-       current_path=$(pwd)
-       cd $SPARK_HOME
-       . $SPARK_HOME/sbin/stop-all.sh
-       . $SPARK_HOME/sbin/start-all.sh
-       cd $current_path
-    fi
-
-    #restart flink
-    result=$(echo ${PLATFORM} | grep "flink")
-    if [ -n "${result}" ]; then
-       echo "restart flink"
-       current_path=$(pwd)
-       cd $FLINK_HOME/bin
-       . $FLINK_HOME/bin/stop-cluster.sh
-       . $FLINK_HOME/bin/start-cluster.sh
-       cd $current_path
-    fi
-
-    #restart java
-    result=$(echo ${PLATFORM} | grep "java")
-    if [ -n "${result}" ]; then
-       echo "restart java"
-       sync; echo 3 > /proc/sys/vm/drop_caches
-    fi
-
-
-    if [ "${CLEAN_CLUSTER}" = "all" ]; then
-       sync; echo 3 > /proc/sys/vm/drop_caches
-       ssh root@10.4.4.32 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.35 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.33 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.25 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.36 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.23 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.34 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.29 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.28 "sync; echo 3 > /proc/sys/vm/drop_caches"
-       ssh root@10.4.4.24 "sync; echo 3 > /proc/sys/vm/drop_caches"
-    fi
-
-#fi of if KILL
 fi
+
+#restart java
+result=$(echo ${PLATFORM} | grep "java")
+if [ -n "${result}" ]; then
+   echo "restart java"
+   sync; echo 3 > /proc/sys/vm/drop_caches
+fi
+
+
+if [ "${CLEAN_CLUSTER}" = "all" ]; then
+   sync; echo 3 > /proc/sys/vm/drop_caches
+   ssh root@10.4.4.32 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.35 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.33 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.25 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.36 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.23 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.34 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.29 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.28 "sync; echo 3 > /proc/sys/vm/drop_caches"
+   ssh root@10.4.4.24 "sync; echo 3 > /proc/sys/vm/drop_caches"
+fi
+

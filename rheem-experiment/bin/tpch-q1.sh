@@ -3,7 +3,7 @@
 PLATFORM=$1
 SIZE=$2
 
-NAME="wordcount"
+NAME="tpch"
 BASEDIR="/data/experiments"
 FOLDER_CODE="code"
 FOLDER_CONF="conf"
@@ -27,7 +27,12 @@ fi
 
 . ./execute.sh \
         -exn ${NAME} \
+        -q "Q1" \
         -plat ${PLATFORM} \
-        -i hdfs://10.4.4.32:8300/data/${NAME}/${SIZE} \
+        -lineitem hdfs://10.4.4.32:8300/data/${NAME}/lineitem/${SIZE} \
+        -orders hdfs://10.4.4.32:8300/data/${NAME}/orders/${SIZE} \
+        -customer hdfs://10.4.4.32:8300/data/${NAME}/customer/${SIZE} \
         -o hdfs://10.4.4.32:8300/output/${NAME}/${PLATFORM}/${SIZE} \
+        -start "1998-12-01" \
+        -delta 90 \
         &> ${FOLDER}/${PLATFORM}.log
