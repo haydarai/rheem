@@ -25,6 +25,7 @@ public abstract class Implementation implements Serializable {
     protected RheemResults results;
     protected UDFs udfs;
 
+
     public Implementation(String platform, RheemParameters parameters, RheemResults result, UDFs udfs) {
         if(validate(platform)) {
             this.platform = platform;

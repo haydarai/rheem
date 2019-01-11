@@ -56,8 +56,23 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         );
 
         try {
-            final InputStream inputStream = fs.open(url);
-            Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+            Stream<String> lines;
+            if(fs.isDirectory(url)){
+                lines = fs.listChildren(url)
+                    .stream()
+                    .filter( path -> ! fs.isDirectory(path))
+                    .flatMap(path -> {
+                        try {
+                            InputStream inputStream = fs.open(path);
+                            return new BufferedReader(new InputStreamReader(inputStream)).lines();
+                        } catch (IOException e) {
+                            throw new RheemException(String.format("Reading %s failed in the subfile %s.", url, url), e);
+                        }
+                    });
+            }else {
+                final InputStream inputStream = fs.open(url);
+                lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+            }
             ((StreamChannel.Instance) outputs[0]).accept(lines);
         } catch (IOException e) {
             throw new RheemException(String.format("Reading %s failed.", url), e);

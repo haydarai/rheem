@@ -1,6 +1,8 @@
 package org.qcri.rheem.experiment.utils.results.type;
 
 
+import java.net.URI;
+
 public class FileResult implements RheemResult {
 
     private String path;
@@ -11,5 +13,9 @@ public class FileResult implements RheemResult {
 
     public String getPath(){
         return this.path;
+    }
+
+    public URI getURI(){
+        return URI.create(this.getPath());
     }
 }
