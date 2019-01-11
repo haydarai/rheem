@@ -5,22 +5,19 @@ import org.apache.commons.cli.Options;
 import org.qcri.rheem.experiment.ExperimentController;
 import org.qcri.rheem.experiment.ExperimentException;
 import org.qcri.rheem.experiment.Implementation;
-import org.qcri.rheem.experiment.tpch.TPCH;
+import org.qcri.rheem.experiment.tpch.Query;
 import org.qcri.rheem.experiment.utils.parameters.RheemParameters;
-import org.qcri.rheem.experiment.utils.parameters.type.FileParameter;
 import org.qcri.rheem.experiment.utils.results.RheemResults;
-import org.qcri.rheem.experiment.utils.results.type.FileResult;
 import org.qcri.rheem.experiment.utils.udf.UDFs;
 
-public class Q3 extends TPCH {
+public class Q3 extends Query {
 
-    public Q3() {
-        super();
+    public Q3(ExperimentController controller) {
+        super(controller);
     }
 
     @Override
     public void addOptions(Options options) {
-        super.addOptions(options);
         Option input_file_option = new Option(
                 "i",
                 "input_file",
@@ -41,15 +38,8 @@ public class Q3 extends TPCH {
     }
 
     @Override
-    public Implementation buildImplementation(ExperimentController controller) {
+    public Implementation buildImplementation(ExperimentController controller, RheemParameters parameters, RheemResults results) {
         String platform = controller.getValue("plat").toLowerCase();
-        RheemParameters parameters = new RheemParameters();
-
-        parameters.addParameter("input", new FileParameter(controller.getValue("input_file")));
-
-        RheemResults results = new RheemResults();
-
-        results.addContainerOfResult("output", new FileResult(controller.getValue("output_file")));
 
         UDFs udfs = new UDFs();
 

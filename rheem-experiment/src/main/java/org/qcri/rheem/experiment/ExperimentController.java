@@ -18,7 +18,7 @@ public abstract class ExperimentController {
 
     protected abstract Options buildOptions();
 
-    protected void generateCommandLine(){
+    public void generateCommandLine(){
         String[] args = getArgs();
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
@@ -212,4 +212,7 @@ public abstract class ExperimentController {
         return URI.create(this.getValue(key, default_value.toString()));
     }
 
+    public Options getOptions() {
+        return options;
+    }
 }
