@@ -14,7 +14,7 @@ public class Entity {
 
 
     public Entity(String data){
-        this.fields = data.split("|");
+        this.fields = data.split("\\|");
     }
 
     public Entity(Object ... data){
@@ -62,11 +62,16 @@ public class Entity {
             values[i] = matcher.group();
             i++;
         }*/
-        String[] values = date.split("-");
+        try {
+            String[] values = date.split("-");
 
-        return Integer.parseInt(values[0])*365
-                + Integer.parseInt(values[1])*30
-                + Integer.parseInt(values[2]);
+            return Integer.parseInt(values[0]) * 365
+                    + Integer.parseInt(values[1]) * 30
+                    + Integer.parseInt(values[2]);
+        }catch (Exception e){
+            e.printStackTrace();
+            return -1;
+        }
     }
 
     @Override

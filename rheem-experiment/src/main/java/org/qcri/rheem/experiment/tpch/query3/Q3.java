@@ -18,23 +18,6 @@ public class Q3 extends Query {
 
     @Override
     public void addOptions(Options options) {
-        Option input_file_option = new Option(
-                "i",
-                "input_file",
-                true,
-                "The location of the input file that will use in the TPCH - Q3"
-        );
-        input_file_option.setRequired(true);
-        options.addOption(input_file_option);
-
-        Option output_file_option = new Option(
-                "o",
-                "output_file",
-                true,
-                "the location of the output file that will use for the TPCH - Q3"
-        );
-        output_file_option.setRequired(true);
-        options.addOption(output_file_option);
     }
 
     @Override

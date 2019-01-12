@@ -45,7 +45,7 @@ final public class Q1SparkImplementation extends SparkImplementation {
                             entity.getDouble(4),
                             entity.getDouble(5),
                             entity.getDouble(6),
-                            1
+                            (double)1.0
                     );
                     return tuple;
                 })

@@ -10,7 +10,7 @@ do
     for si in ${sizes[@]}
     do
         ./restart.sh java,flink,spark all &> /dev/null
-        echo "./tpch-qa.sh ${plat} ${si}"
-        ./tpch-q1.sh ${plat} ${si}
+        echo "./tpch-q3.sh ${plat} ${si}"
+        ./tpch-q3.sh ${plat} ${si}
     done
 done

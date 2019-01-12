@@ -4,20 +4,23 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.functions.FunctionAnnotation;
 import org.apache.flink.api.java.operators.IterativeDataSet;
+import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
-import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.qcri.rheem.experiment.implementations.flink.FlinkImplementation;
 import org.qcri.rheem.experiment.utils.parameters.RheemParameters;
+import org.qcri.rheem.experiment.utils.parameters.type.FileParameter;
+import org.qcri.rheem.experiment.utils.parameters.type.VariableParameter;
 import org.qcri.rheem.experiment.utils.results.RheemResults;
+import org.qcri.rheem.experiment.utils.results.type.FileResult;
 import org.qcri.rheem.experiment.utils.udf.UDFs;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Random;
 
 final public class KmeansFlinkImplementation extends FlinkImplementation {
     public KmeansFlinkImplementation(String platform, RheemParameters parameters, RheemResults result, UDFs udfs) {
@@ -25,15 +28,37 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
     }
 
     @Override
-    protected void doExecutePlan() {}
-    /*
+    protected void doExecutePlan() {
+        String input = ((FileParameter) parameters.getParameter("input")).getPath();
+        String output =((FileResult) results.getContainerOfResult("output")).getPath();
+
+        int n_centroid=((VariableParameter<Integer>)parameters.getParameter("n_centroid")).getVariable();
+        long seed=((VariableParameter<Long>)parameters.getParameter("seed")).getVariable();
+        int iterations = ((VariableParameter<Integer>)parameters.getParameter("iterations")).getVariable();
+
         // get input data:
         // read the points and centroids from the provided paths or fall back to default data
-        DataSet<Point> points = getPointDataSet(params, env);
-        DataSet<Centroid> centroids = getCentroidDataSet(params, env);
+        MapOperator<String, Point> points = this.env.readTextFile(input).map(
+            line -> {
+                String[] fields = line.split(",");
+                try {
+                    final Point point = new Point(Double.parseDouble(fields[0]), Double.parseDouble(fields[1]));
+                    return point;
+                } catch (Exception e) {
+                    return new Point(-1, -1);
+                }
+            }
+        );
+        ArrayList<Centroid> list = new ArrayList<>(n_centroid);
+        Random random = new Random(seed);
+        for(int i = 0; i < n_centroid; i++){
+            list.add(new Centroid(random.nextInt(), random.nextGaussian(), random.nextGaussian()));
+        }
+
+        DataSet<Centroid> centroids = this.env.fromCollection(list);
 
         // set number of bulk iterations for KMeans algorithm
-        IterativeDataSet<Centroid> loop = centroids.iterate(params.getInt("iterations", 10));
+        IterativeDataSet<Centroid> loop = centroids.iterate(iterations);
 
         DataSet<Centroid> newCentroids = points
                 // compute closest centroid for each point
@@ -51,120 +76,10 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
                 // assign points to final clusters
                 .map(new SelectNearestCenter()).withBroadcastSet(finalCentroids, "centroids");
 
-        // emit result
-        if (params.has("output")) {
-            clusteredPoints.writeAsCsv(params.get("output"), "\n", " ");
-
-            // since file sinks are lazy, we trigger the execution explicitly
-            env.execute("KMeans Example");
-        } else {
-            System.out.println("Printing result to stdout. Use --output to specify output path.");
-            clusteredPoints.print();
-        }
+        clusteredPoints.writeAsText(output);
     }
 
 
-    // *************************************************************************
-    //     DATA SOURCE READING (POINTS AND CENTROIDS)
-    // *************************************************************************
-
-    private static DataSet<Centroid> getCentroidDataSet(ParameterTool params, ExecutionEnvironment env) {
-        DataSet<Centroid> centroids;
-        if (params.has("centroids")) {
-            centroids = env.readCsvFile(params.get("centroids"))
-                    .fieldDelimiter(" ")
-                    .pojoType(Centroid.class, "id", "x", "y");
-        } else {
-            System.out.println("Executing K-Means example with default centroid data set.");
-            System.out.println("Use --centroids to specify file input.");
-            centroids = KMeansData.getDefaultCentroidDataSet(env);
-        }
-        return centroids;
-    }
-
-    private static DataSet<Point> getPointDataSet(ParameterTool params, ExecutionEnvironment env) {
-        DataSet<Point> points;
-        if (params.has("points")) {
-            // read points from CSV file
-            points = env.readCsvFile(params.get("points"))
-                    .fieldDelimiter(" ")
-                    .pojoType(Point.class, "x", "y");
-        } else {
-            System.out.println("Executing K-Means example with default point data set.");
-            System.out.println("Use --points to specify file input.");
-            points = KMeansData.getDefaultPointDataSet(env);
-        }
-        return points;
-    }
-
-    // *************************************************************************
-    //     DATA TYPES
-    // *************************************************************************
-
-    /**
-     * A simple two-dimensional point.
-     */
-    public static class Point implements Serializable {
-
-        public double x, y;
-
-        public Point() {}
-
-        public Point(double x, double y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public Point add(Point other) {
-            x += other.x;
-            y += other.y;
-            return this;
-        }
-
-        public Point div(long val) {
-            x /= val;
-            y /= val;
-            return this;
-        }
-
-        public double euclideanDistance(Point other) {
-            return Math.sqrt((x - other.x) * (x - other.x) + (y - other.y) * (y - other.y));
-        }
-
-        public void clear() {
-            x = y = 0.0;
-        }
-
-        @Override
-        public String toString() {
-            return x + " " + y;
-        }
-    }
-
-    /**
-     * A simple two-dimensional centroid, basically a point with an ID.
-     */
-    public static class Centroid extends Point {
-
-        public int id;
-
-        public Centroid() {}
-
-        public Centroid(int id, double x, double y) {
-            super(x, y);
-            this.id = id;
-        }
-
-        public Centroid(int id, Point p) {
-            super(p.x, p.y);
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            return id + " " + super.toString();
-        }
-    }
 
     // *************************************************************************
     //     USER FUNCTIONS

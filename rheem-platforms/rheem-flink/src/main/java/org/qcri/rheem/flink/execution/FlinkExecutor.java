@@ -115,9 +115,9 @@ public class FlinkExecutor extends PushExecutorTemplate {
             }else {
                 try {
                     //TODO validate the execute in different contexts
-                    //this.fee.execute();
+                    this.fee.execute();
                 } catch (Exception e) {
-                    throw new RheemException(e);
+                    //throw new RheemException(e);
                 }
             }
         }

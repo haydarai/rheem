@@ -3,14 +3,14 @@
 
 platforms=("flink" "spark")
 
-sizes=("1" "10" "100" "200")
+sizes=("0010" "0100" "1000")
 
 for plat in ${platforms[@]}
 do
     for si in ${sizes[@]}
     do
         ./restart.sh java,flink,spark all &> /dev/null
-        echo "./tpch-qa.sh ${plat} ${si}"
-        ./tpch-q1.sh ${plat} ${si}
+        echo "./kmeans.sh ${plat} ${si}"
+        ./kmeans.sh ${plat} ${si}
     done
 done

@@ -1,7 +1,9 @@
 package org.qcri.rheem.experiment.tpch.query1;
 
 import org.apache.flink.api.common.functions.GroupReduceFunction;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple10;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.apache.flink.util.Collector;
 import org.qcri.rheem.experiment.implementations.flink.FlinkImplementation;
 import org.qcri.rheem.experiment.tpch.entities.Entity;
@@ -11,6 +13,7 @@ import org.qcri.rheem.experiment.utils.parameters.type.VariableParameter;
 import org.qcri.rheem.experiment.utils.results.RheemResults;
 import org.qcri.rheem.experiment.utils.results.type.FileResult;
 import org.qcri.rheem.experiment.utils.udf.UDFs;
+import scala.collection.immutable.StringOps;
 
 final public class Q1FlinkImplementation extends FlinkImplementation {
     public Q1FlinkImplementation(String platform, RheemParameters parameters, RheemResults result, UDFs udfs) {
@@ -34,7 +37,7 @@ final public class Q1FlinkImplementation extends FlinkImplementation {
                 return entity.parseDate(10) <= (start_date - delta);
             })
             .map(entity -> {
-                Tuple10 tuple = new Tuple10<>(
+                Tuple10 tuple = new Tuple10<String, String, Double, Double, Double, Double, Double, Double, Double, Integer>(
                         entity.getString(8),
                         entity.getString(9),
                         entity.getDouble(4),
@@ -48,6 +51,20 @@ final public class Q1FlinkImplementation extends FlinkImplementation {
                 );
                 return tuple;
             })
+            .returns(
+                new TupleTypeInfo(
+                    TypeInformation.of(String.class),
+                    TypeInformation.of(String.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Integer.class)
+                )
+            )
             .groupBy(0, 1)
             .reduceGroup(new GroupReduceFunction<Tuple10, Tuple10>() {
                 @Override
@@ -68,6 +85,21 @@ final public class Q1FlinkImplementation extends FlinkImplementation {
                     last.setField(counter, 9);
                     out.collect(last);
                 }
-            }).writeAsText(output);
+            })
+            .returns(
+                new TupleTypeInfo(
+                    TypeInformation.of(String.class),
+                    TypeInformation.of(String.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Double.class),
+                    TypeInformation.of(Integer.class)
+                )
+            )
+            .writeAsText(output);
     }
 }
