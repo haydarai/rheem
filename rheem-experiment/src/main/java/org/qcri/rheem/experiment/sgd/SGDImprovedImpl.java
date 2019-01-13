@@ -11,6 +11,7 @@ import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.experiment.ExperimentException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +84,8 @@ public class SGDImprovedImpl {
 
                     // Calculate the convergence criterion.
                     DataQuantaBuilder<?, Tuple2<Double, Double>> convergenceDataset = newWeightsDataset
-                            .map(new ComputeNorm()).withBroadcast(w, "weights");
+                            .map(new ComputeNorm()).withBroadcast(w, "weights")
+                            .withName("weightd");
 
                     return new Tuple<>(newWeightsDataset, convergenceDataset);
                 }).withExpectedNumberOfIterations(maxIterations).collect();
@@ -109,12 +111,16 @@ class TransformPerPartition implements FunctionDescriptor.SerializableFunction<I
             String[] pointStr = line.split(" ");
             double[] point = new double[features+1];
             point[0] = Double.parseDouble(pointStr[0]);
-            for (int i = 1; i < pointStr.length; i++) {
-                if (pointStr[i].equals("")) {
-                    continue;
+            try {
+                for (int i = 1; i < pointStr.length; i++) {
+                    if (pointStr[i].equals("")) {
+                        continue;
+                    }
+                    String kv[] = pointStr[i].split(":", 2);
+                    point[Integer.parseInt(kv[0]) - 1] = Double.parseDouble(kv[1]);
                 }
-                String kv[] = pointStr[i].split(":", 2);
-                point[Integer.parseInt(kv[0])-1] = Double.parseDouble(kv[1]);
+            }catch (Exception e){
+                throw new ExperimentException("the error is "+line, e);
             }
             list.add(point);
         });

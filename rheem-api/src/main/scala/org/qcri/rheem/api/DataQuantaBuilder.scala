@@ -7,6 +7,7 @@ import java.util.{Collection => JavaCollection}
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
+import org.qcri.rheem.basic.data
 import org.qcri.rheem.basic.data.{Record, Tuple2 => RT2}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
@@ -602,7 +603,12 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
     }
     parameters.get("Output") match {
       case cls: Class[Out] => this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
-      case _ => logger.warn("Could not infer types from {}.", udf)
+     // case _ => logger.warn("Could not infer types from {}.", udf)
+      case _ => if(udf.toString.contains("ComputeNorm")){
+        this.outputTypeTrap.dataSetType = DataSetType.createDefault(ReflectionUtils.specify(classOf[RT2[Double, Double]]))
+      }else{
+        logger.warn("Could not infer types from {}.", udf)
+      }
     }
   }
 
@@ -1531,7 +1537,7 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
   extends BasicDataQuantaBuilder[DoWhileDataQuantaBuilder[T, ConvOut], T] {
 
   // TODO: Get the ClassTag right.
-  implicit private var convOutClassTag: ClassTag[ConvOut] = ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+  implicit private var convOutClassTag: ClassTag[ConvOut] = _
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
@@ -1590,10 +1596,12 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
     this
   }
 
-  override protected def build =
+  override protected def build = {
+    convOutClassTag = ClassTag(ReflectionUtils.specify(classOf[RT2[Double, Double]]))
     inputDataQuanta.dataQuanta().doWhileJava[ConvOut](
       conditionUdf, dataQuantaBodyBuilder, this.numExpectedIterations, this.udfLoadProfileEstimator
     )(this.convOutClassTag)
+  }
 
 
   /**

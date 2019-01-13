@@ -2,7 +2,10 @@ package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -71,13 +74,26 @@ public class FlinkMapOperator<InputType, OutputType> extends MapOperator<InputTy
                             fex
                     );
 
-            fex.setRichFunction(richFunction);;
+            fex.setRichFunction(richFunction);
 
-            dataSetOutput = dataSetInput
-                    .map(richFunction)
-                    .returns(this.getOutputType().getDataUnitType().getTypeClass())
-                    .name(this.getName())
-                    .withBroadcastSet(names.field1, names.field0)
+
+            Class _return = this.getOutputType().getDataUnitType().getTypeClass();
+            if(_return == Void.class){
+                TypeInformation<Tuple2<Double, Double>> info = TypeInformation.of(new TypeHint<Tuple2<Double, Double>>(){});
+                dataSetOutput = dataSetInput
+                        .map(richFunction)
+                        .returns((TypeInformation<OutputType>) info)
+                        .name(this.getName())
+                        .withBroadcastSet(names.field1, names.field0);
+
+            }else{
+                dataSetOutput = dataSetInput
+                        .map(richFunction)
+                        .returns(this.getOutputType().getDataUnitType().getTypeClass())
+                        .name(this.getName())
+                        .withBroadcastSet(names.field1, names.field0);
+            }
+
             ;
 
         }else {
