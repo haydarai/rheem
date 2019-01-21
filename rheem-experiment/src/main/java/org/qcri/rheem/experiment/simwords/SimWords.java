@@ -56,6 +56,27 @@ public class SimWords extends RheemExperiment {
         );
         neighborhoodReach_option.setRequired(true);
         options.addOption(neighborhoodReach_option);
+
+
+        Option n_cluster_option = new Option(
+                "nc",
+                "n_cluster",
+                true,
+                "number of the clusters"
+        );
+        n_cluster_option.setRequired(true);
+        options.addOption(n_cluster_option);
+
+
+
+        Option iterations_option = new Option(
+                "iter",
+                "iterations",
+                true,
+                "number of the iterations"
+        );
+        iterations_option.setRequired(true);
+        options.addOption(iterations_option);
     }
 
     @Override
@@ -67,6 +88,8 @@ public class SimWords extends RheemExperiment {
 
         parameters.addParameter("min", new VariableParameter<Integer>(controller.getIntValue("minWordOccurrences")));
         parameters.addParameter("neighborhoodReach", new VariableParameter<Integer>(controller.getIntValue("nr")));
+        parameters.addParameter("n_cluster", new VariableParameter<Integer>(controller.getIntValue("nc")));
+        parameters.addParameter("iterations", new VariableParameter<Integer>(controller.getIntValue("iter")));
 
         RheemResults results = new RheemResults();
 

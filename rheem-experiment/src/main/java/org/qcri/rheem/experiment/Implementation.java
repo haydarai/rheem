@@ -2,6 +2,7 @@ package org.qcri.rheem.experiment;
 
 import org.qcri.rheem.experiment.enviroment.EnviromentExecution;
 import org.qcri.rheem.experiment.enviroment.FlinkEnviroment;
+import org.qcri.rheem.experiment.enviroment.GiraphEnviroment;
 import org.qcri.rheem.experiment.enviroment.JavaEnviroment;
 import org.qcri.rheem.experiment.enviroment.RheemEnviroment;
 import org.qcri.rheem.experiment.enviroment.SparkEnviroment;
@@ -17,6 +18,7 @@ public abstract class Implementation implements Serializable {
     public static final String SPARK = "spark";
     public static final String JAVA  = "java";
     public static final String RHEEM = "rheem";
+    public static final String GIRAPH = "giraph";
 
 
     protected final String platform;
@@ -59,6 +61,9 @@ public abstract class Implementation implements Serializable {
                 return true;
             case RHEEM:
                 this.enviroment = new RheemEnviroment();
+                return true;
+            case GIRAPH:
+                this.enviroment = new GiraphEnviroment();
                 return true;
             default:
                 return false;

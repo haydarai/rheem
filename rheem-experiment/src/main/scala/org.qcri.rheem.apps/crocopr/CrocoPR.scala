@@ -4,6 +4,7 @@ import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.graph._
 import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
 import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper, StdOut}
+import org.qcri.rheem.basic.data
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
@@ -36,7 +37,7 @@ class CrocoPR(plugins: Plugin*) {
     val links2 = readLinks(inputUrl2)
 
     // Merge the links.
-    val allLinks = links1
+    /*val allLinks = links1
       .union(links2).withName("Union links")
       .distinct.withName("Distinct links")
 
@@ -55,16 +56,35 @@ class CrocoPR(plugins: Plugin*) {
       }.withName("Set source vertex ID")
       .join[VertexId, String](_._2, vertexIds, _.field1).withName("Join target vertex IDs")
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0)).withName("Set target vertex ID")
-
+      .writeTextFile(
+        "hdfs://10.4.4.43:8300/data/pages_unredirected/tmp",
+        edge => String.format("%s\t%s", edge.field0, edge.field1)
+      )
     // Run the PageRank.
-    val pageRanks = edges.pageRank(numIterations)
+    val pageRanks = edges.pageRank(numIterations)*/
+
+    /*val vertexIds =     planBuilder
+      .readTextFile("")
+        .map(line => {
+          var vec = line.split("\t")
+          return new data.Tuple2[String.type , String.type ](vec(0), vec(1))
+        })
+
+    val pageRanks = planBuilder.readTextFile("").map(line => {
+      var vec = line.split("\t")
+      return new data.Tuple2[String.type , String.type ](vec(0), vec(1))
+    }).join(tuple => tuple.field1, vertexIds, tuple => tuple.field1)
+        .map(tuple => (tuple.field1._2, tuple.field0._2 ))
+        .collect() */
+
+
 
     // Make the page ranks readable.
-    pageRanks
+   /* pageRanks
       .map(identity).withName("Hotfix")
       .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1)).withName("Make page ranks readable")
-      .collect()
+      .collect()*/
 
   }
 
@@ -118,7 +138,8 @@ object CrocoPR extends ExperimentDescriptor {
     val pageRank = new CrocoPR(plugins: _*)
 
     // Run the PageRank.
-    val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)
+    val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations)
+      /*.toSeq.sortBy(-_._2)
 
     // Store experiment data.
     val inputFileSize1 = FileSystems.getFileSize(inputUrl1)
@@ -129,7 +150,8 @@ object CrocoPR extends ExperimentDescriptor {
 
     // Print the result.
     println(s"Calculated ${pageRanks.size} page ranks:")
-    StdOut.printLimited(pageRanks, formatter = (pr: (String, java.lang.Float)) => s"${pr._1} has a page rank of ${pr._2}")
+    StdOut.printLimited(pageRanks, formatter = (pr: (String, java.lang.Float)) => s"${pr._1} has a page rank of ${pr._2}")*/
+
   }
 
 }

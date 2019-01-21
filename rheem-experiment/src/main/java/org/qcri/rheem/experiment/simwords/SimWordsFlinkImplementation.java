@@ -4,19 +4,20 @@ import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.operators.FlatMapOperator;
+import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.operators.MapOperator;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.utils.DataSetUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import org.qcri.rheem.experiment.SparseVector;
+import org.qcri.rheem.experiment.simword.SparseVector;
 import org.qcri.rheem.experiment.implementations.flink.FlinkImplementation;
-import org.qcri.rheem.experiment.kmeans.Centroid;
-import org.qcri.rheem.experiment.kmeans.KmeansFlinkImplementation;
-import org.qcri.rheem.experiment.kmeans.Point;
 import org.qcri.rheem.experiment.utils.parameters.RheemParameters;
 import org.qcri.rheem.experiment.utils.parameters.type.FileParameter;
 import org.qcri.rheem.experiment.utils.parameters.type.VariableParameter;
@@ -26,9 +27,11 @@ import org.qcri.rheem.experiment.utils.udf.UDFs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 final public class SimWordsFlinkImplementation extends FlinkImplementation {
@@ -38,7 +41,7 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
 
     @Override
     protected void doExecutePlan() {
-        /*String input = ((FileParameter) parameters.getParameter("input")).getPath();
+        String input = ((FileParameter) parameters.getParameter("input")).getPath();
         String output =((FileResult) results.getContainerOfResult("output")).getPath();
 
         int minWordOccurrences = ((VariableParameter<Integer>)parameters.getParameter("min")).getVariable();
@@ -46,8 +49,126 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
         int number_cluster = ((VariableParameter<Integer>)parameters.getParameter("n_cluster")).getVariable();
         int iterations = ((VariableParameter<Integer>)parameters.getParameter("iterations")).getVariable();
 
+        Map<String, DataSet> firstPart = firstPart(this.env, input, minWordOccurrences, neighborhoodReach);
+        DataSet<Tuple2<Long, String>> words_id = firstPart.get("words_id");
+        DataSet<Tuple2<Integer, SparseVector>> wordVectors = firstPart.get("wordVectors");
+
+        ////TODO VALIDATE
+        DataSet<Tuple2<Integer, SparseVector>> centroids = words_id
+            .map(
+                tuple -> {
+                    return new Tuple2<Integer, Collection<Integer>>(tuple.f0.intValue(), new ArrayList<>(tuple.f0.intValue()));
+            }).returns(TypeInformation.of(new TypeHint<Tuple2<Integer, Collection<Integer>>>(){}))
+            .groupBy(0)
+
+            .reduce(
+                    new ReduceFunction<Tuple2<Integer, Collection<Integer>>>() {
+                        @Override
+                        public Tuple2<Integer, Collection<Integer>> reduce(Tuple2<Integer, Collection<Integer>> value1, Tuple2<Integer, Collection<Integer>> value2) throws Exception {
+                            value1.f1.addAll(value2.f1);
+                            return value1;
+                        }
+                    }
+            )
+            .flatMap(
+                new FlatMapFunction<Tuple2<Integer, Collection<Integer>>, Tuple2<Integer, SparseVector>>() {
+
+
+                    private List<Integer> elements;
+
+                    @Override
+                    public void flatMap(Tuple2<Integer, Collection<Integer>> value, Collector<Tuple2<Integer, SparseVector>> out) throws Exception {
+
+                        int[] idArray = value.f1.stream().mapToInt(i -> i).toArray();
+                        for (int i = 0; i < number_cluster; i++) {
+                            out.collect(new Tuple2(i, SparseVector.createRandom(idArray, (double) 0.99, number_cluster, false)));
+                        }
+                    }
+                }
+        );
+
+        // set number of bulk iterations for KMeans algorithm
+        IterativeDataSet<Tuple2<Integer, SparseVector>> loop = centroids.iterate(iterations);
+
+
+        DataSet<Tuple2<Integer, SparseVector>> newCentroids = wordVectors
+                .map(new SelectNearestCentroidFlink("centroids")).withBroadcastSet(loop, "centroids")
+                .map(
+                    tuple3 -> new Tuple2<Integer, SparseVector>(tuple3.f2, tuple3.f1)
+                ).returns(TypeInformation.of(new TypeHint<Tuple2<Integer, SparseVector>>(){}))
+                .groupBy(0)
+                .reduce(new ReduceFunction<Tuple2<Integer, SparseVector>>() {
+                    @Override
+                    public Tuple2<Integer, SparseVector> reduce(Tuple2<Integer, SparseVector> value1, Tuple2<Integer, SparseVector> value2) throws Exception {
+                        value1.f1 = value1.f1.$plus(value2.f1);
+                        return value1;
+                    }
+                })
+                .map(
+                    tuple -> {
+                        tuple.f1.normalize();
+                        return tuple;
+                    }
+                ).returns(TypeInformation.of(new TypeHint<Tuple2<Integer, SparseVector>>(){}));
+
+        // feed new centroids back into next iteration
+        DataSet<Tuple2<Integer, SparseVector>> finalCentroids = loop.closeWith(newCentroids);
+
+        wordVectors
+                .map(
+                    new SelectNearestCentroidFlink("finalCentroids")
+                ).withBroadcastSet(finalCentroids, "finalCentroids")
+                .map(tuple3 -> {
+                    List<Integer> tmp= new ArrayList<>();
+                    tmp.add(tuple3.f0);
+                    return new Tuple2<Integer, List<Integer>>(
+                        tuple3.f2,
+                        tmp
+                    );
+                }).returns(TypeInformation.of(new TypeHint<Tuple2<Integer, List<Integer>>>(){}))
+                .groupBy(0)
+                .reduce(
+                    new ReduceFunction<Tuple2<Integer, List<Integer>>>() {
+                        @Override
+                        public Tuple2<Integer, List<Integer>> reduce(Tuple2<Integer, List<Integer>> value1, Tuple2<Integer, List<Integer>> value2) throws Exception {
+                            value1.f1.addAll(value2.f1);
+                            return value1;
+                        }
+                    }
+                )
+                .map(
+                    new RichMapFunction<Tuple2<Integer, List<Integer>>, String>() {
+                        private Map<Integer, String> map;
+                        @Override
+                        public void open(Configuration parameters) throws Exception {
+                            this.map = new HashMap<>();
+                            getRuntimeContext()
+                                .<Tuple2<Long, String>>getBroadcastVariable("wordIds")
+                                .forEach(
+                                    tuple -> map.put(tuple.f0.intValue(), tuple.f1)
+                                );
+                        }
+
+                        @Override
+                        public String map(Tuple2<Integer, List<Integer>> value) throws Exception {
+                            List<String> words = new ArrayList<>(value.f1.size());
+                            value.f1.forEach(
+                                element -> {
+                                    words.add(map.getOrDefault(element, "???"));
+                                }
+                            );
+                            return words.toString();
+                        }
+                    }
+                ).withBroadcastSet(words_id,"wordIds")
+                .writeAsText(output);
+    }
+
+    public static Map<String, DataSet> firstPart(ExecutionEnvironment env, String input, int minWordOccurrences, int neighborhoodReach){
+        HashMap<String, DataSet> parts = new HashMap<>();
+
         // Create the word dictionary
-        MapOperator<Tuple2<String, Integer>, String> forzipping = this.env.readTextFile(input)
+        DataSet<String> forzipping = env.readTextFile(input)
                 .flatMap(new FlatMapFunction<String, Tuple2<String, Integer>>() {
                     @Override
                     public void flatMap(String value, Collector<Tuple2<String, Integer>> out) throws Exception {
@@ -70,10 +191,10 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
                 .filter(tuple -> tuple.f1 > minWordOccurrences)
                 .map(tuple -> tuple.f0);
 
-        DataSet<Tuple2<Long, String>> zipped = DataSetUtils.zipWithUniqueId(forzipping);
+        DataSet<Tuple2<Long, String>> words_id = DataSetUtils.zipWithUniqueId(forzipping);
 
         // Create the word neighborhood vectors.
-        MapOperator<Tuple2<Integer, SparseVector>, Tuple2<Integer, SparseVector>> wordVectors = this.env.readTextFile(input).flatMap(
+        DataSet<Tuple2<Integer, SparseVector>> wordVectors = env.readTextFile(input).flatMap(
                 new RichFlatMapFunction<String, Tuple2<Integer, SparseVector>>() {
 
 
@@ -82,7 +203,6 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
 
                     @Override
                     public void open(Configuration parameters) throws Exception {
-                        super.open(parameters);
                         dictionary = new HashMap<>();
                         getRuntimeContext()
                                 .<Tuple2<Long, String>>getBroadcastVariable("wordIds")
@@ -91,6 +211,7 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
                                         tuple -> dictionary.put(tuple.f1, tuple.f0.intValue())
                                 );
                     }
+
 
                     @Override
                     public void flatMap(String value, Collector<Tuple2<Integer, SparseVector>> out) throws Exception {
@@ -122,7 +243,7 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
                                     }
                                     builder.add(wordsIds.get(j), 1);
                                 }
-                                for (int j = i + 1; j <= Math.min(wordsIds.size(), i + neighborhoodReach + 1); j++) {
+                                for (int j = i + 1; j < Math.min(wordsIds.size(), i + neighborhoodReach + 1); j++) {
                                     if (wordsIds.get(j) == -1) {
                                         continue;
                                     }
@@ -136,82 +257,69 @@ final public class SimWordsFlinkImplementation extends FlinkImplementation {
                     }
 
                 }
-            ).withBroadcastSet(zipped, "wordIds")
-            .groupBy(0)
-            .reduce(new ReduceFunction<Tuple2<Integer, SparseVector>>() {
-                @Override
-                public Tuple2<Integer, SparseVector> reduce(Tuple2<Integer, SparseVector> value1, Tuple2<Integer, SparseVector> value2) throws Exception {
-                    value1.f1 = value1.f1.$plus(value2.f1);
-                    return value1;
-                }
-            })
-            .map(new MapFunction<Tuple2<Integer, SparseVector>, Tuple2<Integer, SparseVector>>() {
-                @Override
-                public Tuple2<Integer, SparseVector> map(Tuple2<Integer, SparseVector> value) throws Exception {
-                     value.f1.normalize();
-                     return value;
-                }
-            });
-
-
-        FlatMapOperator<Object, Tuple2<Integer, SparseVector>> centroids = this.env.fromElements(null).flatMap(
-                new RichFlatMapFunction<Object, Tuple2<Integer, SparseVector>>() {
-                    private List<Integer> elements;
-
+        ).withBroadcastSet(words_id, "wordIds")
+                .groupBy(0)
+                .reduce(new ReduceFunction<Tuple2<Integer, SparseVector>>() {
                     @Override
-                    public void open(Configuration parameters) throws Exception {
-                        super.open(parameters);
-                        elements = getRuntimeContext()
-                                .<Tuple2<Long, String>>getBroadcastVariable("wordIds")
-                                .stream()
-                                .map(
-                                        tuple -> tuple.f0.intValue()
-                                ).collect(Collectors.toList());
+                    public Tuple2<Integer, SparseVector> reduce(Tuple2<Integer, SparseVector> value1, Tuple2<Integer, SparseVector> value2) throws Exception {
+                        value1.f1 = value1.f1.$plus(value2.f1);
+                        return value1;
                     }
-
+                })
+                .map(new MapFunction<Tuple2<Integer, SparseVector>, Tuple2<Integer, SparseVector>>() {
                     @Override
-                    public void flatMap(Object value, Collector<Tuple2<Integer, SparseVector>> out) throws Exception {
-                        int[] idArray = elements.stream().mapToInt(i -> i).toArray();
-                        for (int i = 0; i < number_cluster; i++) {
-                            out.collect(new Tuple2(i, SparseVector.createRandom(idArray, (double) 0.99, number_cluster, false)));
-                        }
+                    public Tuple2<Integer, SparseVector> map(Tuple2<Integer, SparseVector> value) throws Exception {
+                        value.f1.normalize();
+                        return value;
                     }
-
-                    ;
-                }
-        ).withBroadcastSet(zipped, "wordIds");
+                });
 
 
-        // set number of bulk iterations for KMeans algorithm
-        IterativeDataSet<Tuple2<Integer, SparseVector>> loop = centroids.iterate(iterations);
+        parts.put("words_id", words_id);
+        parts.put("wordVectors", wordVectors);
 
-        DataSet<Centroid> newCentroids = wordVectors
-                // compute closest centroid for each point
-                .map(new SelectNearestCenter()).withBroadcastSet(loop, "centroids")
-                // count and sum point coordinates for each centroid
-                .map(new KmeansFlinkImplementation.CountAppender())
-                .groupBy(0).reduce(new KmeansFlinkImplementation.CentroidAccumulator())
-                // compute new centroids from point counts and coordinate sums
-                .map(new KmeansFlinkImplementation.CentroidAverager());
+        return parts;
+    }
 
-        // feed new centroids back into next iteration
-        DataSet<Centroid> finalCentroids = loop.closeWith(newCentroids);
-
-        DataSet<Tuple2<Integer, Point>> clusteredPoints = points
-                // assign points to final clusters
-                .map(new KmeansFlinkImplementation.SelectNearestCenter()).withBroadcastSet(finalCentroids, "centroids");
+}
 
 
+class SelectNearestCentroidFlink extends RichMapFunction<Tuple2<Integer, SparseVector>, Tuple3<Integer, SparseVector, Integer>> {
+
+    private String name_broadcast;
+
+    private List<Tuple2<Integer, SparseVector>> centroids;
+
+    private Random random = new Random();
 
 
-        // Apply the centroids to the points and resolve the word IDs.
-        val clusters = wordVectors
-                .mapJava(new SelectNearestCentroidFunction("finalCentroids")).withBroadcast(finalCentroids, "finalCentroids").withName("Select nearest final centroids")
-      .map(assigment => (assigment._3, List(assigment._1))).withName("Discard word vectors")
-                .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 ++ c2._2)).withName("Create clusters")
-                .map(_._2).withName("Discard cluster IDs")
-                .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
-*/
+    public SelectNearestCentroidFlink(String name_broadcast) {
+        this.name_broadcast = name_broadcast;
+    }
 
+    @Override
+    public void open(Configuration parameters) throws Exception {
+        this.centroids = getRuntimeContext().<Tuple2<Integer, SparseVector>>getBroadcastVariable(this.name_broadcast);
+    }
+
+    @Override
+    public Tuple3<Integer, SparseVector, Integer> map(Tuple2<Integer, SparseVector> value) throws Exception {
+
+        double maxSimilarity = -1d;
+        int nearestCentroid = -1;
+
+        for(Tuple2<Integer, SparseVector> centroid : centroids){
+            double similarity = Math.abs(centroid.f1.$times(value.f1));
+            if(similarity > maxSimilarity){
+                maxSimilarity = similarity;
+                nearestCentroid = centroid.f0;
+            }
+        }
+        if(nearestCentroid == -1){
+            maxSimilarity = 0;
+            nearestCentroid = this.centroids.get(this.random.nextInt(this.centroids.size())).f0;
+        }
+
+        return new Tuple3<>(value.f0, value.f1, nearestCentroid);
     }
 }

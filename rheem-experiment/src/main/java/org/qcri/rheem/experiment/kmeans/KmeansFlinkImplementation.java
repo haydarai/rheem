@@ -11,6 +11,8 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.qcri.rheem.experiment.implementations.flink.FlinkImplementation;
+import org.qcri.rheem.experiment.kmeans.udf.Centroid;
+import org.qcri.rheem.experiment.kmeans.udf.Point;
 import org.qcri.rheem.experiment.utils.parameters.RheemParameters;
 import org.qcri.rheem.experiment.utils.parameters.type.FileParameter;
 import org.qcri.rheem.experiment.utils.parameters.type.VariableParameter;
@@ -62,19 +64,19 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
 
         DataSet<Centroid> newCentroids = points
                 // compute closest centroid for each point
-                .map(new SelectNearestCenter()).withBroadcastSet(loop, "centroids")
+                .map(new SelectNearestCenterFlink()).withBroadcastSet(loop, "centroids")
                 // count and sum point coordinates for each centroid
-                .map(new CountAppender())
-                .groupBy(0).reduce(new CentroidAccumulator())
+                .map(new CountAppenderFlink())
+                .groupBy(0).reduce(new CentroidAccumulatorFlink())
                 // compute new centroids from point counts and coordinate sums
-                .map(new CentroidAverager());
+                .map(new CentroidAveragerFlink());
 
         // feed new centroids back into next iteration
         DataSet<Centroid> finalCentroids = loop.closeWith(newCentroids);
 
         DataSet<Tuple2<Integer, Point>> clusteredPoints = points
                 // assign points to final clusters
-                .map(new SelectNearestCenter()).withBroadcastSet(finalCentroids, "centroids");
+                .map(new SelectNearestCenterFlink()).withBroadcastSet(finalCentroids, "centroids");
 
         clusteredPoints.writeAsText(output);
     }
@@ -87,7 +89,7 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
 
     /** Determines the closest cluster center for a data point. */
     @FunctionAnnotation.ForwardedFields("*->1")
-    public static final class SelectNearestCenter extends RichMapFunction<Point, Tuple2<Integer, Point>> {
+    public static final class SelectNearestCenterFlink extends RichMapFunction<Point, Tuple2<Integer, Point>> {
         private Collection<Centroid> centroids;
 
         /** Reads the centroid values from a broadcast variable into a collection. */
@@ -121,7 +123,7 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
 
     /** Appends a count variable to the tuple. */
     @FunctionAnnotation.ForwardedFields("f0;f1")
-    public static final class CountAppender implements MapFunction<Tuple2<Integer, Point>, Tuple3<Integer, Point, Long>> {
+    public static final class CountAppenderFlink implements MapFunction<Tuple2<Integer, Point>, Tuple3<Integer, Point, Long>> {
 
         @Override
         public Tuple3<Integer, Point, Long> map(Tuple2<Integer, Point> t) {
@@ -131,7 +133,7 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
 
     /** Sums and counts point coordinates. */
     @FunctionAnnotation.ForwardedFields("0")
-    public static final class CentroidAccumulator implements ReduceFunction<Tuple3<Integer, Point, Long>> {
+    public static final class CentroidAccumulatorFlink implements ReduceFunction<Tuple3<Integer, Point, Long>> {
 
         @Override
         public Tuple3<Integer, Point, Long> reduce(Tuple3<Integer, Point, Long> val1, Tuple3<Integer, Point, Long> val2) {
@@ -141,7 +143,7 @@ final public class KmeansFlinkImplementation extends FlinkImplementation {
 
     /** Computes new centroid from coordinate sum and count of points. */
     @FunctionAnnotation.ForwardedFields("0->id")
-    public static final class CentroidAverager implements MapFunction<Tuple3<Integer, Point, Long>, Centroid> {
+    public static final class CentroidAveragerFlink implements MapFunction<Tuple3<Integer, Point, Long>, Centroid> {
 
         @Override
         public Centroid map(Tuple3<Integer, Point, Long> value) {

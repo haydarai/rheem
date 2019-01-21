@@ -29,6 +29,15 @@ public class Crocopr extends RheemExperiment {
         input_file_option.setRequired(true);
         options.addOption(input_file_option);
 
+        Option input2_file_option = new Option(
+                "i2",
+                "input2_file",
+                true,
+                "The location of the input2 file that will use in the Crocopr"
+        );
+        input2_file_option.setRequired(true);
+        options.addOption(input2_file_option);
+
         Option output_file_option = new Option(
                 "o",
                 "output_file",
@@ -45,6 +54,7 @@ public class Crocopr extends RheemExperiment {
         RheemParameters parameters = new RheemParameters();
 
         parameters.addParameter("input", new FileParameter(controller.getValue("input_file")));
+        parameters.addParameter("input2", new FileParameter(controller.getValue("input2_file")));
 
         RheemResults results = new RheemResults();
 
@@ -65,6 +75,9 @@ public class Crocopr extends RheemExperiment {
                 break;
             case Implementation.RHEEM:
                 implementation = new CrocoprRheemImplementation(platform, parameters, results, udfs);
+                break;
+            case Implementation.GIRAPH:
+                implementation = new CrocoprGiraphImplementation(platform, parameters, results, udfs);
                 break;
             default:
                 throw new ExperimentException(

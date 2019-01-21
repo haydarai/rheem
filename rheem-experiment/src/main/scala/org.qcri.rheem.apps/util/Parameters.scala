@@ -5,6 +5,7 @@ import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plugin.{DynamicPlugin, Plugin}
 import org.qcri.rheem.flink.Flink
+import org.qcri.rheem.giraph.Giraph
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
 
@@ -47,6 +48,7 @@ object Parameters {
     case "spark-graph" => Spark.graphPlugin
     case "spark-conversions" => Spark.conversionPlugin
     case "flink" => Flink.basicPlugin()
+    case "giraph" => Giraph.plugin()
     case yamlId(url) => DynamicPlugin.loadYaml(url)
     case other => throw new IllegalArgumentException(s"Could not load platform '$other'.")
   }
