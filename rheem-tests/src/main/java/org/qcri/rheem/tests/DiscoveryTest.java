@@ -17,6 +17,7 @@ import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.TupleType;
 import org.qcri.rheem.java.Java;
+import org.qcri.rheem.spark.Spark;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -206,6 +207,7 @@ public class DiscoveryTest {
         //##############################################################################################################
         RheemContext rc = new RheemContext();
         rc.register(Java.basicPlugin());
+        rc.register(Spark.basicPlugin());
 
         RheemPlan rp = new RheemPlan(sink);
 
@@ -217,6 +219,7 @@ public class DiscoveryTest {
     public DebugContext specialWordCountWithSniffer(){
         RheemContext rc = new RheemContext().changeToDebug();
         rc.register(Java.basicPlugin());
+        rc.register(Spark.basicPlugin());
         DebugContext dc = rc.getDebugContext();
         //##############################################################################################################
         //##############################################################################################################
@@ -652,6 +655,7 @@ public class DiscoveryTest {
         //##############################################################################################################
         RheemContext rc = new RheemContext().changeToDebug();
         rc.register(Java.basicPlugin());
+        rc.register(Spark.basicPlugin());
 
         RheemPlan rp = new RheemPlan(sink, sinkTrue, sinkFalse);
 
@@ -667,6 +671,7 @@ public class DiscoveryTest {
     public DebugContext onlySniffer(){
         RheemContext rc = new RheemContext().changeToDebug();
         rc.register(Java.basicPlugin());
+        rc.register(Spark.basicPlugin());
         DebugContext dc = rc.getDebugContext();
         //##############################################################################################################
         //##############################################################################################################
