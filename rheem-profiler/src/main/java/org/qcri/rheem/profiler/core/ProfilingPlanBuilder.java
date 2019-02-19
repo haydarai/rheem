@@ -118,7 +118,7 @@ public class ProfilingPlanBuilder implements Serializable {
                     ExhaustiveEnumeration.doubleRecursiveEnumeration(nodes, profilingConfig.getUnaryExecutionOperators() , profilingConfig.getProfilingPlateform(), 0, total_pipeline_nodes.get() , totalEnumOpertorsPlatforms);
                     break;
                 case "maxPlatSwitch":
-//                    MaxPlatformPruningEnumeration.doubleRecursiveEnumerationWithSwitchPruning(nodes, profilingConfig.getUnaryExecutionOperators() , profilingConfig.getProfilingPlateform(), 0, profilingConfig.getMaxPlatformSwitch(), total_pipeline_nodes.get() , totalEnumOpertorsPlatforms);
+                    MaxPlatformPruningEnumeration.doubleRecursiveEnumerationWithSwitchPruning(nodes, profilingConfig.getUnaryExecutionOperators() , profilingConfig.getProfilingPlateform(), 0, profilingConfig.getMaxPlatformSwitch(), total_pipeline_nodes.get() , totalEnumOpertorsPlatforms);
                     break;
             }
 
