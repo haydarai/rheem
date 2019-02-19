@@ -8,7 +8,6 @@ import org.qcri.rheem.core.optimizer.mloptimizer.api.Topology;
 import org.qcri.rheem.profiler.core.*;
 import org.qcri.rheem.profiler.core.api.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,32 +17,33 @@ import java.util.stream.Collectors;
  */
 public class ProfilingApp {
 
-//    @Test
+    private final String[] PROFILE_TYPES = {"single_operator_profiling", "exhaustive_profiling"};
+
+    @Test
     public static void main(String[] args) {
-        //String profileTesting = "single_operator_profiling";
+
         String profileTesting;
-        String platform="";
+        String platform;
         int maxNodeNumber = 5;
 
+        // Check which profile type
         if (args.length==1)
-            profileTesting=args[0];
+            profileTesting = args[0];
         else
             profileTesting = "exhaustive_profiling";
+        
         List<Topology> topologies;
         ProfilingConfig profilingConfig;
         List< ? extends OperatorProfiler> operatorProfilers;
-        List<Shape> shapes = new ArrayList<>();
-        List<List<PlanProfiler>> planProfilers;
-        List<List<OperatorProfiler>> planProfilersSinks;
-
-        //RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-
+        List<Shape> shapes;
 
         if (args.length>=2)
             maxNodeNumber = Integer.valueOf(args[1]);
 
         if (args.length>=3)
             platform = String.valueOf(args[2]);
+        else
+            platform = "";
 
         switch (profileTesting){
             case "single_operator_profiling":
@@ -51,11 +51,10 @@ public class ProfilingApp {
                 profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
                 operatorProfilers = ProfilingPlanBuilder.PlanBuilder(topologies.get(0),profilingConfig);
                 ProfilingRunner.SingleOperatorProfiling(operatorProfilers,profilingConfig);
+                return;
             case "exhaustive_profiling":
                 for(int nodeNumber=maxNodeNumber;nodeNumber<=maxNodeNumber;nodeNumber++){
-
                     profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
-
                     if (platform.length()!=0)
                         profilingConfig.setProfilingPlateform(Arrays.asList(new String[]{platform}));
                     // Initialize the generator
@@ -73,13 +72,12 @@ public class ProfilingApp {
                     shapes.stream().forEach(s -> s.populateShape(s.getSinkTopology()));
 
                     // populate shapes
-                    //profilingConfig = ProfilingConfigurer.exhaustiveProfilingConfig();
-                    planProfilers = ProfilingPlanBuilder.exhaustiveProfilingPlanBuilder(shapes,profilingConfig);
-                    //shapes.stream().forEach(s -> s.prepareVectorLogs());
+                    ProfilingPlanBuilder.ProfilingPlanBuilder(shapes,profilingConfig);
 
+                    // Execute sub-shapes [execution plans]
                     ProfilingRunner.exhaustiveProfiling(shapes,profilingConfig);
-                    //System.out.println(result.toCsvString())
                 }
+                return;
         }
     }
 }

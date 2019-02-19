@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 public class LoadModel {
     public static final URI MODEL_LOADING_LOCATION = getResourceUri("load-model.py");
 
+
     private static final Logger logger = LoggerFactory.getLogger(LoadModel.class);
 
     private static Configuration configuration = new Configuration();

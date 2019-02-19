@@ -66,7 +66,7 @@ public class LogGenerator {
     private static int opPosStep = 10;
     private static int channelPosStep = 4;
     private static int maxOperatorNumber = 19;
-    private static int maxChannelNumber = 5;
+    private static int maxChannelNumber = 6;
     private double estimatedInputCardinality;
     private double estimatedDataQuataSize;
     public static LinkedHashMap<String,Integer> OPERATOR_VECTOR_POSITION_WITHOUT_DUPLICATES = new LinkedHashMap<String,Integer>(){{
@@ -114,10 +114,10 @@ public class LogGenerator {
     public LinkedHashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
         put("collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("collectionsource",startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("objectfilesource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);
-        put("Collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
+        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
         put("collectionsink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
-        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
-        put("broadcast", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
+//        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
+//        put("broadcast", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
     }};
 
     static LinkedHashMap<String,Integer> OLD_CONVERSION_OPERATOR_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
@@ -861,6 +861,7 @@ public class LogGenerator {
         final int[] count = {0,0};
         final int[] opPos = {0};
         NumberFormat nf = new DecimalFormat("##.#");
+        System.out.println(featureVector.length);
         Arrays.stream(featureVector).forEach(d -> {
             if (count[0]==0) outputVector[0] = outputVector[0].concat("Topologies< ");
             //if (count[0]==4) outputVector[0] = outputVector[0].concat("> ");

@@ -29,12 +29,11 @@ public class Shape {
 
     public static final int MAXIMUM_OPERATOR_NUMBER_PER_SHAPE = 100;
 
-
-    //TODO: Add a vectorlog nested class for more readablilty purposes
+    //TODO: Add a vectorlog nested class for more readability purposes
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final Configuration config;
-    // subshapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
-    private List<Shape> subShapes = new ArrayList<>();
+    // executionShapes that will have all exhaustive filled with different nodes;plateforms;Types of the same shape
+    private List<Shape> executionShapes = new ArrayList<>();
     private List<Topology> allTopologies = new ArrayList<>();
     private List<Topology> sourceTopologies = new ArrayList<>();
     private List<String> plateform;
@@ -47,9 +46,6 @@ public class Shape {
     private int averageComplexity = 1;
     private int numberOperators = 0;
 
-    //private final int VECTOR_SIZE = 105;
-    //private final int VECTOR_SIZE = 146;
-    //private final int VECTOR_SIZE = 194;
     private final int VECTOR_SIZE = 251;
     double[] vectorLogs= new double[VECTOR_SIZE];
     double[][] vectorLogs2D= new double[10][VECTOR_SIZE];
@@ -100,9 +96,9 @@ public class Shape {
     public HashMap<String,Integer> CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
         put("collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 5*channelPosStep);put("collectionsource",startOpPos + (1+maxOperatorNumber)*opPosStep + 6*channelPosStep);
         put("objectfilesource",startOpPos + (1+maxOperatorNumber)*opPosStep + 7*channelPosStep);
-        put("Collect", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
+        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 8*channelPosStep);put("objectfilesink", startOpPos + (1+maxOperatorNumber)*opPosStep + 9*channelPosStep);
         put("collectionsink", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
-        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
+//        put("cache", startOpPos + (1+maxOperatorNumber)*opPosStep + 10*channelPosStep);
     }};
 
     static HashMap<String,Integer> OLD_CONVERSION_OPERATOR_VECTOR_POSITION = new HashMap<String,Integer>(){{
@@ -153,7 +149,7 @@ public class Shape {
 
     // TODO: need maintainablility: whenever you add new variable to topology you have to
     public Shape clone(){
-        Shape newShape = new Shape(this.sinkTopology.createCopy(this.getSinkTopology().getTopologyNumber()), new Configuration());
+        Shape newShape = new Shape(this.sinkTopology.createCopy(this.getSinkTopology().getTopologyNumber()), this.config);
         newShape.populateShape(newShape.getSinkTopology());
         newShape.setPlateform(this.plateform);
         return newShape;
@@ -272,7 +268,7 @@ public class Shape {
      * @return
      */
     public static Shape createShape(UnarySink sinkOperator, boolean ispreExecution, boolean prepareVectorLog){
-        Shape newShape = new Shape(new Configuration());
+        Shape newShape = new Shape(Configuration.getDefaultConfiguration());
 
         // Initiate current and predecessor executionOperator
         Operator currentOperator = sinkOperator;
@@ -280,7 +276,7 @@ public class Shape {
                 .map(inputSlot -> inputSlot.getOccupant().getOwner())
                 .collect(Collectors.toList());
         //Operator predecessorOperator = sinkOperator.getInput(0).getOccupant().getOwner();
-        // DEclare and initialize predecessor executionOperator
+        // Declare and initialize predecessor executionOperator
         Operator predecessorOperator = predecessorOperators.get(0);
         ListIterator iterpredecessorOperators = predecessorOperators.listIterator();
         //for (Operator predecessorOperator:predecessorOperators){
@@ -359,7 +355,7 @@ public class Shape {
                     newShape.getAllTopologies().add(newPipelineTopology);
                 }
 
-                //DONE: add juncture handling
+                //Juncture handling
                 if (predecessorOperator instanceof BinaryToUnaryOperator) {
                     JunctureTopology newJunctureTopology = new JunctureTopology();
                     if (currentOperator.isSink()) {
@@ -399,7 +395,7 @@ public class Shape {
                     }
                 }
 
-                //DONE: add loop handling
+                //Loop handling
                 if (predecessorOperator instanceof LoopHeadOperator) {
                     LoopTopology newLoopTopology = new LoopTopology();
                     if (currentOperator.isSink()) {
@@ -457,12 +453,12 @@ public class Shape {
     public Topology getSinkTopology() {
         return sinkTopology;
     }
-    public List<Shape> getSubShapes() {
-        return subShapes;
+    public List<Shape> getExecutionShapes() {
+        return executionShapes;
     }
 
-    public void setSubShapes(List<Shape> subShapes) {
-        this.subShapes = subShapes;
+    public void setExecutionShapes(List<Shape> executionShapes) {
+        this.executionShapes = executionShapes;
     }
 
 
@@ -512,6 +508,7 @@ public class Shape {
      ********************************************/
 
 
+
     public void prepareVectorLog(boolean ispreExecution){
 
         double[] tmpVectorLogs1D = new double[VECTOR_SIZE];
@@ -538,7 +535,7 @@ public class Shape {
 
                                     // add topoliges to 2d vector log
                                     //tmpVectorLogs2D[0]=tmpVectorLogs1D;
-                                    // Loop through all subShapes
+                                    // Loop through all executionShapes
                                     tmpVectorLogs2D[0][0]=this.getPipelineTopologies().size();
                                     tmpVectorLogs2D[0][1]=this.getJunctureTopologies().size();
                                     tmpVectorLogs2D[0][2]=this.getLoopTopologies().size();

@@ -31,21 +31,8 @@ public class OperatorProfilerBase extends OperatorProfiler {
      */
     public OperatorProfilerBase(Operator operator){
         this.rheemOperator = operator;
-        //this.setExecutionOperator(executionOperator);
     }
 
-    public OperatorProfilerBase(Supplier<Operator> operatorGenerator,
-                                Supplier<?>... dataQuantumGenerators) {
-        this.operatorGenerator = operatorGenerator;
-        this.operator = operatorGenerator.get();
-        this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
-
-//        if (executionOperatorGenerator.get().isSource()) {
-//            UnarySource unarySource = (UnarySource) executionOperatorGenerator.get();
-//            unarySource.get
-//        }
-        this.fileUrl = new Configuration().getStringProperty("rheem.core.log.syntheticDataURL.prefix");
-    }
 
     public OperatorProfilerBase(Supplier<ExecutionOperator> executionOperatorGenerator,
                                  Configuration configuration,
@@ -53,12 +40,7 @@ public class OperatorProfilerBase extends OperatorProfiler {
         this.executionOperatorGenerator = executionOperatorGenerator;
         this.executionOperator = this.executionOperatorGenerator.get();
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
-
-//        if (executionOperatorGenerator.get().isSource()) {
-//            UnarySource unarySource = (UnarySource) executionOperatorGenerator.get();
-//            unarySource.get
-//        }
-        this.fileUrl = new Configuration().getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix");
+        this.fileUrl = configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix");
     }
 
     @Override

@@ -1,5 +1,6 @@
 package org.qcri.rheem.profiler.core;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.mloptimizer.api.LoopTopology;
@@ -10,6 +11,7 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.profiler.core.api.*;
+import org.qcri.rheem.profiler.core.api.PlanEnumeration.ExhaustiveEnumeration;
 import org.qcri.rheem.profiler.generators.DataGenerators;
 import org.qcri.rheem.profiler.generators.ProfilingOperatorGenerator;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
@@ -19,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.*;
-
+import java.util.stream.Collectors;
 /**
  * Generates rheem plans for profiling.
  */
@@ -28,7 +30,7 @@ public class ProfilingPlanBuilder implements Serializable {
     /**
      * Logging for profiling plan building
      */
-    public static final Logger logger =  LoggerFactory.getLogger(ProfilingRunner.class);
+    public static final Logger logger =  LoggerFactory.getLogger(ProfilingPlanBuilder.class);
 
 
     /**
@@ -47,30 +49,181 @@ public class ProfilingPlanBuilder implements Serializable {
     private static LoopTopology currentLoop;
 
 
-    public static List<List<PlanProfiler>> exhaustiveProfilingPlanBuilder(List<Shape> shapes, ProfilingConfig profilingConfiguration){
+    public static List<List<PlanProfiler>> ProfilingPlanBuilder(List<Shape> shapes, ProfilingConfig profilingConfiguration){
         profilingConfig = profilingConfiguration;
         assert (shapes.size()!=0);
 
         List<List<PlanProfiler>> topologyPlanProfilers = new ArrayList<>();
 
         for(Shape s:shapes){
-            if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("exhaustive")){
-                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1, shapes));
+            if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("random")){
+                topologyPlanProfilers.add(randomProfilingPlanBuilder(s, shapes, configuration));
+            } else if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("exhaustive")){
+                topologyPlanProfilers.add(exhaustiveProfilingPlanBuilder(s, configuration, "exhaustive"));
+            } else if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("maxPlatSwitch")){
+            topologyPlanProfilers.add(exhaustiveProfilingPlanBuilder(s, configuration, "maxPlatSwitch"));
             } else {
-                // TODO: add more profiling plan generation enumeration: random, worstPlanGen (more execution time),betterPlanGen (less execution time)
-                topologyPlanProfilers.add(randomProfilingPlanBuilder(s,1, shapes));
+                // TODO: add more profiling plan generation pruning: worstPlanGen (more execution time),betterPlanGen (less execution time)
+                new RheemException("Unhandled profiling plan generation!");
             }
         }
         return topologyPlanProfilers;
     }
 
+    /**
+     * Generates a list that contains a {@param numberPlans} of exhaustive generated {@link PlanProfiler}s for the given {@param shape}
+     * through filling all possible `platform combinations`
+     * @param shape
+     * @return
+     */
+    public static List<PlanProfiler> exhaustiveProfilingPlanBuilder(Shape shape, Configuration configuration, String pruning){
+        List<PlanProfiler> planProfilers = new ArrayList<>();
+        PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
+        List<Shape> tmpSubShapes = new ArrayList<>();
+        String tmpPlateform = "";
+        String tmpOperator = "";
+
+        // Set platforms contained in the shape
+        shape.setPlateform(profilingConfig.getProfilingPlateform());
+
+        int PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+        String platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+
+        // Loop through all dataTypes
+        for(DataSetType type:profilingConfig.getDataType()){
+
+            // Set the shape's platform
+            List<String> platforms = profilingConfig.getProfilingPlateform();
+            // Get total node numbers
+            Optional<Integer> total_pipeline_nodes = shape.getPipelineTopologies().stream()
+                    .map(t1 -> {
+                        if (t1.isSource())
+                            // Remove first node as it will be a source operator
+                            return t1.getNodeNumber() - 1;
+                        else
+                            return t1.getNodeNumber();
+                    })
+                    .reduce((n1, n2) -> n1 + n2);
+
+            List nodes = new ArrayList<String>(total_pipeline_nodes.get());
+            List<List<Tuple2<String,String>>> totalEnumOpertorsPlatforms = new ArrayList<>();
+
+            // Initialize nodes
+            for(int i=0;i<total_pipeline_nodes.get();i++)
+                nodes.add(new Tuple2<>(profilingConfig.getUnaryExecutionOperators().get(0),profilingConfig.getProfilingPlateform()));
+
+            // Get exhaustive operator-plateform generation
+            switch (pruning){
+                case "exhaustive":
+                    ExhaustiveEnumeration.doubleRecursiveEnumeration(nodes, profilingConfig.getUnaryExecutionOperators() , profilingConfig.getProfilingPlateform(), 0, total_pipeline_nodes.get() , totalEnumOpertorsPlatforms);
+                    break;
+                case "maxPlatSwitch":
+//                    MaxPlatformPruningEnumeration.doubleRecursiveEnumerationWithSwitchPruning(nodes, profilingConfig.getUnaryExecutionOperators() , profilingConfig.getProfilingPlateform(), 0, profilingConfig.getMaxPlatformSwitch(), total_pipeline_nodes.get() , totalEnumOpertorsPlatforms);
+                    break;
+            }
+
+            // all pipelines node filling counter
+            int enumCounter=0;
+            // Loop through all combinations
+            for(List<Tuple2<String,String>> OPenumeration:totalEnumOpertorsPlatforms) {
+                // Fill with unary executionOperator profilers
+                for (Topology t : shape.getPipelineTopologies()) {
+                    int topologyNodeNumber = 0;
+                    // check if the nodes are not already filled in the source or sink
+                    if (t.getNodes().isEmpty())
+                        // Fill with source operators
+                        if (t.isSource()) {
+                            topologyNodeNumber = t.getNodeNumber() - 1;
+                            PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+                            platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                            // fill first node
+                            t.getNodes().push(sourceNodeFill(type, platform));
+                            t.addPlatform(platform);
+                        }
+                        else
+                            topologyNodeNumber = t.getNodeNumber();
+                        for (int i = 1; i <= topologyNodeNumber; i++) {
+                            // Get enumerated platform
+                            tmpOperator = OPenumeration
+                                    .get(enumCounter)
+                                    .field0;
+                            // Get enumerated operator
+                            tmpPlateform = OPenumeration
+                                    .get(enumCounter)
+                                    .field1;
+                            t.getNodes().push(UnaryNodeFill(type,tmpPlateform, tmpOperator));
+                            t.addPlatform(tmpPlateform);
+                            enumCounter++;
+                        }
+                }
+                // Reinitialize all pipelines node filling counter
+                enumCounter = 0;
+
+                // Fill with binary executionOperator profilers
+                for (Topology t : shape.getJunctureTopologies()) {
+                    // check if the nodes are not already filled in the source or sink
+                    PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+                    platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                    t.getNodes().push(binaryNodeFill(type, platform));
+                    t.addPlatform(platform);
+                }
+
+                // Fill the loop topologies
+                for (Topology t : shape.getLoopTopologies()) {
+                    // if there's multiple platform; case of flink loop operator is avoided to avoid having non flink operator inside loop subPlan
+                    if (profilingConfig.getProfilingPlateform().size() > 1)
+                        while (platform.equals("flink")) {
+                            // select a new platform randomly
+                            PlatformRnd = (int) (Math.random() * profilingConfig.getProfilingPlateform().size());
+                            platform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+                        }
+                    t.getNodes().push(loopNodeFill(type, platform));
+                    t.addPlatform(platform);
+
+                }
+
+                // Fill sink topology
+                prepareSink(shape.getSinkTopology(), type, platform, configuration);
+
+                // Build the planProfiler
+                buildPlanProfiler(shape, type);
+
+                // add the filled shape to tempSubShapes
+                tmpSubShapes.add(shape.clone());
+
+                // Reset shape
+                shape.resetAllNodes();
+
+                // Add planProfiler
+                planProfilers.add(planProfiler);
+            }
+
+        }
+        shape.setExecutionShapes(tmpSubShapes);
+        return planProfilers;
+    }
+
+    /**
+     * Fills the toplogy instance with unary profiling operators
+     * @return
+     */
+    private static Tuple2<String,List<OperatorProfiler>> exhaustiveUnaryNodeFill(DataSetType type, String plateform){
+        int udfRnd = profilingConfig.getUdfsComplexity().get( (int)(Math.random() * profilingConfig.getUdfsComplexity().size()));
+        // Generate all operator Profilers with the same execution platform
+        List<OperatorProfiler> OperatorProfilerList = profilingConfig.getUnaryExecutionOperators().stream()
+                .map(operator->ProfilingOperatorGenerator.getProfilingOperator(operator, type, plateform,1,udfRnd))
+                .collect(Collectors.toList());
+
+        Tuple2<String,List<OperatorProfiler>> returnNode = new Tuple2(plateform, ProfilingOperatorGenerator.getProfilingOperator(plateform, type, plateform,1,udfRnd));
+        return returnNode;
+    }
 
     /**
      * Generates a list that contains a {@param numberPlans} of random {@link PlanProfiler}s for the given {@param shape}
      * @param shape
      * @return
      */
-    public static List<PlanProfiler> randomProfilingPlanBuilder(Shape shape, int numberPlans, List<Shape> shapes){
+    public static List<PlanProfiler> randomProfilingPlanBuilder(Shape shape, List<Shape> shapes, Configuration configuration){
         List<PlanProfiler> planProfilers = new ArrayList<>();
         PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
         List<Shape> tmpSubShapes = new ArrayList<>();
@@ -124,7 +277,7 @@ public class ProfilingPlanBuilder implements Serializable {
                                 t.addPlatform(platform);
                             }
 
-                            // Fill the loop topologies
+                            // Fill loop topologies
                             for (Topology t : shape.getLoopTopologies()) {
                                 // select a new platform randomly
                                 PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
@@ -144,7 +297,7 @@ public class ProfilingPlanBuilder implements Serializable {
                             // Fill the sinks
                             //for(Topology t:shape.getSinkTopology()){
                             //if (shape.getSinkTopology().getNodes().isEmpty())
-                            prepareSink(shape.getSinkTopology(), type, platform);
+                            prepareSink(shape.getSinkTopology(), type, platform, configuration);
                             //}
 
                             // Build the planProfiler
@@ -163,7 +316,7 @@ public class ProfilingPlanBuilder implements Serializable {
                 }
             //}
         }
-        shape.setSubShapes(tmpSubShapes);
+        shape.setExecutionShapes(tmpSubShapes);
         return planProfilers;
     }
 
@@ -172,7 +325,7 @@ public class ProfilingPlanBuilder implements Serializable {
      * @param shape
      * @return
      */
-    public static List<PlanProfiler> exhaustiveProfilingPlanBuilder(Shape shape){
+    public static List<PlanProfiler> ProfilingPlanBuilder(Shape shape){
         List<PlanProfiler> planProfilers = new ArrayList<>();
         PlanProfiler planProfiler = new PlanProfiler(shape, profilingConfig);
 
@@ -279,7 +432,7 @@ public class ProfilingPlanBuilder implements Serializable {
                 try{
                     currentNode.getField1().getExecutionOperator().connectTo(0,previousNode.getField1().getExecutionOperator(),inputSlot);
                 } catch (Exception e){
-                    logger.error(e.getMessage());
+//                    logger.error(e.getMessage());
                 }
 
                 // Reset inputSlot to 0 after connecting the last pipeline node with the jucture topology's node
@@ -419,10 +572,38 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
+     * Add nodes to source Topology (i.e. pipeline topology)
+     * PS: Source node i counted in the node number
+     * @param topology
+     */
+    private static void prepareSourceExhaustive(Topology topology, DataSetType type, List<String> plateforms) {
+        // select teh first platform to appear in the config file for the source operators
+        int PlatformRnd;
+        String plateform = profilingConfig.getProfilingPlateform().get(0);
+        // add the first source node
+        topology.getNodes().push(sourceNodeFill(type, plateform));
+        topology.addPlatform(plateform);
+
+        // exit in the case of a loop
+        if (topology.isLoop())
+            return;
+
+        // add the remaining nodes with unary nodes
+        for(int i=1;i<=topology.getNodeNumber();i++) {
+            // re-select a new platform randomly
+            PlatformRnd = (int)(Math.random() * profilingConfig.getProfilingPlateform().size());
+            plateform = profilingConfig.getProfilingPlateform().get(PlatformRnd);
+            topology.getNodes().push(randomUnaryNodeFill(type, plateform));
+            topology.addPlatform(plateform);
+        }
+    }
+
+
+    /**
      * Add the sink to the sink topology; NOTE: that the sink is node included as a node
      * @param topology
      */
-    private static void prepareSink(Topology topology, DataSetType type, String plateform) {
+    private static void prepareSink(Topology topology, DataSetType type, String plateform, Configuration configuration) {
 
         // check if the sink is already filled as pipeline/source Topology.
         if (topology.getNodes().empty()){
@@ -431,11 +612,11 @@ public class ProfilingPlanBuilder implements Serializable {
                 topology.getNodes().push(randomUnaryNodeFill(type, plateform));
                 topology.addPlatform(plateform);
             // Add the last sink node
-            topology.getNodes().push(sinkNodeFill(type, plateform));
+            topology.getNodes().push(sinkNodeFill(type, plateform, configuration));
             topology.addPlatform(plateform);
 
         } else{
-            topology.getNodes().push( sinkNodeFill(type, plateform));
+            topology.getNodes().push( sinkNodeFill(type, plateform, configuration));
             topology.addPlatform(plateform);
         }
 
@@ -448,10 +629,10 @@ public class ProfilingPlanBuilder implements Serializable {
      * Fills the toplogy instance with unary profiling operators
      * @return
      */
-    private static Tuple2<String,OperatorProfiler> sinkNodeFill(DataSetType type, String plateform){
+    private static Tuple2<String,OperatorProfiler> sinkNodeFill(DataSetType type, String plateform, Configuration configuration){
         // we currently support use the collection source
         String operator = profilingConfig.getSinkExecutionOperators().get(0);
-        Tuple2<String,OperatorProfiler> returnNode =new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, configuration.getStringProperty("rheem.profiler.sinkPlatform",plateform),1,1)) ;
+        Tuple2<String,OperatorProfiler> returnNode =new Tuple2(operator, ProfilingOperatorGenerator.getProfilingOperator(operator, type, profilingConfig.getSinkPlatform(),1,1)) ;
         returnNode.getField1().setUDFcomplexity(1);
         return returnNode;
     }
@@ -480,6 +661,9 @@ public class ProfilingPlanBuilder implements Serializable {
         returnNode.getField1().setUDFcomplexity(udfRnd);
         return returnNode;
     }
+
+
+
 
     /**
      * Fills the toplogy instance with unary profiling operators
@@ -515,7 +699,7 @@ public class ProfilingPlanBuilder implements Serializable {
     }
 
     /**
-     * Fills the toopology instance with binary profiling executionOperator
+     * Fills the toopology instance with loop profiling executionOperator
      * @return
      */
     private static Tuple2<String,OperatorProfiler> loopNodeFill(DataSetType type, String plateform){
@@ -591,7 +775,7 @@ public class ProfilingPlanBuilder implements Serializable {
      * @param profilingConfiguration
      * @return
      */
-    public static List<PlanProfiler> exhaustiveProfilingPlanBuilder(Shape shape,ProfilingConfig profilingConfiguration){
+    public static List<PlanProfiler> ProfilingPlanBuilder(Shape shape, ProfilingConfig profilingConfiguration){
         profilingConfig = profilingConfiguration;
         if (profilingConfig.getProfilingPlanGenerationEnumeration().equals("exhaustive")){
             return exhaustivePipelineProfilingPlanBuilder(shape);
@@ -664,9 +848,6 @@ public class ProfilingPlanBuilder implements Serializable {
                 "distinct-integer", "sort", "sort-string", "sort-integer", "count", "groupby", "join", "union", "cartesian", "callbacksink", "collect",
                 "word-count-split", "word-count-canonicalize", "word-count-count"));
         List<SparkOperatorProfiler> profilingOperators = new ArrayList<>();
-        //List allCardinalities = this.profilingConfig.getInputCardinality();
-        //List dataQuata = this.profilingConfig.getDataQuantaSize();
-        //List UdfComplexity = this.profilingConfig.getUdfsComplexity();
 
         for (String operator : operators) {
             switch (operator) {

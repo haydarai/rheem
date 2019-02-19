@@ -11,7 +11,6 @@ import java.util.List;
 public class ProfilingConfig {
 
 
-
     private int maxJunctureTopologies;
     private int maxLoopTopologies;
     private int numberRunningPlansPerShape;
@@ -28,16 +27,25 @@ public class ProfilingConfig {
     private List<Integer> UdfsComplexity = new ArrayList<>();
     private List<Integer> inputRatio = new ArrayList<>();
     private List<Integer> iterations = new ArrayList<>();
+    private List<Integer> selectivity = new ArrayList<>();
     private List<String> profilingPlateforms;
     private List<DataSetType> dataTypes;
+    private String sinkPlatform;
+    private boolean bushyGeneration;
+    private int maxPlatformSwitch;
 
+    public boolean isBushyGeneration() {
+        return bushyGeneration;
+    }
+
+    /**
+     * GETTERS & SETTERS
+     */
     public List<String> getUnaryExecutionOperators() {
         return unaryExecutionOperators;
     }
 
-    public void setUnaryExecutionOperators(List<String> unaryExecutionOperators) {
-        this.unaryExecutionOperators = unaryExecutionOperators;
-    }
+    public void setUnaryExecutionOperators(List<String> unaryExecutionOperators) {this.unaryExecutionOperators = unaryExecutionOperators;}
 
     public List<String> getBinaryExecutionOperators() {
         return binaryExecutionOperators;
@@ -79,7 +87,6 @@ public class ProfilingConfig {
         this.maxLoopTopologies = maxLoopTopologies;
     }
 
-
     public List<String> getLoopExecutionOperators() {
         return loopExecutionOperators;
     }
@@ -88,19 +95,9 @@ public class ProfilingConfig {
         this.loopExecutionOperators = loopExecutionOperators;
     }
 
-
-
-
-
-    public boolean isBushyGeneration() {
-        return bushyGeneration;
-    }
-
     public void setBushyGeneration(boolean bushyGeneration) {
         this.bushyGeneration = bushyGeneration;
     }
-
-    private boolean bushyGeneration;
 
     public List<DataSetType> getDataType() {
         return dataTypes;
@@ -109,8 +106,6 @@ public class ProfilingConfig {
     public void setDataType(List<DataSetType> dataType) {
         this.dataTypes = dataType;
     }
-
-
 
     public void setInputCardinality(List<Long> inputCardinality) {
         this.inputCardinality = inputCardinality;
@@ -185,6 +180,10 @@ public class ProfilingConfig {
         this.sampleSize = sampleSize;
     }
 
+    public void setSelectivity(List<Integer> sampleSizes) {
+        this.sampleSize = sampleSize;
+    }
+
     public void setNumberRunningPlansPerShape(int numberRunningPlansPerShape) {
         this.numberRunningPlansPerShape = numberRunningPlansPerShape;
     }
@@ -193,4 +192,12 @@ public class ProfilingConfig {
         return numberRunningPlansPerShape;
     }
 
+    public void setSinkPlatform(String sinkPlatform) {this.sinkPlatform = sinkPlatform;}
+
+    public String getSinkPlatform(){return sinkPlatform;};
+
+    public void setMaxPlatformSwitch(int maxPlatformSwitch) { this.maxPlatformSwitch = maxPlatformSwitch; }
+
+    public int getMaxPlatformSwitch() { return this.maxPlatformSwitch;
+    }
 }

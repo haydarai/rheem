@@ -26,7 +26,6 @@ public class TopologyBase implements Topology {
     /**
      * Nodes inside a Topology
      */
-    //private LinkedHashMap<Integer,Tuple2<String,OperatorProfiler>> nodes;
     private Stack<Tuple2<String,OperatorProfiler>> nodes = new Stack<>();
 
     /**
@@ -36,15 +35,16 @@ public class TopologyBase implements Topology {
 
     /**
      * platforms associated to the topology (it will contain the same order of platforms as the topology inner node connection)
+     * PS1: The last element of the stack will be used to know the Topology's output platform
+     * PS2: The Stack ordering structure will help identify the platform switch number used if the max platform switch constraint is enabled
      */
-    private List<String> platforms = new Stack<>();
+    private Stack<String> platformStack = new Stack<>();
+
 
     /**
-     * is true when the topology is a part of a loop body
+     * True when the topology is a part of a loop body
      */
     private Boolean isLoopBody = false;
-
-
 
     @Override
     public void setInputTopologySlots(InputTopologySlot[] inputTopologySlots) {
@@ -137,7 +137,7 @@ public class TopologyBase implements Topology {
     // Replace
     public void setNodes(Stack nodes) {
         // reset  nodes platforms
-        platforms.clear();
+        platformStack.clear();
         Stack<Tuple2<String,OperatorProfiler>> newNodes =nodes;
         // Not sure whether the order of platform is ensured below
         newNodes.stream().forEach(n->this.addPlatform(n.getField1().getExecutionOperator().getPlatform().getName()));
@@ -288,9 +288,9 @@ public class TopologyBase implements Topology {
         isLoopBody = booleanBody;
     }
 
-    public void addPlatform(String platform){ this.platforms.add(platform);}
+    public void addPlatform(String platform){ this.platformStack.add(platform);}
 
-    public List getPlatforms(){return this.platforms;};
+    public List getPlatforms(){return this.platformStack;}
 
     /*@Override
     public boolean isSink() {

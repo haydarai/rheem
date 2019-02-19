@@ -25,7 +25,6 @@ import org.qcri.rheem.java.Java;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.generators.DataGenerators;
 import org.qcri.rheem.profiler.generators.UdfGenerators;
-import org.qcri.rheem.profiler.java.JavaSourceProfiler;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
 import org.qcri.rheem.spark.Spark;
@@ -102,9 +101,9 @@ public class ProfilingRunner{
         runningPlanPerShape = profilingConfiguration.getNumberRunningPlansPerShape();
 
         logger.info(String.format("[PROFILING] profiling contains %d shapes with total %d subshapes \n",shapes.size(),
-                shapes.stream().map(s->s.getSubShapes().size()).reduce((s1,s2)->s1+s2).get()));
+                shapes.stream().map(s->s.getExecutionShapes().size()).reduce((s1, s2)->s1+s2).get()));
         shapes.stream().forEach(s -> {
-            s.getSubShapes().stream().forEach(executionShape->{
+            s.getExecutionShapes().stream().forEach(executionShape->{
                         if ((runningPlanPerShape==-1)||(runningCounter<runningPlanPerShape))
                             try {
                                 executeShapeProfiling(executionShape);
@@ -126,6 +125,7 @@ public class ProfilingRunner{
      * @throws IOException
      */
     private static void executeShapeProfiling(Shape shape) throws IOException {
+        assert (shape.getPlateform()!=null);
 
         // Initialize rheemContext
         rheemContext = new RheemContext();
@@ -258,8 +258,8 @@ public class ProfilingRunner{
                         // check the first platform
                         switch (shape.getPlateform().get(0)) {
                             case "java":
-                                JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
-                                sourceProfiler.clearSourceData();
+//                                JavaSourceProfiler sourceProfiler = (JavaSourceProfiler) t.getNodes().firstElement().getField1();
+//                                sourceProfiler.clearSourceData();
                         }
                     }
 
@@ -337,7 +337,7 @@ public class ProfilingRunner{
 
             // Put null for runningJob
             runningJob = null;
-        }catch (Exception e) {
+        } catch (Exception e) {
             if(configuration.getBooleanProperty("rheem.profiler.errors.discard")) {
 
                 // update shape
@@ -508,7 +508,7 @@ public class ProfilingRunner{
                                      threeRunsResult.add(result);
                                      execution.stop();
 
-                                     System.out.println("Meas urement Run "+i+":");
+                                     System.out.println("Measurement Run "+i+":");
                                      if (result != null) System.out.println(result);
                                      System.out.println(stopWatch.toPrettyString());
                                      System.out.println();

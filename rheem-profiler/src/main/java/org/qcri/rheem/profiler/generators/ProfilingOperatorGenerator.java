@@ -60,7 +60,7 @@ public class ProfilingOperatorGenerator {
                                     op.setName("FinkCollectionFileSource");
                                     return op;
                                 },
-                                new Configuration(),
+                                ProfilingPlanBuilder.configuration,
                                 DataGenerators.generateGenerator(1, type)
                         );
                     case "map":

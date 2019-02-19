@@ -137,7 +137,7 @@ public class TopologyGenerator {
             return singleOperatortopology();
 
         int previousGeneratedTopologies = newGeneratedTopologies;
-        newGeneratedTopologies =0;
+        newGeneratedTopologies = 0;
 
         for(int i=1;i<=previousGeneratedTopologies;i++){
             Topology tmpPreviousTopology = topologyList.get(topologyList.size()-i).createCopy(nodesNumber-1);
