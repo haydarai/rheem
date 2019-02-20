@@ -12,6 +12,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.profiler.core.api.*;
 import org.qcri.rheem.profiler.core.api.PlanEnumeration.ExhaustiveEnumeration;
+import org.qcri.rheem.profiler.core.api.PlanEnumeration.MaxPlatformPruningEnumeration;
 import org.qcri.rheem.profiler.generators.DataGenerators;
 import org.qcri.rheem.profiler.generators.ProfilingOperatorGenerator;
 import org.qcri.rheem.profiler.spark.SparkOperatorProfiler;
