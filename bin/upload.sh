@@ -18,9 +18,9 @@ ${CP_REMOTE} -r /Users/notjarvis/IdeaProjects/rheem-experiments/rheem-distro/tar
 ${EXEC_REMOTE} 'rm -rf /disk/experiments/code/netty*'
 
 
-${CP_REMOTE} -r /Users/notjarvis/IdeaProjects/rheem-experiments/rheem-experiment/bin/* \
-    QCRI\\brojas@10.4.4.32:/disk/experiments/bin
+#${CP_REMOTE} -r /Users/notjarvis/IdeaProjects/rheem-experiments/rheem-experiment/bin/* \
+#    QCRI\\brojas@10.4.4.32:/disk/experiments/bin
 
 
-${CP_REMOTE} -r /Users/notjarvis/IdeaProjects/rheem-experiments/rheem-experiment/conf/* \
-    QCRI\\brojas@10.4.4.32:/disk/experiments/conf
+#${CP_REMOTE} -r /Users/notjarvis/IdeaProjects/rheem-experiments/rheem-experiment/conf/* \
+#    QCRI\\brojas@10.4.4.32:/disk/experiments/conf

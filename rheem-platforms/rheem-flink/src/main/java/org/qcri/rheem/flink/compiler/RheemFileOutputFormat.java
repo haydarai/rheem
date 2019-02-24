@@ -53,7 +53,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
         DEFAULT_WRITE_MODE = FileSystem.WriteMode.OVERWRITE ;
 
 
-        DEFAULT_OUTPUT_DIRECTORY_MODE =  FileOutputFormat.OutputDirectoryMode.PARONLY;
+        DEFAULT_OUTPUT_DIRECTORY_MODE =  OutputDirectoryMode.ALWAYS;
     }
 
     // --------------------------------------------------------------------------------------------
@@ -205,12 +205,13 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
     @Override
     public void open(int taskNumber, int numTasks) throws IOException {
         try {
+
             if (taskNumber < 0 || numTasks < 1) {
                 throw new IllegalArgumentException("TaskNumber: " + taskNumber + ", numTasks: " + numTasks);
             }
 
             if (LOG.isDebugEnabled()) {
-                LOG.debug("Opening stream for output (" + (taskNumber + 1) + "/" + numTasks + "). WriteMode=" + writeMode +
+                LOG.debug("Opening stream for output (" + (taskNumber+1) + "/" + numTasks + "). WriteMode=" + writeMode +
                         ", OutputDirectoryMode=" + outputDirectoryMode);
             }
 
@@ -221,19 +222,41 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
 
             final FileSystem fs = p.getFileSystem();
 
-            if(fs.exists(p)) {
-                fs.delete(p, true);
+            // if this is a local file system, we need to initialize the local output directory here
+            if (!fs.isDistributedFS()) {
+
+                if (numTasks == 1 && outputDirectoryMode == OutputDirectoryMode.PARONLY) {
+                    // output should go to a single file
+
+                    // prepare local output path. checks for write mode and removes existing files in case of OVERWRITE mode
+                    if(!fs.initOutPathLocalFS(p, writeMode, false)) {
+                        // output preparation failed! Cancel task.
+                        throw new IOException("Output path '" + p.toString() + "' could not be initialized. Canceling task...");
+                    }
+                }
+                else {
+                    // numTasks > 1 || outDirMode == OutputDirectoryMode.ALWAYS
+
+                    if(!fs.initOutPathLocalFS(p, writeMode, true)) {
+                        // output preparation failed! Cancel task.
+                        throw new IOException("Output directory '" + p.toString() + "' could not be created. Canceling task...");
+                    }
+                }
             }
 
+            // Suffix the path with the parallel instance index, if needed
+            this.actualFilePath = (numTasks > 1 || outputDirectoryMode == OutputDirectoryMode.ALWAYS) ? p.suffix("/" + getDirectoryFileName(taskNumber)) : p;
+
+            // at this point, the file creation must have succeeded, or an exception has been thrown
             this.fileCreated = true;
 
-
-            final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new org.apache.hadoop.fs.Path(p.toString()));
+            final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new org.apache.hadoop.fs.Path(this.actualFilePath.toString()));
             final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
             final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);
             writer = SequenceFile.createWriter(new org.apache.hadoop.conf.Configuration(true), fileOption, keyClassOption, valueClassOption);
         }catch (Exception e){
-            e.printStackTrace();
+            throw new RheemException(this.outputFilePath.toString(), e);
+//            e.printStackTrace();
         }
     }
 

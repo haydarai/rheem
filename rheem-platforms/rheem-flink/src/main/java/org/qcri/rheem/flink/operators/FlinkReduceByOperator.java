@@ -1,8 +1,11 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
@@ -19,13 +22,15 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.compiler.FunctionCompiler;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
+import scala.Tuple2;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.function.Function;
 
 /**
  * Flink implementation of the {@link ReduceByOperator}.
@@ -72,11 +77,14 @@ public class FlinkReduceByOperator<InputType, KeyType>
 
         FunctionCompiler compiler = flinkExecutor.getCompiler();
 
-        KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
+        //KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
+        KeySelector keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
 
         ReduceFunction<InputType> reduceFunction = compiler.compile(this.reduceDescriptor);
 
 
+        System.out.println(this.getInputType().getDataUnitType().getTypeClass());
+        System.out.println(this.getKeyDescriptor().getInputType().toBasicDataUnitType().getTypeClass());
         DataSet<InputType> dataSetOutput =
                 dataSetInput
                         .groupBy(keySelector)
@@ -122,5 +130,23 @@ public class FlinkReduceByOperator<InputType, KeyType>
     @Override
     public boolean containsAction() {
         return false;
+    }
+
+    public class KeySelectorFunctionTuple<T> implements KeySelector<T, Tuple2<String, String>>, ResultTypeQueryable<Tuple2<String, String>>, Serializable {
+
+        public Function<T, Tuple2<String, String>> impl;
+
+        public KeySelectorFunctionTuple(TransformationDescriptor transformationDescriptor) {
+            this.impl = transformationDescriptor.getJavaImplementation();
+        }
+
+        public Tuple2<String, String> getKey(T object){
+            return this.impl.apply(object);
+        }
+
+        @Override
+        public TypeInformation getProducedType() {
+            return TypeInformation.of(new TypeHint<Tuple2<String,String>>(){});
+        }
     }
 }

@@ -19,12 +19,12 @@ start_spark="${SPARK_HOME}/sbin/start-all.sh"
 stop_spark="${SPARK_HOME}/sbin/stop-all.sh"
 restart_spark="${stop_spark} && ${start_spark}"
 
-stop_all="${stop_spark} ; ${stop_flink} ; ${stop_alluxio} ; ${stop_hdfs}"
-start_all="${start_hdfs} ; ${start_alluxio} ; ${start_flink} ; ${start_spark}"
+stop_all="${stop_spark} ; ${stop_flink}"
+start_all="${start_flink} ; ${start_spark}"
 
 function clean_all() {
     for ip in 32 35 33 25 36 23 34 29 28 24; do
-        ssh 10.4.4.${ip} 'rm -rf /logs/hdfs/* /logs/alluxio/* /logs/flink/* /logs/spark/* && sync; echo 3 > /proc/sys/vm/drop_caches'
+        ssh 10.4.4.${ip} 'rm -rf /logs/flink/* /logs/spark/* && sync; echo 3 > /proc/sys/vm/drop_caches'
     done
 }
 

@@ -35,10 +35,10 @@ if [ "${result}" = "all" ]; then
     echo ${restart_all}
     eval ${restart_all}
 
-    while [  $(eval ${safe_mode_get} | grep "ON" | wc -l) = "1" ]; do
-        echo "waiting for the safe mode change"
-        eval ${safe_mode_leave}
-        sleep 10
-    done
+#    while [  $(eval ${safe_mode_get} | grep "ON" | wc -l) = "1" ]; do
+#        echo "waiting for the safe mode change"
+#        eval ${safe_mode_leave}
+#        sleep 10
+#    done
 fi
 

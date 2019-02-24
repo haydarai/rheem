@@ -4,9 +4,13 @@ import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.typeinfo.TypeHint;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.graph.Graph;
+import org.apache.flink.graph.library.linkanalysis.PageRank;
+import org.apache.flink.types.NullValue;
 import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -67,6 +71,9 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
         final DataSet<Tuple2<Long, Long>> dataSetInputReal = dataSetInput.map(mapFunction);
 
 
+        /*
+
+
         FlatMapFunction<Tuple2<Long, Long>, Long> flatMapFunction = new FlatMapFunction<Tuple2<Long, Long>, Long>() {
             @Override
             public void flatMap(Tuple2<Long, Long> longLongTuple2, Collector<Long> collector) throws Exception {
@@ -75,11 +82,13 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
             }
         };
 
-        final DataSet<Long> pages = dataSetInputReal.flatMap(flatMapFunction).distinct();
+        final DataSet<Long> pages = dataSetInputReal.flatMap(flatMapFunction).partitionByHash(ele -> ele.hashCode()).distinct();
 
         int numPages = 0;
         try {
+
             numPages = (int) pages.count();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,8 +131,31 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
                     }
                 }
         );
+*/
 
-        output.accept(dataSetOutput, flinkExecutor);
+        Graph<Long, NullValue, NullValue> graph = Graph.fromTuple2DataSet(dataSetInputReal, flinkExecutor.fee);
+
+        try {
+            final DataSet<org.qcri.rheem.basic.data.Tuple2<Long, Float>> dataSetOutput = graph
+                    .run(
+                        new PageRank<Long, NullValue, NullValue>(DAMPENING_FACTOR, numIterations)
+                    )
+                    .map(
+                        result -> {
+                            return new org.qcri.rheem.basic.data.Tuple2<Long, Float>(
+                                result.getVertexId0(),
+                                (float)result.getPageRankScore().getValue()
+                            );
+                        }
+                    ).returns(TypeInformation.of(new TypeHint<org.qcri.rheem.basic.data.Tuple2<Long, Float>>(){}));
+
+            output.accept(dataSetOutput, flinkExecutor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }

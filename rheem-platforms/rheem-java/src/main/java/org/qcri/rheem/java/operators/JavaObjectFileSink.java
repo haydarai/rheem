@@ -64,6 +64,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         FileChannel.Instance output = (FileChannel.Instance) outputs[0];
         final String path = output.addGivenOrTempPath(this.targetPath, javaExecutor.getCompiler().getConfiguration());
 
+        System.out.println("FILE TO SAVE WILL BE"+path);
         final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(path));
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
         final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);

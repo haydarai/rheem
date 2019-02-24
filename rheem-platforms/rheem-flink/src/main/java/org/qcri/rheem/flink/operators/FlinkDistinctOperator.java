@@ -59,7 +59,7 @@ public class FlinkDistinctOperator<Type>
 
         final DataSet<Type> dataSetInput = input.provideDataSet();
 
-        final DataSet<Type> dataSetOutput = dataSetInput.distinct(new KeySelectorDistinct<Type>());
+        final DataSet<Type> dataSetOutput = dataSetInput.partitionByHash(ele -> ele.hashCode()).distinct(new KeySelectorDistinct<Type>());
 
         output.accept(dataSetOutput, flinkExecutor);
 

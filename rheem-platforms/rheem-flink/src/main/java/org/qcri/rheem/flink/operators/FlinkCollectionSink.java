@@ -43,7 +43,7 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
 
         final DataSet<Type> dataSetInput = input.provideDataSet();
 
-        output.accept(dataSetInput.filter(a -> true).setParallelism(1).collect());
+        output.accept(dataSetInput.filter(a -> true).collect());
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
 

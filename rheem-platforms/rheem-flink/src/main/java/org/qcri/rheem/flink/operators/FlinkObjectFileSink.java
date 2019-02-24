@@ -54,10 +54,11 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
         final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
         final String targetPath = output.addGivenOrTempPath(this.targetPath, flinkExecutor.getConfiguration());
 
+        System.out.println("target______>>>>"+targetPath);
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSink<Type> tDataSink = input.<Type>provideDataSet()
                 .write(new RheemFileOutputFormat<Type>(targetPath), targetPath, FileSystem.WriteMode.OVERWRITE)
-                .setParallelism(1);
+                .setParallelism(40);
 
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);

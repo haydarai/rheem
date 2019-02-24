@@ -11,5 +11,5 @@ CLASS="org.qcri.rheem.apps.tpch.TpcH"
 
 . ./../base/execute.sh \
         exp\(1\) ${PLATFORM} \
-        file://$(pwd)/../conf/tpch_${SIZE}_file.properties Q1 \
-        &> ${FOLDER}/${PLATFORM}_${N_EXECUTION}.log
+        file://$(pwd)/../../conf/tpch_${SIZE}_file.properties Q1 #\
+#        &> ${FOLDER}/${PLATFORM}_${N_EXECUTION}.log

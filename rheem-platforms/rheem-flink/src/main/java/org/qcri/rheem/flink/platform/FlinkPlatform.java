@@ -2,6 +2,9 @@ package org.qcri.rheem.flink.platform;
 
 import org.apache.flink.api.java.CollectionEnvironment;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.graph.Edge;
+import org.apache.flink.graph.Graph;
+import org.apache.flink.graph.Vertex;
 import org.qcri.rheem.basic.plugin.RheemBasic;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
@@ -139,7 +142,16 @@ public class FlinkPlatform extends Platform {
 
     private String[] getJars(Job job){
         List<String> jars = new ArrayList<>(5);
-        List<Class> clazzs = Arrays.asList(new Class[]{FlinkPlatform.class, RheemBasic.class, RheemContext.class});
+        List<Class> clazzs = Arrays.asList(
+                new Class[]{
+                    FlinkPlatform.class,
+                    RheemBasic.class,
+                    RheemContext.class,
+                    Graph.class,
+                    Edge.class,
+                    Vertex.class
+                }
+        );
 
         clazzs.stream().map(
                 ReflectionUtils::getDeclaringJar

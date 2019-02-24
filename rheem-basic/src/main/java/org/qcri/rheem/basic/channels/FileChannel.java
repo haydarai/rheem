@@ -184,13 +184,13 @@ public class FileChannel extends Channel {
                 logger.info("Deleting file channel instances {}.", this.paths);
                 final String path = this.getSinglePath();
                 final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
-                fileSystemOptional.ifPresent(fs -> {
+               /* fileSystemOptional.ifPresent(fs -> {
                     try {
-                        fs.delete(path, true);
+                    //    fs.delete(path, true);
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                });
+                });*/
             });
         }
     }

@@ -18,15 +18,19 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -63,7 +67,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
             OptimizationContext.OperatorContext operatorContext) {
         assert outputs.length == this.getNumOutputs();
 
-        SequenceFileIterator sequenceFileIterator;
+
         final String path;
         if (this.sourcePath == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
@@ -72,12 +76,41 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
             assert inputs.length == 0;
             path = this.sourcePath;
         }
+
+        String url = path.trim();
+        FileSystem fs = FileSystems.getFileSystem(url).orElseThrow(
+            () -> new RheemException(String.format("Cannot access file system of %s.", url))
+        );
+
+
         try {
-            final String actualInputPath = FileSystems.findActualSingleInputPath(path);
-            sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
-            Stream<?> sequenceFileStream =
-                    StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
-            ((StreamChannel.Instance) outputs[0]).accept(sequenceFileStream);
+            Stream<String> lines;
+            if(fs.isDirectory(url)){
+                lines = fs.listChildren(url)
+                        .stream()
+                        .filter( p -> ! fs.isDirectory(p))
+                        .filter( p -> ! p.contains("_SUCCESS"))
+                        .flatMap(p -> {
+                            final String actualInputPath = FileSystems.findActualSingleInputPath(p);
+                            try {
+                                SequenceFileIterator sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
+                                return StreamSupport.stream(
+                                        Spliterators.spliteratorUnknownSize(
+                                            sequenceFileIterator,
+                                        0
+                                        ), false
+                                );
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            return Stream.empty();
+                        });
+            }else {
+                final String actualInputPath = FileSystems.findActualSingleInputPath(path);
+                SequenceFileIterator sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
+                lines = StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
+            }
+            ((StreamChannel.Instance) outputs[0]).accept(lines);
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed to read from %s.", this, path), e);
         }

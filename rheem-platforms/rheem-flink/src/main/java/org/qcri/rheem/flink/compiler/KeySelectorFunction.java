@@ -1,9 +1,11 @@
 package org.qcri.rheem.flink.compiler;
 
+import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import scala.Tuple2;
 
 import java.io.Serializable;
 import java.util.function.Function;
@@ -23,6 +25,13 @@ public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQ
 
         this.impl = transformationDescriptor.getJavaImplementation();
         this.key  = transformationDescriptor.getOutputType().getTypeClass();
+        System.out.println("keydasda: "+this.key);
+        //TODO validate this
+        //if(this.key.getTypeParameters().length > 0){
+       // this.typeInformation = (TypeInformation<K>) TypeInformation.of(new TypeHint<Tuple2<String,String>>(){});
+        //}else {
+        //    this.typeInformation = TypeInformation.of(this.key);
+        //}
         this.typeInformation = TypeInformation.of(this.key);
     }
 
@@ -31,7 +40,7 @@ public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQ
         }
 
     @Override
-    public TypeInformation getProducedType() {
+    public TypeInformation<K> getProducedType() {
         return this.typeInformation;
     }
 }
