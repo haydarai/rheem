@@ -18,7 +18,14 @@ import scala.collection.JavaConversions;
 import scala.runtime.AbstractFunction1;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,7 +107,7 @@ public class SparkRandomPartitionSampleOperator<Type>
             Object samples = sparkContext.runJob(inputRdd.rdd(),
                     new PartitionSampleFunction(tid, ((tid + sampleSize))),
                     (scala.collection.Seq) JavaConversions.asScalaBuffer(partitions),
-                    true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
+                    scala.reflect.ClassTag$.MODULE$.apply(List.class));
             result = ((List<Type>[]) samples)[0];
         } else {
             HashMap<Integer, ArrayList<Integer>> map = new HashMap<>(); //list should be ordered..
@@ -134,7 +141,7 @@ public class SparkRandomPartitionSampleOperator<Type>
                         sparkContext.runJob(inputRdd.rdd(),
                                 new PartitionSampleListFunction(list),
                                 (scala.collection.Seq) JavaConversions.asScalaBuffer(partitions),
-                                true, scala.reflect.ClassTag$.MODULE$.apply(List.class))));
+                                scala.reflect.ClassTag$.MODULE$.apply(List.class))));
             }
 
             for (int i = 0; i < map.size(); i++)

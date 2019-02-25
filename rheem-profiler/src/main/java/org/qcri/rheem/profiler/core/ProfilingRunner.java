@@ -214,13 +214,13 @@ public class ProfilingRunner{
                     for (TextFileSource textFileSource : textFileSources) {
                         switch (shape.getPlateform().get(0)) {
                             case "java":
-                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.java.url", "file:///" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.java.url", "file://"+ configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                             case "spark":
-                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file://" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                             case "flink":
-                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file:///" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
+                                textFileSource.setInputUrl(configuration.getStringProperty("rheem.profiler.platforms.spark.url", "file://" + configuration.getStringProperty("rheem.profiler.logs.syntheticDataURL.prefix")) + "-" + dataQuantaSize + "-" + inputCardinality + ".txt");
                                 break;
                         }
                         logger.info(String.format("[PROFILING] input file url: %s \n", textFileSource.getInputUrl()));

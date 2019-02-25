@@ -4,11 +4,7 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.SampleOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -23,7 +19,12 @@ import scala.collection.convert.Wrappers;
 import scala.runtime.AbstractFunction1;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
 
@@ -106,7 +107,7 @@ public class SparkShufflePartitionSampleOperator<Type>
             //read sequentially from partitionID
             Object samples = sparkContext.runJob(shuffledRDD.rdd(),
                     new TakeSampleFunction(tupleID, tupleID + sampleSize),
-                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
+                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), scala.reflect.ClassTag$.MODULE$.apply(List.class));
 
             tupleID += sampleSize;
             result.addAll(((List<Type>[]) samples)[0]);

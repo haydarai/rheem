@@ -72,7 +72,7 @@ public class OperatorProfilerBase extends OperatorProfiler {
 
         Tuple2 newData = new Tuple2(inputCardinality,dataQuantaSize);
         // check if input data is already created
-        if(createdData.contains(newData)||file.exists()||true)
+        if(createdData.contains(newData)||file.exists())
             return;
 
         // add new data
