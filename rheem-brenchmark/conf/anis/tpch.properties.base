@@ -1,0 +1,6 @@
+rheem.apps.tpch.csv.customer = hdfs://10.2.5.231:8020/user/data/tpch_1000GB/customer.tbl
+rheem.apps.tpch.csv.orders = hdfs://10.2.5.231:8020/user/data/tpch_1000GB/orders.tbl
+rheem.apps.tpch.csv.lineitem = hdfs://10.2.5.231:8020/user/data/tpch_1000GB/lineitem.tbl
+
+#rheem.sqlite3.jdbc.url = jdbc:sqlite:hdfs:///user/atroudi/data/tpch.db
+#rheem.sqlite3.jdbc.url = jdbc:sqlite:file:///root/sqlite/tpch.db

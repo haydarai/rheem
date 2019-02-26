@@ -1,0 +1,835 @@
+########################################
+
+
+bertty.stop = false
+
+#ettings for Spark
+spark.master = spark://10.2.5.231:7077
+rheem.spark.machines = 10
+rheem.spark.cores-per-machine = 4
+spark.executor.memory = 20g
+spark.driver.maxResultSize=4g
+
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.flink.paralelism = 40
+
+#rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+#rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer.loadModelEnvironment.python.path = /root/anaconda/bin/python
+#rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.RandomPruningStrategy
+#rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.TopKPruningStrategy
+#rheem.core.optimizer.pruning.topk = 5
+rheem.core.optimizer.reoptimize = false
+rheem.core.optimizer.instrumentation = org.qcri.rheem.core.profiling.FullInstrumentationStrategy
+rheem.core.log.enabled = true
+rheem.core.log.executions = /root/.rheem/executions.json
+rheem.core.log.cardinalities = /root/.rheem/cardinalities.json
+
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer.model = forest
+
+rheem.profiler.generate.syntheticLogs  = true
+rheem.profiler.inputCards = 1,100,1000,10000,100000
+rheem.profiler.quantaSizes = 1,10,100,1000
+rheem.profiler.udfComplexities = 1,2,3
+rheem.profiler.iterations = 100
+rheem.profiler.maxJunctureTopologies = 2
+#rheem.profiler.maxJunctureTopologies = 1
+rheem.profiler.binaryOperators = union,join
+rheem.profiler.unaryOperators = map,map,reduce,reduce,flatmap,filter,groupby
+rheem.profiler.sinkPlatform=java
+rheem.profiler.maxLoopTopologies = 1
+#rheem.profiler.maxLoopTopologies = 2
+rheem.profiler.numberRunningPlansPerShape = -1
+rheem.profiler.platforms.java.url = hdfs://10.2.5.231:8020/user/atroudi/data/profiling/syntheticData
+rheem.profiler.platforms.spark.url = hdfs://10.2.5.231:8020/user/atroudi/data/profiling/syntheticData
+#rheem.profiler.platforms.spark.url = hdfs://10.2.5.231:8020/user/data/long_abstract_clean.tql
+#rheem.profiler.platforms.spark.url = file:///root/.rheem/syntheticData
+rheem.profiler.generate2dLogs = true
+rheem.profiler.errors.discard = true
+rheem.profiler.runner.maxExecutionTime.minutes = 10
+rheem.profiler.errors.outofMemoryOverhead.milliseconds = 9000000
+
+
+rheem.flink.mode.run = distribution
+rheem.flink.master = 10.2.5.231
+rheem.flink.port = 6123
+rheem.flink.maxExpanded = 5
+
+rheem.giraph.hdfs.tempdir = hdfs://10.2.5.231:8020/user/data/output_tmp
+rheem.giraph.maxWorkers = 40
+
+rheem.spark.init.ms = 8892
+rheem.java.globalgroup.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(0.05430212448438072)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.flatmap.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((23270.598527983442)*(in0))+(62238.605768282694)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":1\
+}
+rheem.sqlite3.sqltostream.load.query = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((0.005263087411431705)*(out0))+(1152.2800465498767)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.objectfilesink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"((83.26424959789074)*(in0))+(1.8231002142850254E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.pagerank.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(((7.464654823837706E-4)*(in0))+(((482.0176356988506)*(in0))*(numIterations)))+(3097.9460396560407)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.broadcast.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((1.5503355368078444)*(in0))+(5.718743300943233E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.zipwithid.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((15.185217470568757)*(in0))+(3.763532284152166)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.while.load = {\
+ "type":"mathex",\
+ "in":3,\
+ "out":2,\
+ "cpu":"((7.2985644674437985E-6)*(in0))+(42002.74934256791)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.distinct.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(989.6109690987663)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.reduceby.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(1143.1515417093256)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.cache.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((48523.35797442208)*(in0))+(1.799551951151878E10)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.localcallbacksink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"((12.00E6)*(in0))+(1000)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"1000",\
+ "p":0.9\
+}
+rheem.spark.map.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((4623.212507336137)*(in0))+(0.5945155999583999)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.map.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((4623.212507336137)*(in0))+(0.5945155999583999)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.mappartitions.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(0.3570424110914542)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.tsvfilesink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"((1307.2379922388366)*(in0))+(2268.0749210693943)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.shuffle-partition-sample.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((93726.92086286146)*(in0))+(10398.140450371138)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.sqlite3.sqltostream.load.output = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(14714.506348998817)*(out0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.pagerank.load.output = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(47.322067508165176)*(out0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.collect.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((1203.1785244557423)*(out0))+(2.789246363868599E10)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.random-sample.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(7.535273393940449E-4)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.textfilesource.load.main = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"(20530.91521186124)*(out0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.textfilesource.load.main = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"(20530.91521186124)*(out0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.join.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":1,\
+ "cpu":"(((188.22710584930354)*((in0)+(in1)))+((1591.4150716259726)*(out0)))+(1053.362526499036)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.giraph.pagerank.load.output = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((56964.683555606745)*(out0))+(0.038351042161454595)",\
+ "ram":"0",\
+ "disk":"0.0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.map.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(1)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.while.load = {\
+ "type":"mathex",\
+ "in":3,\
+ "out":2,\
+ "cpu":"((1.401005135694603)*(in2))+(19126.211650250963)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.repeat.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":2,\
+ "cpu":"5.829643080092546E8",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.flatmap.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(4.0661833818972083E-7)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.filter.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((0.3381821670807207)*(in0))+(1.8057650500466852E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.globalreduce.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((1.1517375084110824E7)*(in0))+(4.073944459567499E7)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.reduceby.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((0.8808297259964428)*(in0))+(7.633061783093696E8)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.collect.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((0.16694102113951725)*(out0))+(36.17095598163977)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.collectionsource.load = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"2067783.3194370237",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.globalgroup.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((751649.1354477307)*(in0))+(37.923779807772085)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.union.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":1,\
+ "cpu":"(17154.238903925223)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.union.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":1,\
+ "cpu":"17.357292760335795",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.giraph.pagerank.load.main = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(((13262.546402910097)*(in0))+((1.986438351259847E7)*(out0)))+(0.15030636701877487)",\
+ "ram":"0",\
+ "disk":"0.0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.distinct.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((7.088403507331799E-4)*(in0))+(1.566734319551447E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.textfilesource.load.prepare = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"8624635.757135034",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.objectfilesource.load = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"((977.4343773425874)*(out0))+(3.1558777907233226E8)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.repeat.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":2,\
+ "cpu":"49676.55909915483",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.collectionsource.load = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"((3.5243806282950683)*(out0))+(910.0775327569266)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.localcallbacksink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"(19.039058524092045)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.mappartitions.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((80.08303813707869)*(in0))+(17874.992724963064)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.globalreduce.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(2.114734656282063)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.pagerank.load.main = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(((44555.613395732704)*(in0))+(((8080.263945228902)*(in0))*(numIterations)))+(1.249638232047193E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.filter.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(0.1E-10)*(in0) + 10E2",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+
+
+
+rheem.flink.flatmap.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((2319350.8546884526)*(in0))+(1.4626818164879847E8)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.cartesian.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":1,\
+ "cpu":"(((844286.4185850665)*((in0)+(in1)))+((1.344916884662085E-8)*(out0)))+(3.089812082020038E10)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.join.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":1,\
+ "cpu":"(((993531.9843249886)*((in0)+(in1)))+((9.255366363369612E-4)*(out0)))+(7.762740452081987E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.globalreduce.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((8.8026510978578E-6)*(in0))+(2.0840736498915985E8)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.filter.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((1.53E4)*(in0))+(6.514367178424401E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.reduceby.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((0.43737590045774255)*(in0))+(2.044699840069734E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.sort.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((2264737.2616746495)*(in0))+(4.560029092192096)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.union.load = {\
+ "type":"mathex",\
+ "in":2,\
+ "out":1,\
+ "cpu":"9.47282366267588E9",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.groupby.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((8315947.207216065)*(in0))+(5.315888352548018E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.localcallbacksink.load.template = {\
+  "type":"mathex", "in":1, "out":1,\
+  "cpu":"?*in0 + ?"\
+}
+rheem.flink.localcallbacksink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"((12.05E6)*(in0))+(2E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"1000",\
+ "p":0.9\
+}
+rheem.flink.distinct.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((5658.223248182052)*(in0))+(3.677141219812821E9)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.flink.collectionsource.load = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"((1.4085078476373572E-4)*(out0))+(1.4156118423469907E8)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+
+
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = true
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = forest
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+rheem.core.optimizer.mloptimizer = true
+rheem.core.optimizer.mloptimizer.model = nn
+rheem.core.optimizer.mloptimizer.exhaustivePruning = false
+rheem.core.optimizer.mloptimizer = false
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy

@@ -1,0 +1,157 @@
+#ettings for Spark
+spark.master = spark://10.2.5.231:7077
+rheem.spark.machines = 10
+rheem.spark.cores-per-machine = 4
+spark.executor.memory = 30g
+spark.eventLog.enabled = false
+spark.eventLog.dir = hdfs://10.2.5.231:8020/tmp/spark-events
+spark.app.name = Example
+spark.driver.maxResultSize=4g
+
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy
+#rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+#rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.RandomPruningStrategy
+rheem.core.optimizer.reoptimize = false
+rheem.core.optimizer.instrumentation = org.qcri.rheem.core.profiling.FullInstrumentationStrategy
+rheem.core.log.enabled = true
+rheem.core.log.executions = /root/anis/logs/rheem/executions.json
+rheem.core.log.cardinalities = /root/anis/logs/rheem/cardinalities.json
+
+rheem.apps.tpch.csv.pagelines = hdfs://10.2.5.231:8020/user/atroudi/data/csv/pagelinks.csv
+rheem.postgres.jdbc.url = jdbc:postgresql://localhost/wordcountDB
+rheem.postgres.jdbc.user = postgres
+rheem.postgres.jdbc.password = root
+
+tpch.orders = hdfs://10.2.5.231:8020/user/atroudi/data/orders.tbl
+
+#rheem.profiler.datagen.url = file:///root/anis/data.txt
+rheem.profiler.datagen.url = hdfs://10.2.5.231:8020/user/atroudi/data/long_cleaned_abstracts_en_10.tql
+rheem.profiling.operatorEvaluation = true
+
+
+#rheem.sqlite3.jdbc.url = jdbc:sqlite:hdfs:///user/atroudi/data/tpch.db
+#rheem.sqlite3.jdbc.url = jdbc:sqlite:hdfs:///user/atroudi/data/pagelinksDB.db
+
+
+
+rheem.spark.textfilesource.load.main = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"(6.483312609941205E-5)*(out0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.reduceby.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(1098.8793131714008)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.flatmap.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((2.690340884279232E-5)*(in0))+(5.248336068617968E-4)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.localcallbacksink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"((13278.262967181627)*(in0))+(1.754384686420893E-6)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.map.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((2.4695337326145634E-7)*(in0))+(2.223289561959866E-6)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.textfilesource.load.prepare = {\
+ "type":"mathex",\
+ "in":0,\
+ "out":1,\
+ "cpu":"6.427387195805294E10",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.map.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(342.981759127314)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.filter.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((28152.688962512664)*(in0))+(652.8633358923485)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.flatmap.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(1123.0250980030187)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.reduceby.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"((10656.64560148352)*(in0))+(3.993350734072724E8)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.localcallbacksink.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":0,\
+ "cpu":"(208.9835362766517)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.filter.load = {\
+ "type":"mathex",\
+ "in":1,\
+ "out":1,\
+ "cpu":"(4.271685911532262E-4)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+

@@ -1,0 +1,353 @@
+spark.master = spark://10.2.5.221:7077
+rheem.spark.machines = 10
+rheem.spark.cores-per-machine = 4
+spark.executor.memory = 20g
+spark.eventLog.enabled = true
+spark.eventLog.dir = hdfs://10.2.5.221:8020/tmp/spark-events
+spark.app.name = Example
+spark.driver.maxResultSize=4g
+
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.reoptimize = false
+rheem.core.optimizer.instrumentation = org.qcri.rheem.core.profiling.FullInstrumentationStrategy
+rheem.core.log.enabled = true
+rheem.core.log.executions = /root/anis/logs/rheem/executions.json
+rheem.core.log.cardinalities = /root/anis/logs/rheem/cardinalities.json
+
+rheem.spark.flatmap.load = {\
+  "in":1, "out":1,\
+  "cpu":"${600*in0 + 600*out0 + 56789}",\
+  "ram":"10000",\
+  "disk":"0",\
+  "net":"${0.2 * in0 + 2000}",\
+  "p":0.9,\
+  "overhead":0,\
+  "ru":"${rheem:logGrowth(0.1, 0.1, 1000000, in0)}"\
+}
+
+rheem.java.filter.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(0.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+
+rheem.java.globalgroup.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(47651.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.flatmap.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((0.0)*(in0))+(1.60790672E8)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.sqlite3.sqltostream.load.query = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((44228.0)*(out0))+(31.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.broadcast.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((1.3029091E7)*(in0))+(1960372.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.distinct.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(17.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.sort.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(7.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.groupby.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(241.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.reduceby.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(0.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.loop.load = {\
+ "in":4,\
+ "out":3,\
+ "cpu":"${((21716.0)*(in3))+(146968.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.cache.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((1.12746867E8)*(in0))+(2375917.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.localcallbacksink.load = {\
+ "in":1,\
+ "out":0,\
+ "cpu":"${((2197.0)*(in0))+(1.149898769E9)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.map.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((76.0)*(in0))+(0.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.tsvfilesink.load = {\
+ "in":1,\
+ "out":0,\
+ "cpu":"${((9177.0)*(in0))+(2246.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.graphchi.pagerank.load.output = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((2600.0)*(out0))+(267447.0)}",\
+ "ram":"${0}",\
+ "disk":"${0.0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.collect.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((23501.0)*(out0))+(1138794.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.textfilesource.load.main = {\
+ "in":0,\
+ "out":1,\
+ "cpu":"${(76.0)*(out0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.graphchi.pagerank.load.main = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(((134.0)*(in0))+((1.51792033E8)*(out0)))+(9327888.0)}",\
+ "ram":"${0}",\
+ "disk":"${0.0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.while.load = {\
+ "in":3,\
+ "out":2,\
+ "cpu":"${((0.0)*(in2))+(57706.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.repeat.load = {\
+ "in":2,\
+ "out":2,\
+ "cpu":"${2.0}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.map.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(48.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.globalreduce.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((2815.0)*(in0))+(26952.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.flatmap.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(498.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.filter.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((7992.0)*(in0))+(4.91185139E8)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.reduceby.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((0.0)*(in0))+(413.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.count.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(3802.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.collect.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${((147.0)*(out0))+(4732.0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.collectionsource.load = {\
+ "in":0,\
+ "out":1,\
+ "cpu":"${99575.0}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.union.load = {\
+ "in":2,\
+ "out":1,\
+ "cpu":"${(59.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.union.load = {\
+ "in":2,\
+ "out":1,\
+ "cpu":"${1.445271609E9}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.textfilesource.load.prepare = {\
+ "in":0,\
+ "out":1,\
+ "cpu":"${2.60837658E8}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.repeat.load = {\
+ "in":2,\
+ "out":2,\
+ "cpu":"${547.0}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.spark.collectionsource.load = {\
+ "in":0,\
+ "out":1,\
+ "cpu":"${((5.4385682E7)*(out0))+(1.42269749E8)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.localcallbacksink.load = {\
+ "in":1,\
+ "out":0,\
+ "cpu":"${(244.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.globalreduce.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(2458.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+rheem.java.filter.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"${(6715.0)*(in0)}",\
+ "ram":"${0}",\
+ "disk":"${0}",\
+ "net":"${0}",\
+ "p":0.9\
+}
+
