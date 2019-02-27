@@ -18,7 +18,7 @@ rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumerat
 
 rheem.core.optimizer.reoptimize = false
 rheem.core.optimizer.instrumentation = org.qcri.rheem.core.profiling.FullInstrumentationStrategy
-rheem.core.log.enabled = true
+rheem.core.log.enabled = true+
 rheem.core.log.executions = /root/anis/logs/rheem/executions.json
 rheem.core.log.cardinalities = /root/anis/logs/rheem/cardinalities.json
 

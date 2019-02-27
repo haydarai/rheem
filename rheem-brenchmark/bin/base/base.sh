@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+function getFromTemplate(){
+    if [ -z "${IP}" ]; then
+        IP=$(hostname --ip-address)
+    fi
+    ORIGIN=$1
+    DESTINY=$2
+    sed -e "s/__IP__/${IP}/g" ${ORIGIN} > ${DESTINY}
+}
+
+if [ -z "${IP}" ]; then
+    IP=$(hostname --ip-address)
+fi
+
 if [ -z "${BASEDIR}" ]; then
     BASEDIR="/disk/ml-experiments"
 fi
@@ -53,7 +66,7 @@ if [ -z "${NAME_CONF_SPARK}" ]; then
 fi
 
 if [ -z "${OTHER_FLAGS}" ]; then
-    OTHER_FLAGS="-Xms20g -Xmx10g -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:ParallelGCThreads=4"
+    OTHER_FLAGS="-Xms10g -Xmx20g -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:ParallelGCThreads=4"
 fi
 . $(pwd)/../base/set_variables.sh
 

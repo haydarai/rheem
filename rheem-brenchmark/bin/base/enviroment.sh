@@ -71,14 +71,17 @@ if [ "${FLAG_LOG}" = "true" ]; then
 fi
 
 if [ "${FLAG_RHEEM}" = "true" ]; then
+    getFromTemplate ${BASEDIR}/${FOLDER_CONF}/template/${NAME_CONF_RHEEM} ${BASEDIR}/${FOLDER_CONF}/${NAME_CONF_RHEEM}
     FLAGS="${FLAGS} -Drheem.configuration=file://${BASEDIR}/${FOLDER_CONF}/${NAME_CONF_RHEEM}"
 fi
 
 if [ "${FLAG_FLINK}" = "true" ]; then
+    getFromTemplate ${BASEDIR}/${FOLDER_CONF}/template/${NAME_CONF_FLINK} ${BASEDIR}/${FOLDER_CONF}/${NAME_CONF_FLINK}
     FLAGS="${FLAGS} -Dflink.configuration=file://${BASEDIR}/${FOLDER_CONF}/${NAME_CONF_FLINK}"
 fi
 
 if [ "${FLAG_SPARK}" = "true" ]; then
+    getFromTemplate ${BASEDIR}/${FOLDER_CONF}/template/${NAME_CONF_SPARK} ${BASEDIR}/${FOLDER_CONF}/${NAME_CONF_SPARK}
     FLAGS="${FLAGS} -Dspark.configuration=file://${BASEDIR}/${FOLDER_CONF}/${NAME_CONF_SPARK}"
 fi
 

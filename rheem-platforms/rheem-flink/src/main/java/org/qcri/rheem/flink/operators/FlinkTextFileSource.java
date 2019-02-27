@@ -2,6 +2,7 @@ package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
 import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -12,9 +13,13 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Spliterator;
 
 /**
  * Provides a {@link Collection} to a Flink job.
@@ -49,7 +54,21 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
 
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
         flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
-        final DataSet<String> dataSet = flinkExecutor.fee.readTextFile(this.getInputUrl()).setParallelism(flinkExecutor.getNumDefaultPartitions());
+        String file = this.getInputUrl();
+        DataSet<String> dataSet = null;
+        if(this.getInputUrl().startsWith("file://")){
+            try {
+                dataSet = flinkExecutor.fee.fromCollection(
+                    Files.lines(Paths.get(new URI(file))).iterator(),
+                    String.class
+                ).rebalance().setParallelism(flinkExecutor.getNumDefaultPartitions());
+            }catch (Exception e){
+                throw new RheemException(e);
+            }
+            //dataSet = flinkExecutor.fee.readTextFile(file).setParallelism(flinkExecutor.getNumDefaultPartitions());
+        }else {
+            dataSet = flinkExecutor.fee.readTextFile(file).setParallelism(flinkExecutor.getNumDefaultPartitions());
+        }
 
 
         output.accept(dataSet, flinkExecutor);
@@ -64,7 +83,7 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
         ));
         output.getLineage().addPredecessor(mainLineageNode);
 
-        return prepareLineageNode.collectAndMark();
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override

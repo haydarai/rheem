@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
 
-PLATFORMS=("spark" "java" "flink" "java,spark" "java,flink" "java,spark,flink")
+#PLATFORMS=("spark" "java" "flink" "java,spark" "java,flink" "java,spark,flink")
+PLATFORMS=("java")
 
-
+#. ./../base/restart.sh all
 for PLATFORM in ${PLATFORMS[@]}
 do
     for i in {1..9}
     do
-        . ./base_mlgen.sh $PLATFORM ${i} ${i} "1,100,1000,10000,100000" "1,10,100,1000" "exhaustive_profiling" "multiplatform" "operators+lowcard.log"
+        . ./base_mlgen.sh $PLATFORM ${i} ${i} "1,100,1000,10000,100000" "1,10,100,1000" "exhaustive_profiling" "multiplatform" "operators+lowcard.log" "false"
 
         . ./base_mlgen.sh $PLATFORM ${i} ${i} "1000000" "1,10,100" "exhaustive_profiling" "multiplatform" "operators+lowMedcard"
 

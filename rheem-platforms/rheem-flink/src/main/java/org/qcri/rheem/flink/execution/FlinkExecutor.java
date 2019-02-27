@@ -113,6 +113,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
                 this.logger.info("{} was not executed eagerly as requested.", task);
             }else {
                 try {
+                    System.out.println("im here");
                     this.fee.execute();
                 } catch (Exception e) {
                     throw new RheemException(e);

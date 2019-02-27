@@ -33,10 +33,6 @@ if [ -z "${VERSION_FLINK}" ]; then
     VERSION_FLINK="1.7.1"
 fi
 
-if [ -z "${IP}" ]; then
-    IP="10.4.4.32"
-fi
-
 #if nof define SPARK_HOME
 if [ -z "${SPARK_HOME}" ]; then
       SPARK_HOME=${BASE_PATH}/${T_PROCESSING}/spark/${VERSION_SPARK}
