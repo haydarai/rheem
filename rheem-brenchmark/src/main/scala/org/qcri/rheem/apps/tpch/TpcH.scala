@@ -1,7 +1,7 @@
 package org.qcri.rheem.apps.tpch
 
 import de.hpi.isg.profiledb.store.model.Experiment
-import org.qcri.rheem.apps.tpch.queries.{Query1, Query3Database, Query3File, Query3Hybrid}
+import org.qcri.rheem.apps.tpch.queries._
 import org.qcri.rheem.apps.util.{Parameters, ProfileDBHelper, StdOut}
 import org.qcri.rheem.core.api.Configuration
 import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate
@@ -9,6 +9,7 @@ import org.qcri.rheem.postgres.Postgres
 import org.qcri.rheem.postgres.operators.PostgresTableSource
 import org.qcri.rheem.sqlite3.Sqlite3
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
+
 import scala.collection.JavaConversions._
 
 /**
@@ -55,6 +56,13 @@ object TpcH {
     queryName match {
       case "Q1" =>
         val query = new Query1(plugins: _*)
+        experiment = Parameters.createExperiment(experimentArg, query)
+        experiment.getSubject.addConfiguration("plugins", args(1))
+        experiment.getSubject.addConfiguration("query", args(3))
+        val result = query(configuration, jdbcPlatform, createTableSource)(experiment)
+        StdOut.printLimited(result, 10)
+      case "Q1File" =>
+        val query = new Query1File(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)
         experiment.getSubject.addConfiguration("plugins", args(1))
         experiment.getSubject.addConfiguration("query", args(3))

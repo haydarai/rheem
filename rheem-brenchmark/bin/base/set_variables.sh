@@ -53,3 +53,20 @@ if [ -z "${ALLUXIO_HOME}" ]; then
     ALLUXIO_HOME=${BASE_PATH}/${T_STORAGE}/alluxio/${VERSION_ALLUXIO}
 fi
 
+#COMMAND TO USE IN THE SCRIPT
+if [ -z "${HDFS}" ]; then
+    HDFS="${HADOOP_HOME}/bin/hdfs dfs"
+
+    HDFS_MKDIR="${HDFS} -mkdir -p "
+    HDFS_DELETE="${HDFS} -rm -r -skipTrash "
+
+    HDFS_UPLOAD="${HDFS} -copyFromLocal "
+    HDFS_DOWNLOAD="${HDFS} -getmerge "
+
+    HDFS_COPY="${HDFS} -cp "
+    HDFS_MOVE="${HDFS} -mv "
+
+    HDFS_LIST="${HDFS} -ls "
+fi
+
+source $(pwd)/../base/get_list_cluster.sh

@@ -70,22 +70,6 @@ if [ -z "${OTHER_FLAGS}" ]; then
 fi
 . $(pwd)/../base/set_variables.sh
 
-#COMMAND TO USE IN THE SCRIPT
-if [ -z "${HDFS}" ]; then
-    HDFS="${HADOOP_HOME}/bin/hdfs dfs"
-
-    HDFS_MKDIR="${HDFS} -mkdir -p "
-    HDFS_DELETE="${HDFS} -rm -r -skipTrash "
-
-    HDFS_UPLOAD="${HDFS} -copyFromLocal "
-    HDFS_DOWNLOAD="${HDFS} -getmerge "
-
-    HDFS_COPY="${HDFS} -cp "
-    HDFS_MOVE="${HDFS} -mv "
-
-    HDFS_LIST="${HDFS} -ls "
-fi
-
 FOLDER=$(pwd)/../logs/${NAME}/
 
 if [ ! -d "${FOLDER}" ]; then

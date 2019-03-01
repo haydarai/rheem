@@ -9,6 +9,8 @@ import org.qcri.rheem.java.Java
 import org.qcri.rheem.postgres.Postgres
 import org.qcri.rheem.spark.Spark
 import org.qcri.rheem.sqlite3.Sqlite3
+import org.qcri.rheem.flink.Flink
+import org.qcri.rheem.giraph.Giraph
 
 /**
   * Utility to parse parameters of the apps.
@@ -53,6 +55,9 @@ object Parameters {
     case "postgres-conversions" => Postgres.conversionPlugin
     case "sqlite3" => Sqlite3.plugin
     case "sqlite3-conversions" => Sqlite3.conversionPlugin
+    case "flink" => Flink.basicPlugin()
+    case "flink-conversions" => Flink.conversionPlugin()
+    case "giraph" => Giraph.plugin()
     case yamlId(url) => DynamicPlugin.loadYaml(url)
     case other => throw new IllegalArgumentException(s"Could not load platform '$other'.")
   }

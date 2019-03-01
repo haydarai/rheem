@@ -56,7 +56,7 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
         flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
         String file = this.getInputUrl();
         DataSet<String> dataSet = null;
-        if(this.getInputUrl().startsWith("file://")){
+        /*if(this.getInputUrl().startsWith("file://")){
             try {
                 dataSet = flinkExecutor.fee.fromCollection(
                     Files.lines(Paths.get(new URI(file))).iterator(),
@@ -68,8 +68,8 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
             //dataSet = flinkExecutor.fee.readTextFile(file).setParallelism(flinkExecutor.getNumDefaultPartitions());
         }else {
             dataSet = flinkExecutor.fee.readTextFile(file).setParallelism(flinkExecutor.getNumDefaultPartitions());
-        }
-
+        }*/
+        dataSet = flinkExecutor.fee.readTextFile(file).setParallelism(flinkExecutor.getNumDefaultPartitions());
 
         output.accept(dataSet, flinkExecutor);
 

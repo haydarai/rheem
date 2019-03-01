@@ -648,8 +648,12 @@ public class ProfilingRunner{
 
         @Override
         public void run() {
-            while( (((System.currentTimeMillis()-startTime)/1000) / 60)<configuration.getLongProperty("rheem.profiler.runner.maxExecutionTime.minutes")){
-                // empty
+            try {
+                while ((((System.currentTimeMillis() - startTime) / 1000) / 60) < configuration.getLongProperty("rheem.profiler.runner.maxExecutionTime.minutes")) {
+                    Thread.sleep(60000);
+                }
+            }catch (Exception e){
+                System.out.println("error when is waiting in the minute: " + (((System.currentTimeMillis() - startTime) / 1000) / 60) );
             }
 
 
