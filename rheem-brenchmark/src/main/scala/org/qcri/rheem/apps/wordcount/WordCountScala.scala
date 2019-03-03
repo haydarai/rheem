@@ -23,6 +23,7 @@ class WordCountScala(plugin: Plugin*) {
     * @return the counted words
     */
   def apply(inputUrl: String,
+            outputUrl: String,
             wordsPerLine: ProbabilisticDoubleInterval = new ProbabilisticDoubleInterval(100, 10000, .8d))
            (implicit configuration: Configuration, experiment: Experiment) = {
     val rheemCtx = new RheemContext(configuration)
@@ -39,7 +40,7 @@ class WordCountScala(plugin: Plugin*) {
       .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
       .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
-      .collect()
+      .writeTextFile(outputUrl, tuple => tuple.toString())
   }
 
 }
@@ -63,29 +64,26 @@ object WordCountScala extends ExperimentDescriptor {
     experiment.getSubject.addConfiguration("plugins", args(1))
     val inputFile = args(2)
     experiment.getSubject.addConfiguration("input", inputFile)
-    val wordsPerLine = if (args.length >= 4) {
-      experiment.getSubject.addConfiguration("wordsPerLine", args(3))
-      Parameters.parseAny(args(3)).asInstanceOf[ProbabilisticDoubleInterval]
+    val outputUrl = args(3)
+    experiment.getSubject.addConfiguration("output", outputUrl)
+    val wordsPerLine = if (args.length >= 5) {
+      experiment.getSubject.addConfiguration("wordsPerLine", args(4))
+      Parameters.parseAny(args(4)).asInstanceOf[ProbabilisticDoubleInterval]
     } else null
 
     // Run wordCount.
     val wordCount = new WordCountScala(plugins: _*)
-    val words =
-      (if (wordsPerLine != null) {
-        wordCount(inputFile, wordsPerLine)
-      } else {
-        wordCount(inputFile)
-      }).toSeq.sortBy(-_._2)
+    if (wordsPerLine != null) {
+      wordCount(inputFile, outputUrl, wordsPerLine)
+    } else {
+      wordCount(inputFile, outputUrl)
+    }
 
     // Store experiment data.
     val inputFileSize = FileSystems.getFileSize(inputFile)
     if (inputFileSize.isPresent) experiment.getSubject.addConfiguration("inputSize", inputFileSize.getAsLong)
     ProfileDBHelper.store(experiment, configuration)
 
-    // Print results.
-    println(s"Found ${words.size} words:")
-    words.take(10).foreach(wc => println(s"${wc._2}x ${wc._1}"))
-    if (words.size > 10) print(s"${words.size - 10} more...")
   }
 
 }

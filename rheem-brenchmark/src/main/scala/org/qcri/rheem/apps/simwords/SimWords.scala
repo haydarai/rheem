@@ -1,5 +1,7 @@
 package org.qcri.rheem.apps.simwords
 
+import java.util
+
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
@@ -20,7 +22,9 @@ class SimWords(plugins: Plugin*) {
             neighborhoodReach: Int,
             numClusters: Int,
             numIterations: Int,
-            wordsPerLine: ProbabilisticDoubleInterval)
+            wordsPerLine: ProbabilisticDoubleInterval,
+            outputUrl: String
+           )
            (implicit experiment: Experiment,
             configuration: Configuration) = {
 
@@ -106,7 +110,7 @@ class SimWords(plugins: Plugin*) {
       .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
 
 
-    clusters.collect()
+    clusters.writeTextFile(outputUrl, list => list.toString() )
   }
 
 }
@@ -135,13 +139,16 @@ object SimWords extends ExperimentDescriptor {
     experiment.getSubject.addConfiguration("clusters", args(5))
     val numIterations = args(6).toInt
     experiment.getSubject.addConfiguration("iterations", args(6))
-    val wordsPerLine = if (args.length >= 8) {
-      experiment.getSubject.addConfiguration("wordsPerLine", args(7))
-      Parameters.parseAny(args(7)).asInstanceOf[ProbabilisticDoubleInterval]
+    val outputUrl = args(7)
+    experiment.getSubject.addConfiguration("outputUrl", args(7))
+
+    val wordsPerLine = if (args.length >= 9) {
+      experiment.getSubject.addConfiguration("wordsPerLine", args(8))
+      Parameters.parseAny(args(8)).asInstanceOf[ProbabilisticDoubleInterval]
     } else new ProbabilisticDoubleInterval(100, 10000, 0.9)
 
     val simWords = new SimWords(plugins: _*)
-    val result = simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine)
+    val result = simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine, outputUrl)
 
     // Store experiment data.
     val inputFileSize = FileSystems.getFileSize(inputFile)
@@ -149,6 +156,6 @@ object SimWords extends ExperimentDescriptor {
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the results.
-    result.filter(_.size > 1).toIndexedSeq.sortBy(_.size).reverse.foreach(println(_))
+    //result.filter(_.size > 1).toIndexedSeq.sortBy(_.size).reverse.foreach(println(_))
   }
 }

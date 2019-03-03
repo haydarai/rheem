@@ -40,7 +40,7 @@ public class SGDImprovedImpl {
                           int maxIterations,
                           double accuracy,
                           int sampleSize) {
-        return this.apply(datasetUrl, datasetSize, features, maxIterations, accuracy, sampleSize, null);
+        return this.apply(datasetUrl, datasetSize, features, maxIterations, accuracy, sampleSize, null, "");
     }
 
     public double[] apply(String datasetUrl,
@@ -49,7 +49,8 @@ public class SGDImprovedImpl {
                           int maxIterations,
                           double accuracy,
                           int sampleSize,
-                          Experiment experiment) {
+                          Experiment experiment,
+                          String outputUrl) {
 
         // Initialize the builder.
         RheemContext rheemContext = new RheemContext(this.configuration);
@@ -72,7 +73,7 @@ public class SGDImprovedImpl {
 
 
         // Do the SGD
-        Collection<double[]> results  =
+        //Collection<double[]> results  =
                 weightsBuilder.doWhile(new LoopCondition(accuracy, maxIterations), w -> {
                     // Sample the data and update the weights.
                     DataQuantaBuilder<?, double[]> newWeightsDataset = transformBuilder
@@ -86,10 +87,13 @@ public class SGDImprovedImpl {
                             .map(new ComputeNorm()).withBroadcast(w, "weights");
 
                     return new Tuple<>(newWeightsDataset, convergenceDataset);
-                }).withExpectedNumberOfIterations(maxIterations).collect();
+                }).withExpectedNumberOfIterations(maxIterations)
+                .writeTextFile(outputUrl, array -> Arrays.toString(array), "SGD Improved Impl");
+                //.collect();
 
         // Return the results.
-        return RheemCollections.getSingleOrNull(results); // Support null for when execution is skipped.
+        //return RheemCollections.getSingleOrNull(results); // Support null for when execution is skipped.
+        return null;
 
     }
 }

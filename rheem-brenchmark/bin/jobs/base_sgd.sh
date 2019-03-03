@@ -38,10 +38,13 @@ if [ "${SIZE}" = "0400" ]; then
     PARAMETERS="44000000 28 1000 0 1"
 fi
 
+OUTPUT_FILE="/out/${NAME}/${PLATFORM}_${SIZE}_${N_EXECUTION}"
+
 . ./../base/execute.sh \
         exp\(1\) \
         ${PLATFORM} \
         preaggregation \
         hdfs://${IP}:8300/data/higgs/${SIZE} \
         ${PARAMETERS} \
+        hdfs://${IP}:8300${OUTPUT_FILE} \
         &> ${FOLDER}/${PLATFORM}_${SIZE}_${N_EXECUTION}.log

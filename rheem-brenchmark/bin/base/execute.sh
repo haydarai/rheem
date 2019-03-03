@@ -6,6 +6,11 @@ if [ "${CONTEXT}" = "true" ]; then
         . ../base/restart.sh all
     fi
 
+    if [ -z "${OUTPUT_FILE}" ] ;then
+        echo "deleting the file ${OUTPUT_FILE} in hdfs"
+        eval "${HDFS_DELETE} ${OUTPUT_FILE}"
+    fi
+
     echo "java ${FLAGS} -cp \"${RHEEM_CLASSPATH}\" ${CLASS} $*"
 
     if [ -z "${TIMEOUT}" ]; then

@@ -36,6 +36,8 @@ object SGD extends ExperimentDescriptor {
     experiment.getSubject.addConfiguration("accuracy", accuracy)
     val sampleSize = args(8).toInt
     experiment.getSubject.addConfiguration("sampleSize", sampleSize)
+    val outputUrl = args(9)
+    experiment.getSubject.addConfiguration("outputUrl", outputUrl)
 
     var weights: Array[Double] = null
     aggregationType match {
@@ -48,7 +50,7 @@ object SGD extends ExperimentDescriptor {
         // Initialize the SGD algorithm.
         val sgd = new SGDImprovedImpl(configuration, plugins.toArray)
         // Run the SGD.
-        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize, experiment)
+        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize, experiment, outputUrl)
       case other => sys.error("Unknown aggregation type: " + other)
     }
 

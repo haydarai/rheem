@@ -41,6 +41,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
   override def version = "0.1.0"
 
   def apply(configuration: Configuration,
+            outputUrl: String,
             segment: String = "BUILDING",
             date: String = "1995-03-15")
            (implicit experiment: Experiment) = {
@@ -128,7 +129,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
         }
       )
       .withName("Aggregate revenue")
-      .collect()
+      .writeTextFile(outputUrl, record => record.toString)
   }
 
 }

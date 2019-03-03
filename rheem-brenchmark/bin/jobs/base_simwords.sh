@@ -10,6 +10,8 @@ CLASS="org.qcri.rheem.apps.simwords.SimWords"
 
 . ./../base/base.sh
 
+OUTPUT_FILE="/out/${NAME}/${PLATFORM}_${SIZE}_${N_EXECUTION}"
+
 . ./../base/execute.sh \
         exp\(1\) \
         ${PLATFORM} \
@@ -18,4 +20,5 @@ CLASS="org.qcri.rheem.apps.simwords.SimWords"
         2 \
         10 \
         1 \
+        hdfs://${IP}:8300${OUTPUT_FILE} \
         &> ${FOLDER}/${PLATFORM}_${SIZE}_${N_EXECUTION}.log

@@ -42,10 +42,11 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
   override def version = "0.1.0"
 
   def apply(configuration: Configuration,
+            outputUrl: String,
             jdbcPlatform: JdbcPlatformTemplate,
             createTableSource: (String, Seq[String]) => JdbcTableSource,
             delta: Int = 90)
-           (implicit experiment: Experiment): Iterable[Query1.Result] = {
+           (implicit experiment: Experiment) = {
 
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
@@ -62,7 +63,7 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the customer data.
     val _delta = delta
-    val result = planBuilder
+    planBuilder
       .readTextFile(lineitemFile)
       .withName("Read line items")
       .map(LineItem.parseCsv)
@@ -119,9 +120,9 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
         result.count_order
       ))
       .withName("Post-process line item aggregates")
-      .collect()
+      .writeTextFile(outputUrl, record => record.toString)
 
-    result
+
   }
 
 }

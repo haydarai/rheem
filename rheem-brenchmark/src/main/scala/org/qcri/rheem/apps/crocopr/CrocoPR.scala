@@ -21,7 +21,7 @@ class CrocoPR(plugins: Plugin*) {
     * @param inputUrl2 URL to the second RDF N3 file
     * @return the page ranks
     */
-  def apply(inputUrl1: String, inputUrl2: String, numIterations: Int)
+  def apply(inputUrl1: String, inputUrl2: String, numIterations: Int, outputUrl: String)
            (implicit experiment: Experiment, configuration: Configuration) = {
     // Initialize.
     val rheemCtx = new RheemContext(configuration)
@@ -64,7 +64,7 @@ class CrocoPR(plugins: Plugin*) {
       .map(identity).withName("Hotfix")
       .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1)).withName("Make page ranks readable")
-      .collect()
+      .writeTextFile(outputUrl, tuple => tuple.toString())
 
   }
 
@@ -113,12 +113,15 @@ object CrocoPR extends ExperimentDescriptor {
     experiment.getSubject.addConfiguration("input2", inputUrl2)
     val numIterations = args(4).toInt
     experiment.getSubject.addConfiguration("iterations", numIterations)
+    val outputUrl = args(5)
+    experiment.getSubject.addConfiguration("output", outputUrl)
+
 
     // Prepare the PageRank.
     val pageRank = new CrocoPR(plugins: _*)
 
     // Run the PageRank.
-    val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)
+    pageRank(inputUrl1, inputUrl2, numIterations, outputUrl)
 
     // Store experiment data.
     val inputFileSize1 = FileSystems.getFileSize(inputUrl1)
@@ -128,8 +131,8 @@ object CrocoPR extends ExperimentDescriptor {
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
-    println(s"Calculated ${pageRanks.size} page ranks:")
-    StdOut.printLimited(pageRanks, formatter = (pr: (String, java.lang.Float)) => s"${pr._1} has a page rank of ${pr._2}")
+    //println(s"Calculated ${pageRanks.size} page ranks:")
+    //StdOut.printLimited(pageRanks, formatter = (pr: (String, java.lang.Float)) => s"${pr._1} has a page rank of ${pr._2}")
   }
 
 }
