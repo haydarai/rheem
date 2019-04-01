@@ -67,7 +67,7 @@ public class SparkPlatform extends Platform {
             "spark.executor.heartbeatInterval",
             "spark.network.timeout",
             "spark.default.parallelism",
-            "spark.ui.port"
+            "spark.ui.port",
             "spark.network.timeout",
             "spark.speculation",
             "spark.speculation.interval",
