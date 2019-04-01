@@ -59,6 +59,7 @@ import java.util.stream.Stream;
  */
 public class RheemPlans {
 
+    //public static final URI FILE_SOME_LINES_TXT = createUri("/long_cleaned_abstracts_en_100.tql");
     public static final URI FILE_SOME_LINES_TXT = createUri("/some-lines.txt");
 
     public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.txt");
@@ -386,7 +387,7 @@ public class RheemPlans {
         loopOperator.setName("loop");
         loopOperator.initialize(source, convergenceSource);
 
-        // Build the sample operator.
+        // Build the sample executionOperator.
         SparkShufflePartitionSampleOperator<Integer> sampleOperator =
                 new SparkShufflePartitionSampleOperator<>(
                         iterationNumber -> sampleSize,
@@ -449,6 +450,19 @@ public class RheemPlans {
         RepeatOperator<Integer> repeat = new RepeatOperator<>(numIterations, Integer.class);
         repeat.setName("repeat");
 
+
+        // Begin of New added part below
+        MapOperator<Integer, Integer> preprocessing = new MapOperator<>(
+                i -> i, Integer.class, Integer.class
+        );
+        source.connectTo(0,preprocessing,0);
+        // End of New added part below
+
+        MapOperator<Integer, Integer> FIRSTincrement = new MapOperator<>(
+                i -> i + 1, Integer.class, Integer.class
+        );
+        FIRSTincrement.setName("FIRSTincrement");
+
         MapOperator<Integer, Integer> increment = new MapOperator<>(
                 i -> i + 1, Integer.class, Integer.class
         );
@@ -460,7 +474,8 @@ public class RheemPlans {
         );
         sink.setName("sink");
 
-        repeat.initialize(source, 0);
+        source.connectTo(0,FIRSTincrement,0);
+        repeat.initialize(FIRSTincrement, 0);
         repeat.beginIteration(increment, 0);
         repeat.endIteration(increment, 0);
         repeat.connectFinalOutputTo(sink, 0);
@@ -766,7 +781,7 @@ public class RheemPlans {
         noCommaOperator.setName("Filter comma");
         UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
         unionOperator.setName("Union");
-        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createCollectingSink(new ArrayList<>(),String.class);
         stdoutSink.setName("Print");
         SortOperator<String, String> sortOperator = new SortOperator<>(r->r, String.class, String.class);
         sortOperator.setName("Sort");

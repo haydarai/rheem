@@ -27,7 +27,7 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
     public static final int ITERATION_OUTPUT_INDEX = 0;
     public static final int FINAL_OUTPUT_INDEX = 1;
 
-    private final Integer numIterations;
+    private Integer numIterations;
 
     private State state = State.NOT_STARTED;
 
@@ -178,4 +178,7 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
         return this.getNumIterations();
     }
 
+    public void setNumExpectedIterations(int numExpectedIterations) {
+        this.numIterations = numExpectedIterations;
+    }
 }

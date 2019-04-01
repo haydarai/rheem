@@ -198,6 +198,7 @@ public class PlanEnumerator {
                            Map<ExecutionOperator, ExecutionTask> executedTasks,
                            Map<OutputSlot<?>, Collection<Channel>> openChannels) {
 
+
         this.optimizationContext = optimizationContext;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
@@ -362,7 +363,6 @@ public class PlanEnumerator {
         if (branchEnumeration == null) {
             return;
         }
-
         this.postProcess(branchEnumeration, currentOptimizationCtx);
     }
 
@@ -593,11 +593,13 @@ public class PlanEnumerator {
             }
         }
 
-        this.prune(concatenatedEnumeration);
+        if(!getConfiguration().getBooleanProperty("rheem.core.optimizer.mloptimizer.exhaustivePruning"))
+            this.prune(concatenatedEnumeration);
 
+        //count++;
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }
-
+//private static int count = 0;
     /**
      * Sends activations to relevant {@link #enumerationActivators} or {@link #concatenationActivators}.
      *

@@ -1,0 +1,92 @@
+ettings for Spark
+spark.master = spark://10.2.5.221:7077
+rheem.spark.machines = 10
+rheem.spark.cores-per-machine = 4
+spark.executor.memory = 20g
+spark.eventLog.enabled = true
+spark.eventLog.dir = hdfs://10.2.5.221:8020/tmp/spark-events
+spark.app.name = Example
+spark.driver.maxResultSize=4g
+
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.reoptimize = false
+rheem.core.optimizer.instrumentation = org.qcri.rheem.core.profiling.FullInstrumentationStrategy
+rheem.core.log.enabled = true
+rheem.core.log.executions = /root/anis/logs/rheem/executions.json
+rheem.core.log.cardinalities = /root/anis/logs/rheem/cardinalities.json
+
+
+rheem.java.globalgroup.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"55.8*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+
+rheem.java.globalgroup.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"55*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.flatmap.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"((1)*(in0))+(189735962)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+
+rheem.java.groupby.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"(1)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.reduceby.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"(1)*(in0)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.java.loop.load = {\
+ "in":4,\
+ "out":3,\
+ "cpu":"((4)*(in3))",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.cache.load = {\
+ "in":1,\
+ "out":1,\
+ "cpu":"((2163925970)*(in0))",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}
+rheem.spark.localcallbacksink.load = {\
+ "in":1,\
+ "out":0,\
+ "cpu":"((41939652)*(in0))+(22303533306.21285)",\
+ "ram":"0",\
+ "disk":"0",\
+ "net":"0",\
+ "p":0.9\
+}

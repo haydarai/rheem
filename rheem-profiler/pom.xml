@@ -13,6 +13,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>com.github.haifengl</groupId>
+            <artifactId>smile-core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
             <groupId>org.rrd4j</groupId>
             <artifactId>rrd4j</artifactId>
             <version>2.2</version>
@@ -28,6 +33,12 @@
             <version>0.5.0-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-flink</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-graphchi_2.11</artifactId>
             <version>0.5.0-SNAPSHOT</version>
@@ -49,6 +60,26 @@
         <dependency>
             <groupId>de.hpi.isg</groupId>
             <artifactId>profiledb-instrumentation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-core</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

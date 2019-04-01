@@ -35,6 +35,5 @@ public class FlinkBasicPlugin implements Plugin{
 
     @Override
     public void setProperties(Configuration configuration) {
-
     }
 }

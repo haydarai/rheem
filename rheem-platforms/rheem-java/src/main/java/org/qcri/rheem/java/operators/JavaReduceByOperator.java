@@ -75,9 +75,26 @@ public class JavaReduceByOperator<Type, KeyType>
         final BinaryOperator<Type> reduceFunction = javaExecutor.getCompiler().compile(this.reduceDescriptor);
         JavaExecutor.openFunction(this, reduceFunction, inputs, operatorContext);
 
-        final Map<KeyType, Type> reductionResult = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
-                Collectors.groupingBy(keyExtractor, new ReducingCollector<>(reduceFunction))
-        );
+        Map<KeyType, Type> reductionResult;
+        if (!operatorContext.getOptimizationContext().getConfiguration().getBooleanProperty("rheem.profiling.operatorEvaluation")){
+            reductionResult = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
+                    Collectors.groupingBy(keyExtractor, new ReducingCollector<>(reduceFunction))
+            );
+        } else {
+            int[] counter = {0};
+            reductionResult = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
+                    Collectors.groupingBy(keyExtractor, new ReducingCollector<>((el1,el2) -> {
+                        counter[0]++;
+                        if(counter[0]%10==0) {
+                            return reduceFunction.apply(el1, el2);
+                        }else{
+                            return null;
+                        }
+                    }))
+            );
+
+        }
+
         ((CollectionChannel.Instance) outputs[0]).accept(reductionResult.values());
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);

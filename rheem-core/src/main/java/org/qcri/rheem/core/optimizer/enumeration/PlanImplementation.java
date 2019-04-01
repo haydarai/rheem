@@ -643,6 +643,12 @@ public class PlanImplementation {
         }
     }
 
+    double getMLCostEstimate(boolean isIncludeOverhead) {
+        //build feature vector
+        // send it to ML
+        // get the estimates
+        return 4;
+    }
     /**
      * Retrieves the cost estimate for this instance.
      *
@@ -1085,4 +1091,10 @@ public class PlanImplementation {
             return Objects.hash(execOutput, execInputs);
         }
     }
+
+    /**
+     * @return {@link Junction}'s and associate {@link OutputSlot}
+     */
+    public Map<OutputSlot<?>, Junction> getJunctions() { return junctions; }
+
 }

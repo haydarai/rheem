@@ -68,6 +68,10 @@ public class SparkPlatform extends Platform {
             "spark.network.timeout",
             "spark.default.parallelism",
             "spark.ui.port"
+            "spark.network.timeout",
+            "spark.speculation",
+            "spark.speculation.interval",
+            "spark.speculation.multiplier"
     };
 
     /**

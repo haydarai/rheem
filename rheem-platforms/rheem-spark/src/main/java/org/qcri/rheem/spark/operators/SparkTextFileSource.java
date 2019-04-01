@@ -49,6 +49,9 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
         assert outputs.length == this.getNumOutputs();
 
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+      /*  if(this.getInputUrl().startsWith("file://")){
+            this.setInputUrl(this.getInputUrl().replace("file://", "local://"));
+        }*/
         final JavaRDD<String> rdd = sparkExecutor.sc.textFile(this.getInputUrl());
         this.name(rdd);
         output.accept(rdd, sparkExecutor);

@@ -8,14 +8,13 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.10.5</scala.version>
-        <scala.compat.version>2.10</scala.compat.version>
-        <spark.version>1.6.3</spark.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.compat.version>2.11</scala.compat.version>
+        <spark.version>2.4.0</spark.version>
         <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
-        <hadoop.version>2.6.5</hadoop.version>
+        <hadoop.version>2.6.0</hadoop.version>
         <graphchi.version>0.2.2</graphchi.version>
         <antlr.version>4.5.3</antlr.version>
-        <json.version>20180130</json.version>
         <external.platforms.scope>provided</external.platforms.scope>
     </properties>
 
@@ -515,7 +514,7 @@
             <dependency>
                 <groupId>org.json</groupId>
                 <artifactId>json</artifactId>
-                <version>${json.version}</version>
+                <version>20160212</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>
@@ -535,7 +534,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>2.6</version>
+                <version>2.4</version>
             </dependency>
             <dependency>
                 <groupId>net.openhft</groupId>
@@ -610,5 +609,6 @@
         <module>rheem-profiler</module>
         <module>rheem-extensions</module>
         <module>rheem-experiment</module>
+        <module>rheem-brenchmark</module>
     </modules>
 </project>

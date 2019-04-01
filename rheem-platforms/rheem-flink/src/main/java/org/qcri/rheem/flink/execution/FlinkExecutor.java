@@ -1,20 +1,19 @@
 package org.qcri.rheem.flink.execution;
 
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.PartialExecution;
-import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.compiler.FunctionCompiler;
+import org.qcri.rheem.flink.compiler.KeySelectorFunction;
 import org.qcri.rheem.flink.operators.FlinkExecutionOperator;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
 
@@ -118,7 +117,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
                     this.logger.warn("execution until"+task.toString());
                     this.fee.execute();
                 } catch (Exception e) {
-                    //throw new RheemException(e);
+                    throw new RheemException(e);
                 }
             }
         }

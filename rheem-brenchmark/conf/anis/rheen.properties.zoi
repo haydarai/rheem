@@ -1,0 +1,14 @@
+# Settings for Spark
+spark.master = spark://10.2.5.221:7077
+spark.executor.memory = 20g
+spark.eventLog.enabled = true
+spark.eventLog.dir = hdfs://10.2.0.221:54310/tmp/spark-events
+spark.app.name = ML4all2
+spark.driver.maxResultSize=4g
+
+rheem.core.optimizer.pruning.strategies = org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy
+rheem.core.optimizer.reoptimize = false
+rheem.core.optimizer.instrumentation = org.qcri.rheem.core.profiling.FullInstrumentationStrategy
+rheem.core.log.enabled = true
+rheem.core.log.executions = /root/zoi/.rheem/executions.json
+rheem.core.log.cardinalities = /root/zoi/.rheem/.cardinalities.json

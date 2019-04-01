@@ -9,7 +9,6 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
@@ -51,7 +50,7 @@ public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallback
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        ((JavaChannelInstance) inputs[0]).<T>provideStream().forEach(this.callback);
+        //((JavaChannelInstance) inputs[0]).<T>provideStream().forEach(this.callback);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

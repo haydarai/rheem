@@ -1,0 +1,10 @@
+#!/bin/bash
+
+#basedir=$(readlink -m "$0/../..")
+#. "$basedir/conf/set-env.sh"
+. /root/anis/conf/set-env.sh
+#. /root/anis/conf/set-env.sh
+#. /root/anis/conf/set-env.sh
+echo $RHEEM_CLASSPATH
+echo $basedir
+java -Dlog4j.configuration="file://$basedir/conf/log4j.properties" -Xms10240m -Xmx21504m -XX:+UseParallelGC -XX:+UseParallelOldGC -XX:ParallelGCThreads=4 -Drheem.configuration="file://$basedir/conf/rheem.properties" -cp "$RHEEM_CLASSPATH" org.qcri.rheem.apps.sgd.SGD $*

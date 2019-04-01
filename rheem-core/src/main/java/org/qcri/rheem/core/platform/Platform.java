@@ -36,6 +36,16 @@ public abstract class Platform {
         }
     }
 
+    /**
+     * Backward compatibility with 0.2.2 version
+     * @param name
+     */
+    protected Platform(String name) {
+        this.name = name;
+        this.configName = "";
+        this.configureDefaults(Configuration.getDefaultConfiguration());
+    }
+
     protected Platform(String name, String configName) {
         this.name = name;
         this.configName = configName;

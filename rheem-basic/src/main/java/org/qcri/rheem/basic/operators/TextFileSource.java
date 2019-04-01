@@ -27,7 +27,6 @@ public class TextFileSource extends UnarySource<String> {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private final String inputUrl;
 
     private final String encoding;
 
@@ -37,7 +36,7 @@ public class TextFileSource extends UnarySource<String> {
 
     public TextFileSource(String inputUrl, String encoding) {
         super(DataSetType.createDefault(String.class));
-        this.inputUrl = inputUrl;
+        super.inputUrl = inputUrl;
         this.encoding = encoding;
     }
 
@@ -52,9 +51,6 @@ public class TextFileSource extends UnarySource<String> {
         this.encoding = that.getEncoding();
     }
 
-    public String getInputUrl() {
-        return this.inputUrl;
-    }
 
     @Override
     public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
@@ -110,6 +106,7 @@ public class TextFileSource extends UnarySource<String> {
                 return new CardinalityEstimate(0L, 0L, 1d);
             }
 
+            // bytesPerLine is saved as use DataQuanta size in profiling
             OptionalDouble bytesPerLine = this.estimateBytesPerLine();
             if (!bytesPerLine.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",

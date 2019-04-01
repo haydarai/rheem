@@ -86,7 +86,7 @@ public class ExpressionBuilder extends MathExBaseVisitor<Expression> {
 
     @Override
     public Expression visitBinaryOperation(MathExParser.BinaryOperationContext ctx) {
-        final char operator = ctx.operator.getText().charAt(0);
+        final char operator = ctx.executionOperator.getText().charAt(0);
         final Expression operand0 = this.visit(ctx.operand0);
         final Expression operand1 = this.visit(ctx.operand1);
 
@@ -95,7 +95,7 @@ public class ExpressionBuilder extends MathExBaseVisitor<Expression> {
 
     @Override
     public Expression visitUnaryOperation(MathExParser.UnaryOperationContext ctx) {
-        final char operator = ctx.operator.getText().charAt(0);
+        final char operator = ctx.executionOperator.getText().charAt(0);
         final Expression operand = this.visit(ctx.expression());
         return new UnaryOperation(operator, operand);
     }

@@ -124,7 +124,7 @@ public class FullIntegrationIT {
     public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
         // Build a Rheem plan.
         final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
-        // ILLEGAL: This platform is not registered, so this operator will find no implementation.
+        // ILLEGAL: This platform is not registered, so this executionOperator will find no implementation.
         rheemPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
 
         // Instantiate Rheem and activate the Java backend.
@@ -237,8 +237,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(Java.basicPlugin())
-                .with(Spark.basicPlugin());
+                .with(Flink.basicPlugin());
+       //         .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 

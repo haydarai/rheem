@@ -66,6 +66,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        int counter =0;
         final Function<InputType0, KeyType> keyExtractor0 = javaExecutor.getCompiler().compile(this.keyDescriptor0);
         final Function<InputType1, KeyType> keyExtractor1 = javaExecutor.getCompiler().compile(this.keyDescriptor1);
 
@@ -112,7 +113,9 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             final int expectedNumElements = cardinalityEstimate1 == null ?
                     1000 :
                     (int) cardinalityEstimate1.getGeometricMeanEstimate();
+            // Create hashmap for storing input1 data with associated key
             Map<KeyType, Collection<InputType1>> probeTable = new HashMap<>(expectedNumElements);
+            // store the dataquantums of input1 with removing duplicates in @probeTable
             ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().forEach(dataQuantum1 ->
                     probeTable.compute(keyExtractor1.apply(dataQuantum1),
                             (key, value) -> {
@@ -122,9 +125,28 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
                             }
                     )
             );
-            joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 ->
-                    probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
-                            .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
+
+            if (!operatorContext.getOptimizationContext().getConfiguration().getBooleanProperty("rheem.profiling.operatorEvaluation")){
+                // Apply the join of input0 with input1
+                joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 ->
+                        probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
+                                .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
+            } else {
+                int[] count = {0};
+                joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 -> {
+                    count[0]++;
+                    if (count[0]>20)
+                        return null;
+                    return probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
+                                .map(dataQuantum1 -> {
+
+                                    return new Tuple2<>(dataQuantum0, dataQuantum1);
+                                });
+                });
+            }
+
+
+            // Index the execution
             indexingExecutionLineageNode.addPredecessor(inputs[1].getLineage());
             indexingExecutionLineageNode.collectAndMark(executionLineageNodes, producedChannelInstances);
             probingExecutionLineageNode.addPredecessor(inputs[0].getLineage());

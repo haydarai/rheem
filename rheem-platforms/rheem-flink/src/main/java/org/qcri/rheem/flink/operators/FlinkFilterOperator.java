@@ -63,7 +63,7 @@ public class FlinkFilterOperator<Type> extends FilterOperator<Type> implements F
         ((DataSetChannel.Instance) outputs[0]).accept(outputDataSet, flinkExecutor);
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
-    }
+}
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
