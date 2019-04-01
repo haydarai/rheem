@@ -1,6 +1,8 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.Utils;
+import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.io.PrintingOutputFormat;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.function.ConsumerDescriptor;
@@ -54,14 +56,11 @@ public class FlinkLocalCallbackSink <Type extends Serializable> extends LocalCal
 
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSet<Type> inputDataSet = input.provideDataSet();
-
         try {
             if (this.collector != null) {
-
-                this.collector.addAll(inputDataSet.filter(a -> true).setParallelism(1).collect());
-
+                this.collector.addAll(inputDataSet.collect());
             } else {
-                inputDataSet.output(new PrintingOutputFormat<Type>()).setParallelism(1);
+                inputDataSet.output(new PrintingOutputFormat<Type>());
             }
         } catch (Exception e) {
             e.printStackTrace();
