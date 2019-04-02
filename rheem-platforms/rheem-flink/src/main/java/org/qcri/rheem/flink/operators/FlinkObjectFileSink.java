@@ -58,7 +58,7 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSink<Type> tDataSink = input.<Type>provideDataSet()
                 .write(new RheemFileOutputFormat<Type>(targetPath), targetPath, FileSystem.WriteMode.OVERWRITE)
-                .setParallelism(40);
+                .setParallelism(flinkExecutor.getNumDefaultPartitions());
 
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);

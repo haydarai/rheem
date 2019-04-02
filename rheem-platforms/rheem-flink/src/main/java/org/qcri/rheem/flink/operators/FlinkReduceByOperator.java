@@ -77,8 +77,8 @@ public class FlinkReduceByOperator<InputType, KeyType>
 
         FunctionCompiler compiler = flinkExecutor.getCompiler();
 
-        //KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
-        KeySelector keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
+        KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
+        //KeySelector keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
 
         ReduceFunction<InputType> reduceFunction = compiler.compile(this.reduceDescriptor);
 

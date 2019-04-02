@@ -19,7 +19,7 @@ class KmeansTest {
   private def getTestFileUrl(fileName: String) =
     Thread.currentThread().getContextClassLoader.getResource(fileName).toString
 
-
+/*
   @Test
   def shouldWorkWithJava() = {
     val kmeans = new Kmeans(Java.basicPlugin)
@@ -72,6 +72,6 @@ class KmeansTest {
     //        s"None of $centroids matches the expected centroid $expectedCentroid.",
     //        centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 6))
     //    }
-  }
+  }*/
 }
 
