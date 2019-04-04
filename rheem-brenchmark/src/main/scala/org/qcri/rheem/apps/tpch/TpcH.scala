@@ -27,7 +27,7 @@ object TpcH {
     val plugins = Parameters.loadPlugins(args(1))
     val configUrl = args(2)
     val queryName = args(3)
-    val outputUrl = args(4)
+    //val outputUrl = args(4)
 
     val jdbcPlatform = {
       val jdbcPlatforms = plugins
@@ -67,16 +67,16 @@ object TpcH {
         experiment = Parameters.createExperiment(experimentArg, query)
         experiment.getSubject.addConfiguration("plugins", args(1))
         experiment.getSubject.addConfiguration("query", args(3))
-        experiment.getSubject.addConfiguration("outputUrl", args(4))
-        val result = query(configuration, outputUrl, jdbcPlatform, createTableSource)(experiment)
-//        StdOut.printLimited(result, 10)
+   //     experiment.getSubject.addConfiguration("outputUrl", args(4))
+        val result = query(configuration, jdbcPlatform, createTableSource)(experiment)
+        StdOut.printLimited(result, 10)
       case "Q3File" =>
         val query = new Query3File(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)
         experiment.getSubject.addConfiguration("plugins", args(1))
         experiment.getSubject.addConfiguration("query", args(3))
-        experiment.getSubject.addConfiguration("outputUrl", args(4))
-        val result = query(configuration, outputUrl)(experiment)
+   //     experiment.getSubject.addConfiguration("outputUrl", args(4))
+        val result = query(configuration)(experiment)
 //        StdOut.printLimited(result, 10)
       case "Q3" =>
         val query = new Query3Database(plugins: _*)

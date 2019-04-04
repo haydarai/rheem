@@ -5,6 +5,7 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.LineItem
 import org.qcri.rheem.apps.util.ExperimentDescriptor
+import org.qcri.rheem.basic.data.Tuple2
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.jdbc.operators.JdbcTableSource
@@ -85,7 +86,7 @@ class Query1(plugins: Plugin*) extends ExperimentDescriptor {
       .withName("Calculate result fields")
 
       .reduceByKey(
-        result => (result.l_returnflag, result.l_linestatus),
+        result => new Tuple2(result.l_returnflag, result.l_linestatus),
         (r1, r2) => Query1.Result(
           r1.l_returnflag,
           r1.l_linestatus,
@@ -132,6 +133,10 @@ object Query1 {
                     avg_qty: Double,
                     avg_price: Double,
                     avg_disc: Double,
-                    count_order: Int)
+                    count_order: Int) {
+    def this() {
+      this(null, null, 0, 0, 0, 0, 0, 0, 0, 0)
+    }
+  }
 
 }

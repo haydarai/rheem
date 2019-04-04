@@ -286,6 +286,7 @@ public class Job extends OneTimeExecutable {
                 ));
             }
 
+
             // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
             String runId = "1";
             try {
@@ -320,6 +321,7 @@ public class Job extends OneTimeExecutable {
             if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
                 this.logExecution();
             }
+
         } catch (RheemException e) {
             throw e;
         } catch (Throwable t) {
@@ -580,6 +582,7 @@ public class Job extends OneTimeExecutable {
         if(executionPlans.size()==1)
             return this.planImplementation = executionPlans.stream().reduce((p1,p2)->p1).get();
         PlanImplementation bestPlanImplementation;
+        this.logger.info("We will use MLOptimizer: "+ configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"));
         if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
             logGenerator.reinitializepruningLogs();
 
@@ -597,10 +600,10 @@ public class Job extends OneTimeExecutable {
             LoadModel.loadModel(logGenerator.getPruningFeatureLogs());
 
             // Predict execution time and pick minimum
-            logger.info("Pick best Ml optimizer estimates!");
+            this.logger.info("Pick best Ml optimizer estimates!");
             bestFeatureVector =  MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
 
-            logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
+            this.logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
             this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));
 
 
@@ -663,6 +666,7 @@ public class Job extends OneTimeExecutable {
         }
 
         if (this.configuration.getOptionalBooleanProperty("rheem.core.debug.skipexecution").orElse(false)) {
+            this.logStages(executionPlan);
             return true;
         }
         if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
@@ -678,9 +682,8 @@ public class Job extends OneTimeExecutable {
                 executionPlan, this.optimizationContext
         );
         executionRound.stop();
-
-        // Return.
         return isExecutionComplete;
+
     }
 
     /**

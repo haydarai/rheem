@@ -24,7 +24,7 @@ import java.util.stream.Stream;
  * Load saved learned model
  */
 public class LoadModel {
-    public static final URI MODEL_LOADING_LOCATION = getResourceUri("load-model.py");
+ //   public static final URI MODEL_LOADING_LOCATION = getResourceUri("load-model.py");
 
     private static final Logger logger = LoggerFactory.getLogger(LoadModel.class);
 
@@ -46,7 +46,7 @@ public class LoadModel {
         featureVectors = featurevectors;
 
         // Check if `load-model.py` is under .Rheem directory
-        File loadModelFile  = new File(MODEL_LOADING_LOCATION);
+        URI MODEL_LOADING_LOCATION  = URI.create(configuration.getStringProperty("rheem.core.optimizer.mloptimizer.modelLocation"));
 
         // remove a previously stored on disk vector
         File savedVectors = new File(configuration.getStringProperty("rheem.core.optimizer.mloptimizer.saveVectorLocation"));
@@ -70,9 +70,9 @@ public class LoadModel {
             BufferedReader brError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
             Stream<String> errorStream = brError.lines();
             errorStream.forEach(s->{
-//                logger.warn(s);
-                if (s.contains("Error"))
-                    throw new RheemException(String.format("Error when running python script `load-model.py`.\n[ERROR] %s", s));
+                logger.warn(s);
+                //if (s.contains("Error"))
+                   // throw new RheemException(String.format("Error when running python script `load-model.py`.\n[ERROR] %s", s));
             });
             // Destroy process after finish execution
             p.waitFor();

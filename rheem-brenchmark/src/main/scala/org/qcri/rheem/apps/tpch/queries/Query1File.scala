@@ -5,6 +5,7 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.LineItem
 import org.qcri.rheem.apps.util.ExperimentDescriptor
+import org.qcri.rheem.basic.data.Tuple2
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.jdbc.operators.JdbcTableSource
@@ -42,7 +43,6 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
   override def version = "0.1.0"
 
   def apply(configuration: Configuration,
-            outputUrl: String,
             jdbcPlatform: JdbcPlatformTemplate,
             createTableSource: (String, Seq[String]) => JdbcTableSource,
             delta: Int = 90)
@@ -91,7 +91,7 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
       .withName("Calculate result fields")
 
       .reduceByKey(
-        result => (result.l_returnflag, result.l_linestatus),
+        result => new Tuple2(result.l_returnflag, result.l_linestatus),
         (r1, r2) => Query1.Result(
           r1.l_returnflag,
           r1.l_linestatus,
@@ -120,7 +120,7 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
         result.count_order
       ))
       .withName("Post-process line item aggregates")
-      .writeTextFile(outputUrl, record => record.toString)
+      .collect()
 
 
   }
