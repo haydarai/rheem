@@ -102,6 +102,8 @@ public class TextFileSource extends UnarySource<String> {
                 return this.FALLBACK_ESTIMATE;
 
             } else if (fileSize.getAsLong() == 0L) {
+                TextFileSource.this.logger.warn("we find the file {}... deliver fallback estimate.",
+                        TextFileSource.this.inputUrl);
                 timeMeasurement.stop();
                 return new CardinalityEstimate(0L, 0L, 1d);
             }
@@ -126,7 +128,7 @@ public class TextFileSource extends UnarySource<String> {
 
             // Cache the result, so that it will not be recalculated again.
             optimizationContext.putIntoJobCache(jobCacheKey, cardinalityEstimate);
-
+            TextFileSource.this.logger.warn(cardinalityEstimate.toString());
             timeMeasurement.stop();
             return cardinalityEstimate;
         }

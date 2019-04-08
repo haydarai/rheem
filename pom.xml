@@ -608,7 +608,7 @@
         <module>rheem-api</module>
         <module>rheem-profiler</module>
         <module>rheem-extensions</module>
-        <module>rheem-experiment</module>
         <module>rheem-brenchmark</module>
+        <module>rheem-generator</module>
     </modules>
 </project>

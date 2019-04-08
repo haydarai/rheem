@@ -108,9 +108,9 @@ class SimWords(plugins: Plugin*) {
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 ++ c2._2)).withName("Create clusters")
       .map(_._2).withName("Discard cluster IDs")
       .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
+      .collect()
 
-
-    clusters.writeTextFile(outputUrl, list => list.toString() )
+    //clusters.writeTextFile(outputUrl, list => list.toString() )
   }
 
 }

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>rheem</artifactId>
+        <groupId>org.qcri.rheem</groupId>
+        <version>0.5.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>rheem-generator</artifactId>
+    <properties>
+        <protocol.buffer>3.7.1</protocol.buffer>
+        <rheem.version>0.5.0-SNAPSHOT</rheem.version>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protoc-jar-maven-plugin</artifactId>
+                <version>3.1.0.1</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <protocVersion>3.1.0</protocVersion>
+                            <inputDirectories>
+                                <include>src/main/protobuf</include>
+                            </inputDirectories>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <!--Rheem Dependecies START-->
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-basic</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
+        <!--Rheem Dependecies END-->
+
+        <!--Google Protocol buffer Dependecies START-->
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>${protocol.buffer}</version>
+        </dependency>
+        <!--Google Protocol buffer Dependecies END-->
+    </dependencies>
+</project>

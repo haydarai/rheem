@@ -76,8 +76,6 @@ public class FlinkLocalCallbackSink <Type extends Serializable> extends LocalCal
                         .write(new RheemFileOutputFormat<Type>(path), path, FileSystem.WriteMode.OVERWRITE)
                         .setParallelism(flinkExecutor.getNumDefaultPartitions());
 
-
-
                 /*final String id = new AbstractID().toString();
                 final TypeSerializer<Type> serializer = inputDataSet.getType().createSerializer(inputDataSet.getExecutionEnvironment().getConfig());
 

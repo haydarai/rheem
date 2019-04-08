@@ -21,7 +21,7 @@ import scala.util.Random
   */
 class Kmeans(plugin: Plugin*) {
 
-  def apply(k: Int, inputFile: String, outputUrl: String, iterations: Int = 20, isResurrect: Boolean = true)
+  def apply(k: Int, inputFile: String, iterations: Int = 20, isResurrect: Boolean = true)
            (implicit experiment: Experiment, configuration: Configuration) = {
     // Set up the RheemContext.
     implicit val rheemCtx = new RheemContext(configuration)
@@ -73,7 +73,8 @@ class Kmeans(plugin: Plugin*) {
     // Collect the result.
     finalCentroids
       .map(_.toPoint).withName("Strip centroid names")
-      .writeTextFile(outputUrl, point => point.toString)
+      .collect()
+      //.writeTextFile(outputUrl, point => point.toString)
   }
 
 
@@ -103,14 +104,14 @@ object Kmeans extends ExperimentDescriptor {
     experiment.getSubject.addConfiguration("k", args(3))
     val numIterations = args(4).toInt
     experiment.getSubject.addConfiguration("iterations", args(4))
-    val outputUrl = args(5)
-    experiment.getSubject.addConfiguration("outputUrl", outputUrl)
+    //val outputUrl = args(5)
+    //experiment.getSubject.addConfiguration("outputUrl", outputUrl)
 
     // Initialize k-means.
     val kmeans = new Kmeans(plugins: _*)
 
     // Run k-means.
-    kmeans(k, file, outputUrl, numIterations)
+    kmeans(k, file, numIterations)
 
     // Store experiment data.
     val fileSize = FileSystems.getFileSize(file)

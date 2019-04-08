@@ -63,8 +63,14 @@ public class HadoopFileSystem implements FileSystem {
     @Override
     public long getFileSize(String fileUrl) throws FileNotFoundException {
         try {
-            final FileStatus fileStatus = this.getHdfs(fileUrl).getFileStatus(new Path(fileUrl));
-            return fileStatus.getLen();
+            Path file_path = new Path(fileUrl);
+            final FileStatus fileStatus = this.getHdfs(fileUrl).getFileStatus(file_path);
+            if(fileStatus.isFile()) {
+                return fileStatus.getLen();
+            }
+            //ELSE is a folder
+            return this.getHdfs(fileUrl).getContentSummary(file_path).getSpaceConsumed();
+
         } catch (IOException e) {
             throw new FileNotFoundException(String.format("Could not access %s.", fileUrl));
         }
@@ -77,7 +83,18 @@ public class HadoopFileSystem implements FileSystem {
 
     @Override
     public InputStream open(String url) throws IOException {
-        return this.getHdfs(url).open(new Path(url));
+        Path file_path = new Path(url);
+        final FileStatus fileStatus = this.getHdfs(url).getFileStatus(file_path);
+        if(fileStatus.isFile()) {
+            return this.getHdfs(url).open(new Path(url));
+        }//else is a folder
+        FileStatus[] files = this.getHdfs(url).listStatus(file_path);
+        for(int i = 0; i < files.length; i++){
+            if( files[i].isFile() && ! files[i].getPath().toString().contains("_SUCCESS") ){
+                return this.getHdfs(url).open(files[i].getPath());
+            }
+        }
+        return null;
     }
 
     @Override

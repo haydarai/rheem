@@ -614,10 +614,13 @@ public class Job extends OneTimeExecutable {
                     .reduce((p1, p2) -> {
                         final double t1 = p1.getSquashedCostEstimate();
                         final double t2 = p2.getSquashedCostEstimate();
+                        System.out.println(String.format("plan 1: %f   plan 2: %f", t1, t2));
                         return t1 < t2 ? p1 : p2;
                     })
                     .orElseThrow(() -> new RheemException("Could not find an execution plan."));
         }
+        this.logger.info("the cost of the best plan is "+ bestPlanImplementation.getSquashedCostEstimate());
+        this.logger.info("the cost of the best plan is "+ bestPlanImplementation.getCostEstimate());
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
         return this.planImplementation = bestPlanImplementation;
     }

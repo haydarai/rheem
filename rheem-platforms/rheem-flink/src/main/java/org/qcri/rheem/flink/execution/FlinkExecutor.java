@@ -1,5 +1,6 @@
 package org.qcri.rheem.flink.execution;
 
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Job;
@@ -108,6 +109,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
         this.registerMeasuredCardinalities(producedChannelInstances);
 
         // Warn if requested eager execution did not take place.
+        this.logger.info("Flink will execute");
         if (isRequestEagerExecution ){
             if( partialExecution == null) {
                 this.logger.info("{} was not executed eagerly as requested.", task);
@@ -115,7 +117,8 @@ public class FlinkExecutor extends PushExecutorTemplate {
                 try {
                     //TODO validate the execute in different contexts
                     this.logger.warn("execution until"+task.toString());
-                    this.fee.execute();
+                    JobExecutionResult result = this.fee.execute();
+                    this.logger.warn("execution result " + result.getJobID() );
                 } catch (Exception e) {
                     throw new RheemException(e);
                 }

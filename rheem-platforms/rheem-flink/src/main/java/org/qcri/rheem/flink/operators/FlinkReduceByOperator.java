@@ -159,15 +159,15 @@ public class FlinkReduceByOperator<InputType, KeyType>
         return false;
     }
 
-    public class KeySelectorFunctionTuple<T> implements KeySelector<T, Tuple2<String, String>>, ResultTypeQueryable<Tuple2<String, String>>, Serializable {
+    public class KeySelectorFunctionTuple<T> implements KeySelector<T, Tuple2<?, ?>>, ResultTypeQueryable<Tuple2<?, ?>>, Serializable {
 
-        public Function<T, Tuple2<String, String>> impl;
+        public Function<T, Tuple2<?, ?>> impl;
 
         public KeySelectorFunctionTuple(TransformationDescriptor transformationDescriptor) {
             this.impl = transformationDescriptor.getJavaImplementation();
         }
 
-        public Tuple2<String, String> getKey(T object){
+        public Tuple2<?, ?> getKey(T object){
             return this.impl.apply(object);
         }
 
@@ -175,8 +175,8 @@ public class FlinkReduceByOperator<InputType, KeyType>
         public TypeInformation getProducedType() {
             try{
                 return new PojoTypeInfo(Tuple2.class, Arrays.asList(
-                        new PojoField(Tuple2.class.getField("_1"),  TypeInformation.of(String.class)),
-                        new PojoField(Tuple2.class.getField("_2"),  TypeInformation.of(String.class ))
+                        new PojoField(Tuple2.class.getField("field0"),  TypeInformation.of(String.class))
+                       // new PojoField(Tuple2.class.getField("field1"),  TypeInformation.of(Tuple2.class.getField("field1").getType() ))
                 ));
             } catch (NoSuchFieldException e) {
                 e.printStackTrace();

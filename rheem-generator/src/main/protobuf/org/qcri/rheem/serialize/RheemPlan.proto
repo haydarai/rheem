@@ -1,0 +1,62 @@
+// See README.txt for information and build instructions.
+//
+// Note: START and END tags are used in comments to define sections used in
+// tutorials.  They are not part of the syntax for Protocol Buffers.
+//
+// To get an in-depth walkthrough of this file and the related examples, see:
+// https://developers.google.com/protocol-buffers/docs/tutorials
+
+// [START declaration]
+syntax = "proto3";
+package org.qcri.rheem.generator;
+
+// [END declaration]
+
+// [START java_declaration]
+option java_package = "org.qcri.rheem.serialize.protocol.protobuf";
+option java_outer_classname = "RheemProtoBuf";
+// [END java_declaration]
+
+// [START RheemPlan]
+message RheemPlanProtoBuf {
+
+  enum RheemPlatformProtoBuf {
+    JAVA = 0;
+    SPARK = 1;
+    FLINK = 2;
+  }
+
+  message RheemSlotProtoBuf {
+
+    RheemOperatorProtoBuf owner = 1;
+    int32 position = 2;
+    repeated RheemSlotProtoBuf ocupants = 3 ;
+
+  }
+
+  message RheemParameterProtoBuf {
+    string type = 1;
+    string field_name = 2;
+    bytes value = 3;
+  }
+
+  message RheemOperatorProtoBuf {
+    string name = 1;
+    string class = 2;
+    repeated RheemParameterProtoBuf parameters= 3;
+    repeated RheemSlotProtoBuf inputSlot = 4;
+    repeated RheemSlotProtoBuf outputSlot = 5;
+    RheemPlatformProtoBuf platform = 6;
+  }
+
+
+
+
+  string name = 1;
+  string type = 2;
+
+  repeated RheemPlatformProtoBuf platforms = 3;
+  repeated RheemOperatorProtoBuf operators = 4;
+
+}
+// [END RheemPlan]
