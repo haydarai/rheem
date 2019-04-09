@@ -4,7 +4,6 @@ import java.util.UUID;
 
 public class RheemIdentifier {
 
-    private static int seed = 1;
     UUID id;
 
     public RheemIdentifier(){

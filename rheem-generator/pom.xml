@@ -46,6 +46,16 @@
             <artifactId>rheem-basic</artifactId>
             <version>${rheem.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-java</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-spark_${scala.compat.version}</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
         <!--Rheem Dependecies END-->
 
         <!--Google Protocol buffer Dependecies START-->

@@ -50,9 +50,10 @@ public class Down2Top extends Direction{
 
     public void generateNext(){
         Operator current = this.queue.peek();
+        if(current == null) return;
         Arrays.stream(current.getAllInputs())
                 .map(input -> input.getOccupant().getOwner())
-                .filter(this.enrolled::contains)
+                .filter(op -> !this.enrolled.contains(op))
                 .forEach(op -> {
                     this.queue.add(op);
                     this.enrolled.add(op);

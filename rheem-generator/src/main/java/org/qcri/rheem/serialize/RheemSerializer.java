@@ -4,11 +4,16 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.serialize.protocol.RheemAutoEnconderFactory;
 import org.qcri.rheem.serialize.protocol.RheemDecode;
 import org.qcri.rheem.serialize.protocol.RheemEncode;
+import org.qcri.rheem.serialize.protocol.protobuf.RheemProtobufFactory;
+import org.qcri.rheem.serialize.protocol.protobuf.store.ProtoBufStoreFactory;
 import org.qcri.rheem.serialize.store.RheemStoreFactory;
 import org.qcri.rheem.serialize.store.RheemStoreReader;
 import org.qcri.rheem.serialize.store.RheemStoreWriter;
 
-import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+
 
 public class RheemSerializer<Protocol> {
 
@@ -21,6 +26,7 @@ public class RheemSerializer<Protocol> {
 
     public RheemSerializer(){
         //TODO recovery from configuration;
+        this(new RheemProtobufFactory(), new ProtoBufStoreFactory());
     }
 
     public RheemSerializer(RheemAutoEnconderFactory autoEnconderFactory, RheemStoreFactory rheemStoreFactory){
@@ -51,8 +57,12 @@ public class RheemSerializer<Protocol> {
     }
 
 
-    public static void main(String... args){
+    public static void main(String... args) throws IOException, URISyntaxException {
+        RheemPlan plan = org.qcri.rheem.serialize.tmp.Main.createRheemPlan("file:///lalal", new ArrayList<>());
 
+        RheemSerializer serializer = new RheemSerializer();
+
+        serializer.save(plan);
 
 
     }
