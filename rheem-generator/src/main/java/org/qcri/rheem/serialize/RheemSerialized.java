@@ -36,5 +36,7 @@ public abstract class RheemSerialized<Protocol> {
 
     public abstract byte[] toBytes();
 
+    public abstract void fromBytes(byte[] bytes);
+
 
 }

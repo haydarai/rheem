@@ -9,7 +9,9 @@ public class ProtoBufDecode implements RheemDecode<RheemProtoBuf.RheemPlanProtoB
 
 
     @Override
-    public RheemPlan decode(RheemSerialized protocol) {
+    public RheemPlan decode(RheemSerialized<RheemProtoBuf.RheemPlanProtoBuf> protocol) {
+        System.out.println(protocol.getValue());
+
         return null;
     }
 }

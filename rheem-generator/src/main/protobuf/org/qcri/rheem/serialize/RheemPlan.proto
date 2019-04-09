@@ -39,6 +39,7 @@ message RheemPlanProtoBuf {
     string type = 1;
     string field_name = 2;
     bytes value = 3;
+    int32 position = 4;
   }
 
   message RheemOperatorProtoBuf {

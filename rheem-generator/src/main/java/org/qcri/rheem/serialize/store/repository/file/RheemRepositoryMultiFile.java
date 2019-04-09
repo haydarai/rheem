@@ -7,6 +7,7 @@ import org.qcri.rheem.serialize.store.repository.RheemRepository;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class RheemRepositoryMultiFile implements RheemRepository {
@@ -34,7 +35,12 @@ public class RheemRepositoryMultiFile implements RheemRepository {
     }
 
     @Override
-    public RheemSerialized<?> read(RheemIdentifier identifier) {
+    public byte[] read(RheemIdentifier identifier) {
+        try {
+            return Files.readAllBytes(Paths.get(this.folder.getPath(), identifier.getId().toString()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

@@ -16,7 +16,7 @@ public class RheemRepositoryFile implements RheemRepository {
     }
 
     @Override
-    public RheemSerialized<?> read(RheemIdentifier identifier) {
+    public byte[] read(RheemIdentifier identifier) {
         return null;
     }
 

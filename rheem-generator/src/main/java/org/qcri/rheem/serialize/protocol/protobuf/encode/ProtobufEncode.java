@@ -1,6 +1,15 @@
 package org.qcri.rheem.serialize.protocol.protobuf.encode;
 
+import com.google.protobuf.ByteString;
+import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.basic.operators.FlatMapOperator;
+import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -15,8 +24,14 @@ import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf;
 import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf;
 import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemOperatorProtoBuf;
 import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemSlotProtoBuf;
+import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemParameterProtoBuf;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,11 +129,195 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
                     )
                 );
             }
-
+            this.getParameters(op).stream().forEach(
+                rheemParameterProtoBuf -> {
+                    op_builder.addParameters(rheemParameterProtoBuf.getPosition(), rheemParameterProtoBuf);
+                }
+            );
 
             op_map.put(op, op_builder);
         }
         traversal.restart();
         return op_map;
+    }
+
+
+    private Collection<RheemParameterProtoBuf.Builder> getParameters(Operator op){
+        Collection<RheemParameterProtoBuf.Builder> parameters = new ArrayList<>();
+
+        if(op instanceof TextFileSource){
+            RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(0);
+            param.setFieldName("inputUrl");
+            param.setType(String.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((TextFileSource)op).getInputUrl()
+                )
+            );
+            parameters.add(param);
+        }
+
+        if(op instanceof FlatMapOperator){
+            RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(0);
+            param.setFieldName("function");
+            param.setType(FunctionDescriptor.SerializableFunction.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((FlatMapOperator)op).getFunctionDescriptor().getJavaImplementation()
+                )
+            );
+            parameters.add(param);
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(1);
+            param.setFieldName("inputTypeClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((FlatMapOperator)op).getInputType().getDataUnitType().getTypeClass()
+                )
+            );
+            parameters.add(param);
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(2);
+            param.setFieldName("outputTypeClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((FlatMapOperator)op).getOutputType().getDataUnitType().getTypeClass()
+                )
+            );
+            parameters.add(param);
+        }
+
+        if(op instanceof FilterOperator){
+            RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(0);
+            param.setFieldName("predicateDescriptor");
+            param.setType(PredicateDescriptor.SerializablePredicate.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((FilterOperator)op).getPredicateDescriptor().getJavaImplementation()
+                )
+            );
+            parameters.add(param);
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(1);
+            param.setFieldName("typeClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                    this.obj2ByteString(
+                            ((FilterOperator)op).getType().getDataUnitType().getTypeClass()
+                    )
+            );
+            parameters.add(param);
+            return null;
+        }
+
+        if(op instanceof MapOperator){
+            RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(0);
+            param.setFieldName("function");
+            param.setType(FunctionDescriptor.SerializableFunction.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((MapOperator)op).getFunctionDescriptor().getJavaImplementation()
+                )
+            );
+            parameters.add(param);
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(1);
+            param.setFieldName("inputTypeClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((MapOperator)op).getInputType().getDataUnitType().getTypeClass()
+                )
+            );
+            parameters.add(param);
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(2);
+            param.setFieldName("outputTypeClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((MapOperator)op).getOutputType().getDataUnitType().getTypeClass()
+                )
+            );
+            parameters.add(param);
+        }
+
+        if(op instanceof ReduceByOperator){
+            RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(0);
+            param.setFieldName("keyFunction");
+            param.setType(FunctionDescriptor.SerializableFunction.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((ReduceByOperator)op).getKeyDescriptor().getJavaImplementation()
+                )
+            );
+            parameters.add(param);
+
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(1);
+            param.setFieldName("reduceDescriptor");
+            param.setType(FunctionDescriptor.SerializableBinaryOperator.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((ReduceByOperator)op).getReduceDescriptor().getJavaImplementation()
+                )
+            );
+            parameters.add(param);
+
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(2);
+            param.setFieldName("keyClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((ReduceByOperator)op).getKeyDescriptor().getOutputType().getTypeClass()
+                )
+            );
+            parameters.add(param);
+
+            param = RheemParameterProtoBuf.newBuilder();
+            param.setPosition(3);
+            param.setFieldName("typeClass");
+            param.setType(Class.class.toString());
+            param.setValue(
+                this.obj2ByteString(
+                    ((ReduceByOperator)op).getKeyDescriptor().getInputType().getTypeClass()
+                )
+            );
+            parameters.add(param);
+        }
+
+        if(op instanceof LocalCallbackSink){
+
+            return null;
+        }
+        return parameters;
+    }
+
+    private ByteString obj2ByteString(Object obj){
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(obj);
+            oos.flush();
+            return ByteString.copyFrom(bos.toByteArray());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

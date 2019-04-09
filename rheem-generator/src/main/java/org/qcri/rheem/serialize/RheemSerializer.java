@@ -58,11 +58,14 @@ public class RheemSerializer<Protocol> {
 
 
     public static void main(String... args) throws IOException, URISyntaxException {
-        RheemPlan plan = org.qcri.rheem.serialize.tmp.Main.createRheemPlan("file:///lalal", new ArrayList<>());
+        //RheemPlan plan = org.qcri.rheem.serialize.tmp.Main.createRheemPlan("file:///lalal", new ArrayList<>());
 
         RheemSerializer serializer = new RheemSerializer();
 
-        serializer.save(plan);
+        //serializer.save(plan);
+
+        RheemPlan plan = serializer.recovery(new RheemIdentifier("4b2d11a0-a3c4-4c2c-8879-fc64b4166e64"));
+
 
 
     }

@@ -9,7 +9,7 @@ public interface RheemRepository {
 
     public boolean write(RheemSerialized<?> serialized);
 
-    public RheemSerialized<?> read(RheemIdentifier identifier);
+    public byte[] read(RheemIdentifier identifier);
 
     public boolean close();
 
