@@ -78,7 +78,7 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     /**
      * Creates a new instance.
      */
-    public LocalCallbackSink(ConsumerDescriptor.SerializableConsumer<T> consumerDescriptor, Class<T> typeClass) {
+    public LocalCallbackSink(FunctionDescriptor.SerializableConsumer<T> consumerDescriptor, Class<T> typeClass) {
         super(DataSetType.createDefault(BasicDataUnitType.createBasic(typeClass)), true);
         this.callbackDescriptor = consumerDescriptor;
         this.callback = consumerDescriptor;

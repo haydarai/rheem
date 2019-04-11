@@ -6,7 +6,9 @@ import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.basic.operators.TextFileSink;
 import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
@@ -25,6 +27,7 @@ import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBu
 import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemOperatorProtoBuf;
 import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemSlotProtoBuf;
 import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemParameterProtoBuf;
+import org.qcri.rheem.serialize.protocol.protobuf.RheemProtoBuf.RheemPlanProtoBuf.RheemPlatformProtoBuf;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -35,10 +38,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.UUID;
 
 public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoBuf> {
 
+    private Configuration configuration;
+
+    public ProtobufEncode(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     @Override
     public RheemSerialized<RheemProtoBuf.RheemPlanProtoBuf> enconde(RheemPlan plan) {
@@ -69,7 +77,6 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
                 RheemSlotProtoBuf.Builder slot = op_builder.getOutputSlotBuilder(output.getIndex());
 
                 List<InputSlot<?>> list_inputs = output.getOccupiedSlots();
-                System.out.println(list_inputs);
                 for(InputSlot<?>slot_ocupant: list_inputs){
                     RheemOperatorProtoBuf.Builder op_builder_tmp = op_map.get(slot_ocupant.getOwner());
                     slot.addOcupants(
@@ -92,15 +99,16 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
         Map<Operator, RheemOperatorProtoBuf.Builder> op_map = new HashMap<>();
         for(Operator op: traversal){
             RheemOperatorProtoBuf.Builder op_builder = RheemOperatorProtoBuf.newBuilder();
+            op_builder.setId((UUID.randomUUID()).toString());
             op_builder.setName(op.getName());
-            op_builder.setTypeClass(op.getClass().toString());
+            op_builder.setTypeClass(op.getClass().getName());
 
             InputSlot<?>[] inputs = op.getAllInputs();
             for(int i = 0; i < inputs.length; i++){
                 InputSlot<?> input = inputs[i];
 
                 RheemSlotProtoBuf.Builder slot = RheemSlotProtoBuf.newBuilder();
-                slot.setOwner(op_builder);
+                slot.setOwner(op_builder.getId());
                 slot.setPosition(input.getIndex());
 
                 slot.setType(input.getType().getDataUnitType().getTypeClass().toString());
@@ -112,28 +120,16 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
                 OutputSlot<?> output = outputs[i];
 
                 RheemSlotProtoBuf.Builder slot = RheemSlotProtoBuf.newBuilder();
-                slot.setOwner(op_builder);
+                slot.setOwner(op_builder.getId());
                 slot.setPosition(output.getIndex());
 
                 slot.setType(output.getType().getDataUnitType().getTypeClass().toString());
                 op_builder.addOutputSlot(output.getIndex(), slot);
             }
-            Set<Platform> platform = op.getTargetPlatforms();
-            if(platform.size() > 1){
-                throw new RheemException(
-                    String.format(
-                        "The operator %s of the class %s have more than one platform, the platforms are %s",
-                            op.getName(),
-                            op.getClass(),
-                            Arrays.toString(platform.toArray())
-                    )
-                );
-            }
-            this.getParameters(op).stream().forEach(
-                rheemParameterProtoBuf -> {
-                    op_builder.addParameters(rheemParameterProtoBuf.getPosition(), rheemParameterProtoBuf);
-                }
-            );
+            op_builder.setPlatform(getPlatform(op));
+            op_builder.addAllParameters(this.getParameters(op));
+
+
 
             op_map.put(op, op_builder);
         }
@@ -141,169 +137,247 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
         return op_map;
     }
 
+    private RheemPlatformProtoBuf getPlatform(Operator op){
+        if(op.getTargetPlatforms().size() > 1){
+            throw new RheemException(
+                    String.format(
+                            "The operator %s of the class %s have more than one platform, the platforms are %s",
+                            op.getName(),
+                            op.getClass(),
+                            Arrays.toString(op.getTargetPlatforms().toArray())
+                    )
+            );
+        }
+        if(op.getTargetPlatforms().size() == 0){
+            return RheemPlatformProtoBuf.RHEEM;
+        }
 
-    private Collection<RheemParameterProtoBuf.Builder> getParameters(Operator op){
-        Collection<RheemParameterProtoBuf.Builder> parameters = new ArrayList<>();
+        Platform plat = (Platform) op.getTargetPlatforms().toArray()[0];
+
+        if( plat.getName().toLowerCase().contains("spark")){
+            return RheemPlatformProtoBuf.SPARK;
+        }
+        if( plat.getName().toLowerCase().contains("flink")){
+            return RheemPlatformProtoBuf.FLINK;
+        }
+        if( plat.getName().toLowerCase().contains("java")){
+            return RheemPlatformProtoBuf.JAVA;
+        }
+        return RheemPlatformProtoBuf.RHEEM;
+    }
+
+    private Collection<RheemParameterProtoBuf> getParameters(Operator op){
+        Collection<RheemParameterProtoBuf> parameters = new ArrayList<>();
 
         if(op instanceof TextFileSource){
             RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(0);
             param.setFieldName("inputUrl");
-            param.setType(String.class.toString());
+            param.setType(String.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((TextFileSource)op).getInputUrl()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
         }
 
         if(op instanceof FlatMapOperator){
             RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(0);
             param.setFieldName("function");
-            param.setType(FunctionDescriptor.SerializableFunction.class.toString());
+            param.setType(FunctionDescriptor.SerializableFunction.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((FlatMapOperator)op).getFunctionDescriptor().getJavaImplementation()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(1);
             param.setFieldName("inputTypeClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((FlatMapOperator)op).getInputType().getDataUnitType().getTypeClass()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(2);
             param.setFieldName("outputTypeClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((FlatMapOperator)op).getOutputType().getDataUnitType().getTypeClass()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
         }
 
         if(op instanceof FilterOperator){
             RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(0);
             param.setFieldName("predicateDescriptor");
-            param.setType(PredicateDescriptor.SerializablePredicate.class.toString());
+            param.setType(PredicateDescriptor.SerializablePredicate.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((FilterOperator)op).getPredicateDescriptor().getJavaImplementation()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(1);
             param.setFieldName("typeClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                     this.obj2ByteString(
                             ((FilterOperator)op).getType().getDataUnitType().getTypeClass()
                     )
             );
-            parameters.add(param);
-            return null;
+            parameters.add(param.build());
         }
 
         if(op instanceof MapOperator){
             RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(0);
             param.setFieldName("function");
-            param.setType(FunctionDescriptor.SerializableFunction.class.toString());
+            param.setType(FunctionDescriptor.SerializableFunction.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((MapOperator)op).getFunctionDescriptor().getJavaImplementation()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(1);
             param.setFieldName("inputTypeClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((MapOperator)op).getInputType().getDataUnitType().getTypeClass()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(2);
             param.setFieldName("outputTypeClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((MapOperator)op).getOutputType().getDataUnitType().getTypeClass()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
         }
 
         if(op instanceof ReduceByOperator){
             RheemParameterProtoBuf.Builder param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(0);
             param.setFieldName("keyFunction");
-            param.setType(FunctionDescriptor.SerializableFunction.class.toString());
+            param.setType(FunctionDescriptor.SerializableFunction.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((ReduceByOperator)op).getKeyDescriptor().getJavaImplementation()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(1);
             param.setFieldName("reduceDescriptor");
-            param.setType(FunctionDescriptor.SerializableBinaryOperator.class.toString());
+            param.setType(FunctionDescriptor.SerializableBinaryOperator.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((ReduceByOperator)op).getReduceDescriptor().getJavaImplementation()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(2);
             param.setFieldName("keyClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((ReduceByOperator)op).getKeyDescriptor().getOutputType().getTypeClass()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
 
             param = RheemParameterProtoBuf.newBuilder();
             param.setPosition(3);
             param.setFieldName("typeClass");
-            param.setType(Class.class.toString());
+            param.setType(Class.class.getName());
             param.setValue(
                 this.obj2ByteString(
                     ((ReduceByOperator)op).getKeyDescriptor().getInputType().getTypeClass()
                 )
             );
-            parameters.add(param);
+            parameters.add(param.build());
         }
 
         if(op instanceof LocalCallbackSink){
+            parameters.add(
+                RheemParameterProtoBuf.newBuilder()
+                    .setPosition(0)
+                    .setFieldName("callback")
+                    .setType(FunctionDescriptor.SerializableConsumer.class.getName())
+                    .setValue(
+                        this.obj2ByteString(
+                            ((LocalCallbackSink)op).getCallback()
+                        )
+                    )
+                    .build()
+            );
 
-            return null;
+            parameters.add(
+                RheemParameterProtoBuf.newBuilder()
+                    .setPosition(1)
+                    .setFieldName("typeClass")
+                    .setType(Class.class.getName())
+                    .setValue(
+                        this.obj2ByteString(
+                            ((LocalCallbackSink)op).getType().getDataUnitType().getTypeClass()
+                        )
+                    )
+                    .build()
+            );
+        }
+
+        if(op instanceof TextFileSink){
+            parameters.add(
+                RheemParameterProtoBuf.newBuilder()
+                    .setPosition(0)
+                    .setFieldName("textFileUrl")
+                    .setType(String.class.getName())
+                    .setValue(
+                        this.obj2ByteString(
+                            ((TextFileSink)op).getTextFileUrl()
+                        )
+                    )
+                .build()
+            );
+
+            parameters.add(
+                RheemParameterProtoBuf.newBuilder()
+                    .setPosition(1)
+                    .setFieldName("typeClass")
+                    .setType(Class.class.getName())
+                    .setValue(
+                        this.obj2ByteString(
+                            ((TextFileSink)op).getType().getDataUnitType().getTypeClass()
+                        )
+                    )
+                .build()
+            );
         }
         return parameters;
     }

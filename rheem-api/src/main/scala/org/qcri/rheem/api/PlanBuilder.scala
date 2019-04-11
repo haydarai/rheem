@@ -25,6 +25,9 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
 
   private var experiment: Experiment = _
 
+  private var save_flag: Boolean = false
+  private var execute_flag: Boolean = true
+  private var rheemplan: RheemPlan = null
   // We need to ensure that this module is shipped to Spark etc. in particular because of the Scala-to-Java function wrappers.
   ReflectionUtils.getDeclaringJar(this) match {
     case path: String => udfJars += path
@@ -81,6 +84,8 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
     */
   def buildAndExecute(): Unit = {
     val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
+    if(this.save_flag) this.rheemplan = plan
+    if(!this.execute_flag) return null;
     if (this.experiment == null) this.rheemContext.execute(jobName, plan, this.udfJars.toArray: _*)
     else this.rheemContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
   }
@@ -147,6 +152,12 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
   implicit private[api] def wrap[T: ClassTag](operator: ElementaryOperator): DataQuanta[T] =
     PlanBuilder.wrap[T](operator)(classTag[T], this)
 
+
+  def onlySave() = {
+    this.save_flag = true;
+    this.execute_flag = false;
+    this;
+  }
 }
 
 object PlanBuilder {

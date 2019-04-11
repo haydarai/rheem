@@ -75,7 +75,7 @@ public class LogGenerator {
         put("globalreduce", startOpPos +4*opPosStep);put("distinct", startOpPos +5*opPosStep);put("groupby:globalmaterializedgroup:materializedgroupby", startOpPos +6*opPosStep);
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall:union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
-        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink:collectionsink", startOpPos +18*opPosStep);
+        put("collectionsource", startOpPos +16*opPosStep);put("textfilesource:textsource", startOpPos +17*opPosStep);put("localcallbacksink:callbacksink:collectionsink:textfilesink", startOpPos +18*opPosStep);
         put("collect:zipwithid:cache:count:broadcast:repeatexpanded:mappartitions:sample", startOpPos + 19*opPosStep);
         // Below should be added in different position
         // DAtasetchannel is a flink type channel
@@ -92,12 +92,13 @@ public class LogGenerator {
         put("sort", startOpPos +7*opPosStep);put("join", startOpPos +8*opPosStep);put("unionall", startOpPos +9*opPosStep);put("union", startOpPos +9*opPosStep);put("cartesian", startOpPos +10*opPosStep);put("randomsample", startOpPos +11*opPosStep);
         put("shufflesample", startOpPos +12*opPosStep);put("bernoullisample", startOpPos +13*opPosStep);put("dowhile", startOpPos +14*opPosStep);put("repeat", startOpPos +15*opPosStep);
         put("collectionsource", startOpPos +16*opPosStep);put("textfilesource", startOpPos +17*opPosStep);put("textsource", startOpPos + 17*opPosStep);put("callbacksink", startOpPos +18*opPosStep);
-        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);
+        put("localcallbacksink", startOpPos + 18*opPosStep);put("collect", startOpPos + 19*opPosStep);put("textfilesink", startOpPos + 18*opPosStep);
         // Below should be added in different position
         // Datasetchannel is a flink type channel
         put("zipwithid", startOpPos + 19*opPosStep);put("cache", startOpPos + 19*opPosStep);put("count", startOpPos + 19*opPosStep);put("broadcast", startOpPos + 19*opPosStep);
         put("repeatexpanded", startOpPos + 19*opPosStep);put("mappartitions", startOpPos + 19*opPosStep);put("shufflepartitionsample", startOpPos + 19*opPosStep);
         put("sample", startOpPos + 19*opPosStep);
+
     }};
 
     public LinkedHashMap<String,Integer> CHANNEL_VECTOR_POSITION = new LinkedHashMap<String,Integer>(){{
@@ -161,6 +162,14 @@ public class LogGenerator {
         // prepare topologies
         sinks.stream()
                 .forEach( sink->{
+                    if(sink.isAlternative()){
+                        sink = ((OperatorAlternative)sink).getAlternatives().stream()
+                                .map(alt -> alt.getContainedOperator())
+                                .filter(op -> {
+                                    System.out.println(op);
+                                    return op instanceof ExecutionOperator;
+                                }).findFirst().get();
+                    }
                     Shape shape = prepareTopologies((UnarySink) sink,ispreExecution);
                     shape.getSourceTopologies().stream()
                             .forEach(t->this.sourceTopologies.add(t));
@@ -1367,7 +1376,12 @@ public class LogGenerator {
                 this.setEstimatedInputCardinality(averageOutputCardinality);
                 UnarySource textFileSource = (UnarySource) localOperatorContexts.get(operator).getOperator();
                 if(textFileSource.getInputUrl()!=null){
-                    double fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+                    double fileSize;
+                    try {
+                        fileSize = FileSystems.getFileSize(textFileSource.getInputUrl()).getAsLong();
+                    }catch (Exception e){
+                        fileSize = 0;
+                    }
                     // avoid having infinity
                     if (averageOutputCardinality!=0)
                         this.setEstimatedDataQuataSize(fileSize/averageOutputCardinality);

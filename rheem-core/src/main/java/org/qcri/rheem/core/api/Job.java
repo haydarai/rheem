@@ -39,7 +39,14 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.file.Files;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -161,6 +168,8 @@ public class Job extends OneTimeExecutable {
 
     private final boolean isProactiveReoptimization;
 
+    private double[] vector_picked;
+
     /**
      * Creates a new instance.
      *
@@ -202,6 +211,30 @@ public class Job extends OneTimeExecutable {
         else {
             this.monitor = new DisabledMonitor();
         }
+
+    }
+
+    private void storeVector(long executionTime) {
+
+        try {
+            File file = new File(configuration.getStringProperty("rheem.profiler.logs.planVector_1D"));
+            final File parentFile = file.getParentFile();
+            if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
+                throw new RheemException("Could not initialize cardinality repository.");
+            }
+
+            NumberFormat nf = new DecimalFormat("##.#");
+            double[] logs = this.logGenerator.addPruningFeatureLog(this.planImplementation);
+            String record = Arrays.stream(logs).mapToObj(nf::format).map(p -> p + " ").collect(Collectors.joining()) + executionTime;
+            System.out.println(record);;
+
+        } catch (RheemException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RheemException(String.format("Cannot write to %s.", configuration.getStringProperty("rheem.profiler.logs.planVector_1D")), e);
+        }
+
+
     }
 
     /**
@@ -259,11 +292,11 @@ public class Job extends OneTimeExecutable {
         try {
 
             // if ml learning model is used the the vector log preparation happen before inflation and hyperplan generation
-            if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
+           // if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
                 logger.info("rheem plan to feature vector convesion.");
                 // prepare vector log
                 logGenerator.prepareVectorLog(rheemPlan,rheemContext.getConfiguration(),true);
-            }
+          //  }
             // Prepare the #rheemPlan for the optimization.
             this.optimizationRound.start();
             this.prepareRheemPlan();
@@ -310,7 +343,6 @@ public class Job extends OneTimeExecutable {
                 }
                 this.optimizationRound.stop();
             }
-
             this.stopWatch.start("Post-processing");
 
             // Update best feature plan vector with corrected cardinalities
@@ -331,6 +363,8 @@ public class Job extends OneTimeExecutable {
             this.stopWatch.start("Post-processing", "Release Resources");
             this.releaseResources();
             this.stopWatch.stop("Post-processing");
+            System.out.println("hereeee");
+            this.storeVector(this.stopWatch.getOrCreateRound("Execution").getMillis());
             this.logger.info("StopWatch results:\n{}", this.stopWatch.toPrettyString());
         }
     }
@@ -614,7 +648,6 @@ public class Job extends OneTimeExecutable {
                     .reduce((p1, p2) -> {
                         final double t1 = p1.getSquashedCostEstimate();
                         final double t2 = p2.getSquashedCostEstimate();
-                        System.out.println(String.format("plan 1: %f   plan 2: %f", t1, t2));
                         return t1 < t2 ? p1 : p2;
                     })
                     .orElseThrow(() -> new RheemException("Could not find an execution plan."));

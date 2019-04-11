@@ -56,6 +56,11 @@
             <artifactId>rheem-spark_${scala.compat.version}</artifactId>
             <version>${rheem.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-flink</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
         <!--Rheem Dependecies END-->
 
         <!--Google Protocol buffer Dependecies START-->
@@ -65,5 +70,30 @@
             <version>${protocol.buffer}</version>
         </dependency>
         <!--Google Protocol buffer Dependecies END-->
+        <!--HDFS Dependecies START-->
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>${hadoop.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-core</artifactId>
+            <version>1.2.1</version>
+        </dependency>
+        <!--HDFS Dependecies END-->
+        <!--Spark Dependecies START-->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.compat.version}</artifactId>
+            <version>${spark.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!--Spark Dependecies END-->
     </dependencies>
 </project>

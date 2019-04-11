@@ -21,14 +21,15 @@ option java_outer_classname = "RheemProtoBuf";
 message RheemPlanProtoBuf {
 
   enum RheemPlatformProtoBuf {
-    JAVA = 0;
-    SPARK = 1;
-    FLINK = 2;
+    RHEEM = 0;
+    JAVA = 1;
+    SPARK = 2;
+    FLINK = 3;
   }
 
   message RheemSlotProtoBuf {
 
-    RheemOperatorProtoBuf owner = 1;
+    string owner = 1;
     int32 position = 2;
     repeated RheemSlotProtoBuf ocupants = 3 ;
     string type = 4;
@@ -43,12 +44,13 @@ message RheemPlanProtoBuf {
   }
 
   message RheemOperatorProtoBuf {
-    string name = 1;
-    string type_class = 2;
-    repeated RheemParameterProtoBuf parameters= 3;
-    repeated RheemSlotProtoBuf inputSlot = 4;
-    repeated RheemSlotProtoBuf outputSlot = 5;
-    RheemPlatformProtoBuf platform = 6;
+    string id = 1;
+    string name = 2;
+    string type_class = 3;
+    repeated RheemParameterProtoBuf parameters = 4;
+    repeated RheemSlotProtoBuf inputSlot = 5;
+    repeated RheemSlotProtoBuf outputSlot = 6;
+    RheemPlatformProtoBuf platform = 7;
   }
 
 

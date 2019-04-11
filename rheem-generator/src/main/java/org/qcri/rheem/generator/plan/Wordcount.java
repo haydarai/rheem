@@ -1,13 +1,12 @@
-package org.qcri.rheem.serialize.tmp;
+package org.qcri.rheem.generator.plan;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
-import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.basic.operators.TextFileSink;
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -16,30 +15,22 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.java.Java;
-import org.qcri.rheem.java.platform.JavaPlatform;
-import org.qcri.rheem.spark.Spark;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Example Rheem App that does a word count -- the Hello World of Map/Reduce-like systems.
  */
-public class Main {
+public class Wordcount {
 
     /**
      * Creates the {@link RheemPlan} for the word count app.
      *
      * @param inputFileUrl the file whose words should be counted
      */
-    public static RheemPlan createRheemPlan(String inputFileUrl, Collection<Tuple2<String, Integer>> collector) throws URISyntaxException, IOException {
+    public static RheemPlan createRheemPlan(String inputFileUrl, String outputFileUrl){
         // Assignment mode: none.
-
         TextFileSource textFileSource = new TextFileSource(inputFileUrl);
         textFileSource.setName("Load file");
 
@@ -68,6 +59,7 @@ public class Main {
         mapOperator.setName("To lower case, add counter");
 
 
+
         // groupby the key (word) and add up the values (frequency)
         ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
                 new TransformationDescriptor<>(pair -> pair.field0,
@@ -84,9 +76,9 @@ public class Main {
 
 
         // write results to a sink
-        LocalCallbackSink<Tuple2<String, Integer>> sink = LocalCallbackSink.createCollectingSink(
-                collector,
-                DataSetType.createDefaultUnchecked(Tuple2.class)
+        TextFileSink<Tuple2<String, Integer>> sink = new TextFileSink<Tuple2<String, Integer>>(
+                outputFileUrl,
+                ReflectionUtils.specify(Tuple2.class)
         );
         sink.setName("Collect result");
 
@@ -98,44 +90,6 @@ public class Main {
         reduceByOperator.connectTo(0, sink, 0);
 
         return new RheemPlan(sink);
-    }
-
-    public static void main(String[] args) throws IOException, URISyntaxException {
-        try {
-            if (args.length == 0) {
-                System.err.print("Usage: <platform1>[,<platform2>]* <input file URL>");
-                System.exit(1);
-            }
-
-            List<Tuple2<String, Integer>> collector = new LinkedList<>();
-            RheemPlan rheemPlan = createRheemPlan(args[1], collector);
-
-            RheemContext rheemContext = new RheemContext();
-            for (String platform : args[0].split(",")) {
-                switch (platform) {
-                    case "java":
-                        rheemContext.register(Java.basicPlugin());
-                        break;
-                    case "spark":
-                        rheemContext.register(Spark.basicPlugin());
-                        break;
-                    default:
-                        System.err.format("Unknown platform: \"%s\"\n", platform);
-                        System.exit(3);
-                        return;
-                }
-            }
-
-            rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
-
-            collector.sort((t1, t2) -> Integer.compare(t2.field1, t1.field1));
-            System.out.printf("Found %d words:\n", collector.size());
-            collector.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
-        } catch (Exception e) {
-            System.err.println("App failed.");
-            e.printStackTrace();
-            System.exit(4);
-        }
     }
 
 }

@@ -22,7 +22,7 @@ class ExtendWordVectorRest(broadcastName: String)
 
   override def apply(t: TupleSparse): String = {
     var wv = (t.field0, this.words.getOrElse(t.field0, "(unknown)"), t.field1)
-    return s"${wv._1};${wv._2};${wv._3.toDictionaryString}"
+    return s"${wv._1};${wv._2};${wv._3}"
   }
 
 }

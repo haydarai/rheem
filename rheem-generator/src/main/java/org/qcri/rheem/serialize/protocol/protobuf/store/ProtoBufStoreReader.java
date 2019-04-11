@@ -1,5 +1,6 @@
 package org.qcri.rheem.serialize.protocol.protobuf.store;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.serialize.RheemIdentifier;
 import org.qcri.rheem.serialize.RheemSerialized;
 import org.qcri.rheem.serialize.protocol.protobuf.ProtoBufSerialized;
@@ -10,9 +11,9 @@ import org.qcri.rheem.serialize.store.repository.file.RheemRepositoryMultiFile;
 public class ProtoBufStoreReader extends ProtoBufStoreIO implements RheemStoreReader<RheemProtoBuf.RheemPlanProtoBuf> {
 
 
-    public ProtoBufStoreReader() {
-        super(new RheemRepositoryMultiFile());
-        this.getRepository().open("/Users/notjarvis/IdeaProjects/rheem-experiments/plans");
+    public ProtoBufStoreReader(Configuration conf) {
+        super(conf, new RheemRepositoryMultiFile());
+        this.getRepository().open(this.getConfiguration().getStringProperty("rheem.store.path"));
     }
 
     @Override

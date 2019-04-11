@@ -544,6 +544,14 @@ public interface Operator {
      */
     void addTargetPlatform(Platform platform);
 
+    default void removeTargetPlatform(Platform platform){
+        this.getTargetPlatforms().remove(platform);
+    }
+
+    default void clearTargetPlatform(){
+        this.getTargetPlatforms().clear();
+    }
+
     /**
      * Convenience version of {@link Operator#propagateOutputCardinality(int, OptimizationContext.OperatorContext)},
      * where the adjacent {@link InputSlot}s reside in the same {@link OptimizationContext} as the {@code operatorContext}.

@@ -1,5 +1,6 @@
 package org.qcri.rheem.serialize;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.serialize.protocol.RheemAutoEnconderFactory;
 import org.qcri.rheem.serialize.protocol.RheemDecode;
@@ -10,13 +11,10 @@ import org.qcri.rheem.serialize.store.RheemStoreFactory;
 import org.qcri.rheem.serialize.store.RheemStoreReader;
 import org.qcri.rheem.serialize.store.RheemStoreWriter;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-
 
 public class RheemSerializer<Protocol> {
 
+    private Configuration configuration;
     private Class<Protocol> protocolClass;
     private RheemEncode<Protocol> encoder;
     private RheemDecode<Protocol> decoder;
@@ -30,12 +28,13 @@ public class RheemSerializer<Protocol> {
     }
 
     public RheemSerializer(RheemAutoEnconderFactory autoEnconderFactory, RheemStoreFactory rheemStoreFactory){
-        this.encoder = autoEnconderFactory.buildEncode();
-        this.decoder = autoEnconderFactory.buildDecode();
+        this.configuration = new Configuration();
+        this.encoder = autoEnconderFactory.buildEncode(this.configuration);
+        this.decoder = autoEnconderFactory.buildDecode(this.configuration);
         this.protocolClass = autoEnconderFactory.getProtocolClass();
 
-        this.reader = rheemStoreFactory.buildReader();
-        this.writer = rheemStoreFactory.buildWriter();
+        this.reader = rheemStoreFactory.buildReader(this.configuration);
+        this.writer = rheemStoreFactory.buildWriter(this.configuration);
     }
 
     public RheemSerialized<Protocol> getSerialized(RheemPlan rheemPlan){
@@ -46,30 +45,16 @@ public class RheemSerializer<Protocol> {
         return this.reader.read(identifier);
     }
 
-    public boolean save(RheemPlan plan){
+    public RheemIdentifier save(RheemPlan plan){
         RheemSerialized<Protocol> serialized = getSerialized(plan);
-        return this.writer.save(serialized);
+        this.writer.save(serialized);
+        return serialized.getId();
     }
 
     public RheemPlan recovery(RheemIdentifier identifier){
         RheemSerialized<Protocol> serialized = this.getSerialized(identifier);
         return this.decoder.decode(serialized);
     }
-
-
-    public static void main(String... args) throws IOException, URISyntaxException {
-        //RheemPlan plan = org.qcri.rheem.serialize.tmp.Main.createRheemPlan("file:///lalal", new ArrayList<>());
-
-        RheemSerializer serializer = new RheemSerializer();
-
-        //serializer.save(plan);
-
-        RheemPlan plan = serializer.recovery(new RheemIdentifier("4b2d11a0-a3c4-4c2c-8879-fc64b4166e64"));
-
-
-
-    }
-
 
 
 }

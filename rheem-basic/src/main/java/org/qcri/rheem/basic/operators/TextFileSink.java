@@ -78,4 +78,8 @@ public class TextFileSink<T> extends UnarySink<T> {
         this.formattingDescriptor = that.formattingDescriptor;
     }
 
+    public String getTextFileUrl(){
+        return this.textFileUrl;
+    }
+
 }
