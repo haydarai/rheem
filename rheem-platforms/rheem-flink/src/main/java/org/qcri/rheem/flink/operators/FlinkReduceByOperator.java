@@ -86,18 +86,14 @@ public class FlinkReduceByOperator<InputType, KeyType>
 
         FunctionCompiler compiler = flinkExecutor.getCompiler();
 
-//        KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
+        KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
 
         //Function<InputType, KeyType> funGetKey = this.keyDescriptor.getJavaImplementation();
-        KeySelector<InputType, ?> keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
+//        KeySelector<InputType, ?> keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
 
         // ReduceFunction<InputType> reduceFunction = compiler.compile(this.reduceDescriptor);
         BiFunction<InputType, InputType, InputType> reduce_function = this.reduceDescriptor.getJavaImplementation();
 
-        System.out.println(" dsadas   "+this.getInputType().getDataUnitType().getTypeClass());
-        System.out.println(" uuudas   "+this.getOutputType().getDataUnitType().getTypeClass());
-        System.out.println(" ododod   "+this.getKeyDescriptor().getInputType().toBasicDataUnitType().getTypeClass());
-        System.out.println(" uuuuuu   "+this.getKeyDescriptor().getOutputType().toBasicDataUnitType().getTypeClass());
 
 
         GroupReduceOperator<InputType, InputType> tmpOutput = dataSetInput

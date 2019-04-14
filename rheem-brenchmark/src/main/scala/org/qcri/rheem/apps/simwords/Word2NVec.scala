@@ -35,6 +35,7 @@ class Word2NVec(plugins: Plugin*) {
         jobName = s"Word2NVec ($inputFile, reach=$neighborhoodReach, output=$outputFile)"
       ).withExperiment(experiment)
       .withUdfJarsOf(this.getClass)
+        .onlySave()
 
     // Create the word dictionary
     val _minWordOccurrences = minWordOccurrences
@@ -74,6 +75,8 @@ class Word2NVec(plugins: Plugin*) {
       .withName("Extend word vectors")
       //.writeTextFile(outputFile, wv => s"${wv._1};${wv._2};${wv._3.toDictionaryString}")
       .collect()
+
+    planBuilder.rheemplan
   }
 
 }

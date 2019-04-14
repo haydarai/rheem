@@ -1,8 +1,16 @@
 package org.qcri.rheem.flink.operators;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.flink.api.java.operators.DataSink;
 import org.apache.flink.core.fs.FileSystem;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -12,14 +20,27 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.compiler.RheemFileOutputFormat;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
+import org.qcri.rheem.java.operators.JavaObjectFileSource;
+import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * {@link Operator} for the {@link FlinkPlatform} that creates a sequence file.
@@ -88,4 +109,6 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
     public boolean containsAction() {
         return true;
     }
+
+
 }

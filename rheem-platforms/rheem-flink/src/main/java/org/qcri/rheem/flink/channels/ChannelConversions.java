@@ -52,9 +52,9 @@ public class ChannelConversions {
 
         public static Collection<ChannelConversion> ALL = Arrays.asList(
             COLLECTION_TO_DATASET,
-            DATASET_TO_COLLECTION//,
+            DATASET_TO_COLLECTION,
        //     OBJECT_FILE_TO_DATASET,
-       //     DATASET_TO_OBJECT_FILE,
+             DATASET_TO_OBJECT_FILE
         //    DATASET_TO_HDFS_TSV
         );
 }

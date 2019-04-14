@@ -109,6 +109,11 @@
             <artifactId>rheem-benchmark</artifactId>
             <version>0.5.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-generator</artifactId>
+            <version>0.5.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 

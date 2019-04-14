@@ -45,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -224,9 +225,14 @@ public class Job extends OneTimeExecutable {
             }
 
             NumberFormat nf = new DecimalFormat("##.#");
-            double[] logs = this.logGenerator.addPruningFeatureLog(this.planImplementation);
-            String record = Arrays.stream(logs).mapToObj(nf::format).map(p -> p + " ").collect(Collectors.joining()) + executionTime;
-            System.out.println(record);;
+            if(this.vector_picked == null) {
+                this.vector_picked = this.logGenerator.addPruningFeatureLog(this.planImplementation);
+            }
+
+            String record = Arrays.stream(this.vector_picked).mapToObj(nf::format).map(p -> p + " ").collect(Collectors.joining()) + executionTime +"\n";
+            System.out.println(record);
+
+            Files.write(file.toPath(), record.getBytes(), StandardOpenOption.APPEND);
 
         } catch (RheemException e) {
             throw e;
@@ -292,7 +298,7 @@ public class Job extends OneTimeExecutable {
         try {
 
             // if ml learning model is used the the vector log preparation happen before inflation and hyperplan generation
-           // if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
+           // if (configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
                 logger.info("rheem plan to feature vector convesion.");
                 // prepare vector log
                 logGenerator.prepareVectorLog(rheemPlan,rheemContext.getConfiguration(),true);
@@ -363,9 +369,8 @@ public class Job extends OneTimeExecutable {
             this.stopWatch.start("Post-processing", "Release Resources");
             this.releaseResources();
             this.stopWatch.stop("Post-processing");
-            System.out.println("hereeee");
-            this.storeVector(this.stopWatch.getOrCreateRound("Execution").getMillis());
             this.logger.info("StopWatch results:\n{}", this.stopWatch.toPrettyString());
+            this.storeVector(this.stopWatch.getOrCreateRound("Execution").getMillis());
         }
     }
 
@@ -655,6 +660,7 @@ public class Job extends OneTimeExecutable {
         this.logger.info("the cost of the best plan is "+ bestPlanImplementation.getSquashedCostEstimate());
         this.logger.info("the cost of the best plan is "+ bestPlanImplementation.getCostEstimate());
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
+        this.vector_picked = this.logGenerator.addPruningFeatureLog(this.planImplementation);
         return this.planImplementation = bestPlanImplementation;
     }
 

@@ -94,7 +94,8 @@ public class FileSystems {
             if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
                 return children.stream().filter(child -> child.matches(".*/part-[m|r|M|R|-]{0,2}\\d+")).collect(Collectors.toList());
             } else {
-                throw new RheemException("Could not identify directory structure: " + children);
+                return children.stream().sorted().collect(Collectors.toList());
+               //throw new RheemException("Could not identify directory structure: " + children);
             }
         }
 

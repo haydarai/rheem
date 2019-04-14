@@ -27,7 +27,7 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
 
   private var save_flag: Boolean = false
   private var execute_flag: Boolean = true
-  private var rheemplan: RheemPlan = null
+  var rheemplan: RheemPlan = null
   // We need to ensure that this module is shipped to Spark etc. in particular because of the Scala-to-Java function wrappers.
   ReflectionUtils.getDeclaringJar(this) match {
     case path: String => udfJars += path
