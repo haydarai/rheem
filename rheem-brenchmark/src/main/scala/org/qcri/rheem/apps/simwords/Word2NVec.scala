@@ -73,8 +73,8 @@ class Word2NVec(plugins: Plugin*) {
       .mapJava(new ExtendWordVector)
       .withBroadcast(wordIds, "wordIds")
       .withName("Extend word vectors")
-      //.writeTextFile(outputFile, wv => s"${wv._1};${wv._2};${wv._3.toDictionaryString}")
-      .collect()
+      .writeTextFile(outputFile, wv => s"${wv._1};${wv._2};${wv._3.toDictionaryString}")
+      //.collect()
 
     planBuilder.rheemplan
   }
