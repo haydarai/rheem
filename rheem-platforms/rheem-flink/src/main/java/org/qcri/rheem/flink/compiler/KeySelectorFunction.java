@@ -10,8 +10,10 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -29,11 +31,10 @@ public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQ
 
         this.impl = transformationDescriptor.getJavaImplementation();
         this.key  = transformationDescriptor.getOutputType().getTypeClass();
-        System.out.println("keydasdadddddddd: "+this.key);
         //TODO validate this
         //if(this.key.getTypeParameters().length > 0)
 
-        if(this.key == scala.Tuple4.class ){
+       /* if(this.key == scala.Tuple4.class ){
             try{
                 this.typeInformation = new PojoTypeInfo(scala.Tuple4.class, Arrays.asList(
                         new PojoField(scala.Tuple4.class.getField("_1"),  TypeInformation.of(Long.class)),
@@ -46,13 +47,24 @@ public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQ
                 this.typeInformation = null;
             }
         }else{
-            this.typeInformation = TypeInformation.of(this.key);
-        }
+            if(this.key.getSimpleName().toLowerCase().contains("long")){
+                this.typeInformation = TypeInformation.of(this.key);
+            }else {
+                List tmp = new ArrayList<>();
+
+                Field[] fields = this.key.getFields();
+                for (int i = 0; i < fields.length; i++) {
+                    tmp.add(new PojoField(fields[i], TypeInformation.of(fields[i].getType())));
+                }
+
+                this.typeInformation = new PojoTypeInfo(this.key, tmp);
+            }
+        }*/
 
         //}else {
         //    this.typeInformation = TypeInformation.of(this.key);
         //}
-        //this.typeInformation = TypeInformation.of(this.key);
+        this.typeInformation = TypeInformation.of(this.key);
     }
 
     public K getKey(T object){

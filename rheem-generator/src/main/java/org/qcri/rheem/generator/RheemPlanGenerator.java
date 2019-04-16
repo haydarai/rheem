@@ -1,6 +1,9 @@
 package org.qcri.rheem.generator;
 
 import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
+import org.qcri.rheem.apps.simwords.SimWords;
+import org.qcri.rheem.apps.tpch.queries.Query1File;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
@@ -31,6 +34,12 @@ public class RheemPlanGenerator {
                 break;
             case "word2nvec":
                 plan = RheemPlanGenerator.word2nvec(Arrays.copyOfRange(args, 3, args.length));
+                break;
+            case "simwords":
+                plan = RheemPlanGenerator.simwords(Arrays.copyOfRange(args, 3, args.length));
+                break;
+            case "tpch_q1":
+                plan = RheemPlanGenerator.tpchQ1(Arrays.copyOfRange(args, 3, args.length));
                 break;
             default:
                 System.out.println("the plan is not valid");
@@ -77,19 +86,7 @@ public class RheemPlanGenerator {
         Configuration configuration = new Configuration();
         Experiment exp = new Experiment("", null);
         scala.collection.JavaConverters.asScalaIteratorConverter(Arrays.asList(Java.basicPlugin()).iterator()).asScala().toSeq();
-        Word2NVec tmp = new Word2NVec(
-                            scala.collection
-                                    .JavaConverters
-                                    .asScalaIteratorConverter(
-                                            Arrays.asList(
-                                                    (Plugin)Java.basicPlugin(),
-                                                    (Plugin)Spark.basicPlugin(),
-                                                    (Plugin)Flink.basicPlugin()
-                                            ).iterator()
-                                    )
-                                    .asScala()
-                                    .toSeq()
-                        );
+        Word2NVec tmp = new Word2NVec(RheemPlanGenerator.getPlatforms());
         return tmp.apply(parameters[0],
                 Integer.parseInt(parameters[1]),
                 Integer.parseInt(parameters[2]),
@@ -97,5 +94,62 @@ public class RheemPlanGenerator {
                 null,
                 exp,
                 configuration);
+    }
+
+    private static RheemPlan simwords(String[] parameters){
+        Configuration configuration = new Configuration();
+        Experiment exp = new Experiment("", null);
+        scala.collection.JavaConverters.asScalaIteratorConverter(Arrays.asList(Java.basicPlugin()).iterator()).asScala().toSeq();
+        SimWords tmp = new SimWords(RheemPlanGenerator.getPlatforms());
+
+        return tmp.apply(parameters[0],
+                Integer.parseInt(parameters[1]),
+                Integer.parseInt(parameters[2]),
+                Integer.parseInt(parameters[3]),
+                Integer.parseInt(parameters[4]),
+                new ProbabilisticDoubleInterval(100, 10000, 0.9),
+                parameters[5],
+                exp,
+                configuration);
+    }
+
+    private static RheemPlan tpchQ1(String[] parameters){
+        Configuration configuration = new Configuration();
+        configuration.load(parameters[0]);
+        Experiment exp = new Experiment("", new Subject("", ""));
+
+        Query1File query = new Query1File(RheemPlanGenerator.getPlatforms());
+        return query.apply(configuration, null, null, Integer.parseInt(parameters[1]), exp);
+    }
+
+    public static RheemPlan tpchq3(String[] parameters){
+        return null;
+    }
+
+    public static RheemPlan sgd(String[] parameters){
+        return null;
+    }
+
+    public static RheemPlan kmeans(String[] parameters){
+        return null;
+    }
+
+    public static RheemPlan crocopr(String[] parameters){
+        return null;
+    }
+
+
+    private static scala.collection.Seq<Plugin> getPlatforms(){
+        return scala.collection
+                .JavaConverters
+                .asScalaIteratorConverter(
+                        Arrays.asList(
+                                (Plugin)Java.basicPlugin(),
+                                (Plugin)Spark.basicPlugin(),
+                                (Plugin)Flink.basicPlugin()
+                        ).iterator()
+                )
+                .asScala()
+                .toSeq();
     }
 }

@@ -54,6 +54,7 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
       .withJobName(s"TPC-H (${this.getClass.getSimpleName})")
       .withUdfJarsOf(classOf[Query1])
       .withExperiment(experiment)
+      .onlySave()
 
     experiment.getSubject.addConfiguration("delta", delta)
 
@@ -121,7 +122,7 @@ class Query1File(plugins: Plugin*) extends ExperimentDescriptor {
       ))
       .withName("Post-process line item aggregates")
       .collect()
-
+     planBuilder.rheemplan
 
   }
 

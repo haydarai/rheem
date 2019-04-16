@@ -82,4 +82,8 @@ public class TextFileSink<T> extends UnarySink<T> {
         return this.textFileUrl;
     }
 
+    public TransformationDescriptor<T, String> getTransformationDescriptor(){
+        return this.formattingDescriptor;
+    }
+
 }

@@ -85,6 +85,7 @@ public class FlinkCollectionSink<Type> extends UnaryToUnaryOperator<Type, Type>
                     .stream()
                     .filter( p -> ! fs.isDirectory(p))
                     .filter( p -> ! p.contains("_SUCCESS"))
+                    .filter( p -> ! p.endsWith(".crc"))
                     .flatMap(p -> {
                         final String actualInputPath = FileSystems.findActualSingleInputPath(p);
                         try {

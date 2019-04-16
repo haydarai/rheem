@@ -33,6 +33,7 @@ message RheemPlanProtoBuf {
     int32 position = 2;
     repeated RheemSlotProtoBuf ocupants = 3 ;
     string type = 4;
+    string broadcast = 5;
 
   }
 

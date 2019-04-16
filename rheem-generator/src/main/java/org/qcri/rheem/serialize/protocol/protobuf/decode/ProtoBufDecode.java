@@ -69,9 +69,12 @@ public class ProtoBufDecode implements RheemDecode<RheemProtoBuf.RheemPlanProtoB
                     for (RheemSlotProtoBuf ocupant : slot.getOcupantsList()) {
                         RheemOperatorProtoBuf owner = original.get(ocupant.getOwner());
 
-
                         Operator op_next = operators.get(owner);
-                        op_current.connectTo(slot.getPosition(), op_next, ocupant.getPosition());
+                        if(owner.getInputSlot(ocupant.getPosition()).getBroadcast().length() > 0 ){
+                            op_current.broadcastTo(slot.getPosition(), op_next, owner.getInputSlot(ocupant.getPosition()).getBroadcast());
+                        }else {
+                            op_current.connectTo(slot.getPosition(), op_next, ocupant.getPosition());
+                        }
                     }
                 }
             }
@@ -83,26 +86,23 @@ public class ProtoBufDecode implements RheemDecode<RheemProtoBuf.RheemPlanProtoB
 
     private Operator buildOperator(RheemOperatorProtoBuf base_op){
         String base_op_class = base_op.getTypeClass().replaceAll("\\$", ".");
-        Map<Integer, Object> params_map = base_op.getParametersList()
-               .stream()
-               .collect(
-                   toMap(
-                       param_base -> param_base.getPosition(),
-                       param_base -> {
-                           try {
-                               ByteString bytes = param_base.getValue();
-                               ByteArrayInputStream in = new ByteArrayInputStream(bytes.toByteArray());
-                               ObjectInputStream is = new ObjectInputStream(in);
-                               return is.readObject();
-                           } catch (IOException e) {
-                               e.printStackTrace();
-                           } catch (ClassNotFoundException e) {
-                               e.printStackTrace();
-                           }
-                           return null;
-                       }
-                   )
-               );
+        Map<Integer, Object> params_map = new HashMap<>();
+
+
+        for ( RheemPlanProtoBuf.RheemParameterProtoBuf param_base : base_op.getParametersList() ){
+            Object element = null;
+            try {
+                ByteString bytes = param_base.getValue();
+                ByteArrayInputStream in = new ByteArrayInputStream(bytes.toByteArray());
+                ObjectInputStream is = new ObjectInputStream(in);
+                element = is.readObject();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            params_map.put(param_base.getPosition(),element);
+        }
 
         Object[] params_real = new Object[params_map.size()];
         for(int i = 0; i < params_real.length; i++){

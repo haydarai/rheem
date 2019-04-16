@@ -5,6 +5,7 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.{Customer, LineItem, Order}
 import org.qcri.rheem.apps.util.ExperimentDescriptor
+import org.qcri.rheem.basic.data.Tuple3
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
 
@@ -121,7 +122,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
       .withName("Project CO-line-item join product")
 
       .reduceByKey(
-        t => (t.orderKey, t.orderDate, t.shipPriority),
+        t => new Tuple3[Long, Int, Int](t.orderKey, t.orderDate, t.shipPriority),
         (t1, t2) => {
           t1.revenue += t2.revenue;
           t2

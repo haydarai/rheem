@@ -60,12 +60,18 @@ public class RheemLogGenerator {
         for(Operator op: traversal){
             System.out.println(
                 String.format(
-                    "OP(%s): %s \n\tINPUT: {%s}\n\tOUTPUT: {%s}",
+                    "OP(%s): %s \n\tINPUT: {%s}\n\tBroadcast: {%s}\n\tOUTPUT: {%s} ",
                     op.getTargetPlatforms(),
                     op.toString(),
                     Arrays
                         .stream(op.getAllInputs())
+                        .filter(inputSlot -> !inputSlot.isBroadcast())
                         .map(input -> input.getOccupant().getOwner().toString())
+                        .collect(Collectors.joining(" , ")),
+                    Arrays
+                        .stream(op.getAllInputs())
+                        .filter(inputSlot -> inputSlot.isBroadcast())
+                        .map(input -> input.getOccupant().getOwner().toString() +"   #"+input.getName()+"#")
                         .collect(Collectors.joining(" , ")),
                     Arrays
                         .stream(op.getAllOutputs())

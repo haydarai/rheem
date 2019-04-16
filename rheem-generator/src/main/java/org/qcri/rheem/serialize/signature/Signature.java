@@ -164,6 +164,29 @@ public class Signature {
                                 .forName(class_name)
                                 .getConstructor(
                                         String.class,
+                                        Class.forName("org.qcri.rheem.core.function.FunctionDescriptor$SerializableFunction"),
+                                        Class.class
+                                ).newInstance(objs);
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchMethodException e) {
+                        e.printStackTrace();
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InstantiationException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                    return null;
+                }
+        );
+        SIGNATURES.put("org.qcri.rheem.basic.operators.ZipWithIdOperator",
+                (class_name, objs) -> {
+                    try {
+                        return (Operator) Class
+                                .forName(class_name)
+                                .getConstructor(
                                         Class.class
                                 ).newInstance(objs);
                     } catch (ClassNotFoundException e) {

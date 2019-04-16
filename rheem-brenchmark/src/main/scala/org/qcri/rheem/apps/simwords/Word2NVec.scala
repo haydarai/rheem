@@ -35,7 +35,7 @@ class Word2NVec(plugins: Plugin*) {
         jobName = s"Word2NVec ($inputFile, reach=$neighborhoodReach, output=$outputFile)"
       ).withExperiment(experiment)
       .withUdfJarsOf(this.getClass)
-        .onlySave()
+        //.onlySave()
 
     // Create the word dictionary
     val _minWordOccurrences = minWordOccurrences

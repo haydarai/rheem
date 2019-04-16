@@ -235,9 +235,10 @@ public class Job extends OneTimeExecutable {
             Files.write(file.toPath(), record.getBytes(), StandardOpenOption.APPEND);
 
         } catch (RheemException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RheemException(String.format("Cannot write to %s.", configuration.getStringProperty("rheem.profiler.logs.planVector_1D")), e);
+            e.printStackTrace();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            //throw new RheemException(String.format("Cannot write to %s.", configuration.getStringProperty("rheem.profiler.logs.planVector_1D")), e);
         }
 
 
@@ -618,49 +619,52 @@ public class Job extends OneTimeExecutable {
                                                      Set<ExecutionStage> executedStages) {
 
         // trivial
-        if(executionPlans.size()==1)
-            return this.planImplementation = executionPlans.stream().reduce((p1,p2)->p1).get();
         PlanImplementation bestPlanImplementation;
-        this.logger.info("We will use MLOptimizer: "+ configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"));
-        if(configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")){
-            logGenerator.reinitializepruningLogs();
+        if(executionPlans.size()==1) {
+            bestPlanImplementation = executionPlans.stream().reduce((p1, p2) -> p1).get();
+        }else {
+            this.logger.info("We will use MLOptimizer: " + configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer"));
+            if (configuration.getBooleanProperty("rheem.core.optimizer.mloptimizer")) {
+                logGenerator.reinitializepruningLogs();
 
-            //logGenerator =new LogGenerator();
-            // add operators
-            //logGenerator.
+                //logGenerator =new LogGenerator();
+                // add operators
+                //logGenerator.
 
-            List<Tuple2<PlanImplementation,double[]>> tupleIplementationFeatureVector = new ArrayList<>();
-            executionPlans.stream()
-                    .forEach(planImplementation-> {
-                        tupleIplementationFeatureVector.add(new Tuple2<>(planImplementation,logGenerator.addPruningFeatureLog(planImplementation)));
-                    });
+                List<Tuple2<PlanImplementation, double[]>> tupleIplementationFeatureVector = new ArrayList<>();
+                executionPlans.stream()
+                        .forEach(planImplementation -> {
+                            tupleIplementationFeatureVector.add(new Tuple2<>(planImplementation, logGenerator.addPruningFeatureLog(planImplementation)));
+                        });
 
-            // Load Model
-            LoadModel.loadModel(logGenerator.getPruningFeatureLogs());
+                // Load Model
+                LoadModel.loadModel(logGenerator.getPruningFeatureLogs());
 
-            // Predict execution time and pick minimum
-            this.logger.info("Pick best Ml optimizer estimates!");
-            bestFeatureVector =  MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
+                // Predict execution time and pick minimum
+                this.logger.info("Pick best Ml optimizer estimates!");
+                bestFeatureVector = MLestimation.getBestVector(logGenerator.getPruningFeatureLogs());
 
-            this.logger.info(String.format("Best plan feature estimation time: %f",bestFeatureVector.getField1()));
-            this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));
+                this.logger.info(String.format("Best plan feature estimation time: %f", bestFeatureVector.getField1()));
+                this.logger.info("Best plan feature plan: " + logGenerator.printLog(bestFeatureVector.getField0()));
 
 
-            bestPlanImplementation = tupleIplementationFeatureVector.stream().filter(t1->t1.field1==bestFeatureVector.getField0()).findAny().orElse(null).field0;
-        }
-        else{
-            bestPlanImplementation = executionPlans.stream()
-                    .reduce((p1, p2) -> {
-                        final double t1 = p1.getSquashedCostEstimate();
-                        final double t2 = p2.getSquashedCostEstimate();
-                        return t1 < t2 ? p1 : p2;
-                    })
-                    .orElseThrow(() -> new RheemException("Could not find an execution plan."));
+                bestPlanImplementation = tupleIplementationFeatureVector.stream().filter(t1 -> t1.field1 == bestFeatureVector.getField0()).findAny().orElse(null).field0;
+            } else {
+                bestPlanImplementation = executionPlans.stream()
+                        .reduce((p1, p2) -> {
+                            final double t1 = p1.getSquashedCostEstimate();
+                            final double t2 = p2.getSquashedCostEstimate();
+                            return t1 < t2 ? p1 : p2;
+                        })
+                        .orElseThrow(() -> new RheemException("Could not find an execution plan."));
+            }
         }
         this.logger.info("the cost of the best plan is "+ bestPlanImplementation.getSquashedCostEstimate());
         this.logger.info("the cost of the best plan is "+ bestPlanImplementation.getCostEstimate());
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
-        this.vector_picked = this.logGenerator.addPruningFeatureLog(this.planImplementation);
+        try {
+            this.vector_picked = this.logGenerator.addPruningFeatureLog(bestPlanImplementation);
+        }catch (Throwable e){}
         return this.planImplementation = bestPlanImplementation;
     }
 

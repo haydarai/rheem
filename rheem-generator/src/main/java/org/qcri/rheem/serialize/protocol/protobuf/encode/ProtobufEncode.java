@@ -8,10 +8,12 @@ import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.TextFileSink;
 import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.basic.operators.ZipWithIdOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -69,6 +71,12 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
                             slot_ocupant.getIndex()
                     )
                 );
+                if(input.isBroadcast()){
+                    System.out.println("here "+input.getName());
+                    slot.setBroadcast(input.getName());
+                }else{
+                    //slot.setBroadcast(null);
+                }
             }
 
             OutputSlot<?>[] outputs = op.getAllOutputs();
@@ -369,6 +377,19 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
             parameters.add(
                 RheemParameterProtoBuf.newBuilder()
                     .setPosition(1)
+                    .setFieldName("formattingFunction")
+                    .setType(TransformationDescriptor.SerializableFunction.class.getName())
+                    .setValue(
+                        this.obj2ByteString(
+                            ((TextFileSink)op).getTransformationDescriptor().getJavaImplementation()
+                        )
+                    )
+                    .build()
+            );
+
+            parameters.add(
+                RheemParameterProtoBuf.newBuilder()
+                    .setPosition(2)
                     .setFieldName("typeClass")
                     .setType(Class.class.getName())
                     .setValue(
@@ -379,6 +400,23 @@ public class ProtobufEncode implements RheemEncode<RheemProtoBuf.RheemPlanProtoB
                 .build()
             );
         }
+
+        if(op instanceof ZipWithIdOperator){
+            parameters.add(
+                RheemParameterProtoBuf.newBuilder()
+                    .setPosition(0)
+                    .setFieldName("inputTypeClass")
+                    .setType(Class.class.getName())
+                    .setValue(
+                        this.obj2ByteString(
+                            ((ZipWithIdOperator)op).getInputType().getDataUnitType().getTypeClass()
+                        )
+                    )
+                    .build()
+            );
+        }
+
+        System.out.println(op.getClass());
         return parameters;
     }
 

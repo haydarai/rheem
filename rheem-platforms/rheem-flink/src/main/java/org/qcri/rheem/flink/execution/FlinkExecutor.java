@@ -109,7 +109,6 @@ public class FlinkExecutor extends PushExecutorTemplate {
         this.registerMeasuredCardinalities(producedChannelInstances);
 
         // Warn if requested eager execution did not take place.
-        this.logger.info("Flink will execute");
         if (isRequestEagerExecution ){
             if( partialExecution == null) {
                 this.logger.info("{} was not executed eagerly as requested.", task);

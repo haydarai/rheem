@@ -68,8 +68,8 @@ object TpcH {
         experiment.getSubject.addConfiguration("plugins", args(1))
         experiment.getSubject.addConfiguration("query", args(3))
    //     experiment.getSubject.addConfiguration("outputUrl", args(4))
-        val result = query(configuration, jdbcPlatform, createTableSource)(experiment)
-        StdOut.printLimited(result, 10)
+        query(configuration, jdbcPlatform, createTableSource)(experiment)
+       // StdOut.printLimited(result, 10)
       case "Q3File" =>
         val query = new Query3File(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)

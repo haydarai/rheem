@@ -1,17 +1,17 @@
 package org.qcri.rheem.flink.operators;
 
-import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.common.typeinfo.TypeHint;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.operators.GroupReduceOperator;
+import org.apache.flink.api.java.operators.ReduceOperator;
 import org.apache.flink.api.java.typeutils.PojoField;
 import org.apache.flink.api.java.typeutils.PojoTypeInfo;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
-import org.apache.flink.util.Collector;
+import org.apache.flink.api.java.typeutils.TupleTypeInfo;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.basic.data.Tuple3;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
@@ -30,15 +30,11 @@ import org.qcri.rheem.flink.compiler.FunctionCompiler;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
 import java.io.Serializable;
-import java.sql.SQLOutput;
-import java.text.Format;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -86,29 +82,28 @@ public class FlinkReduceByOperator<InputType, KeyType>
 
         FunctionCompiler compiler = flinkExecutor.getCompiler();
 
-        KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
+   //     KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
 
-        //Function<InputType, KeyType> funGetKey = this.keyDescriptor.getJavaImplementation();
-//        KeySelector<InputType, ?> keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
+        KeySelector<InputType, ?> keySelector;
 
-        // ReduceFunction<InputType> reduceFunction = compiler.compile(this.reduceDescriptor);
-        BiFunction<InputType, InputType, InputType> reduce_function = this.reduceDescriptor.getJavaImplementation();
+        if(this.keyDescriptor.getOutputType().getTypeClass() == Tuple2.class) {
+            //THIS FOR AGGREGATE
+            keySelector = new KeySelectorFunctionTuple<InputType>(this.keyDescriptor);
+        }else if (this.keyDescriptor.getOutputType().getTypeClass() == Tuple3.class){
+            //THIS FOR JOIN
+           keySelector = new KeySelectorFunctionTuple3<InputType>(this.keyDescriptor);
+        }else{
+            keySelector = compiler.compileKeySelector(this.keyDescriptor);
+        }
+
+         ReduceFunction<InputType> reduceFunction = compiler.compile(this.reduceDescriptor);
+        //BiFunction<InputType, InputType, InputType> reduce_function = this.reduceDescriptor.getJavaImplementation();
 
 
 
-        GroupReduceOperator<InputType, InputType> tmpOutput = dataSetInput
+        ReduceOperator<InputType> tmpOutput = dataSetInput
                 .groupBy(keySelector)
-                .reduceGroup(new GroupReduceFunction<InputType, InputType>() {
-                    @Override
-                    public void reduce(Iterable<InputType> values, Collector<InputType> out) throws Exception {
-                        Iterator<InputType> iterator = values.iterator();
-                        InputType reduce = iterator.next();
-                        while (iterator.hasNext()) {
-                            reduce = reduce_function.apply(reduce, iterator.next());
-                        }
-                        out.collect(reduce);
-                    }
-                })
+                .reduce(reduceFunction)
                 .returns(TypeInformation.of(this.getOutputType().getDataUnitType().getTypeClass()))
                 .setParallelism(flinkExecutor.getNumDefaultPartitions());
 
@@ -180,4 +175,64 @@ public class FlinkReduceByOperator<InputType, KeyType>
             }
         }
     }
+
+    public class KeySelectorFunctionTuple3<T> implements KeySelector<T, Tuple3<?, ?, ?>>, ResultTypeQueryable<Tuple3<?, ?, ?>>, Serializable {
+
+        public Function<T, Tuple3<?, ?, ?>> impl;
+
+        public KeySelectorFunctionTuple3(TransformationDescriptor transformationDescriptor) {
+            this.impl = transformationDescriptor.getJavaImplementation();
+        }
+
+        public Tuple3<?, ?, ?> getKey(T object){
+            return this.impl.apply(object);
+        }
+
+        @Override
+        public TypeInformation getProducedType() {
+            /*try{
+                return new PojoTypeInfo(Tuple3.class, Arrays.asList(
+                        new PojoField(Tuple3.class.getField("field0"),  TypeInformation.of(Object.class)),
+                        new PojoField(Tuple3.class.getField("field1"),  TypeInformation.of(Object.class)),
+                        new PojoField(Tuple3.class.getField("field2"),  TypeInformation.of(Object.class))
+                        // new PojoField(Tuple2.class.getField("field1"),  TypeInformation.of(Tuple2.class.getField("field1").getType() ))
+                ));
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+
+             */
+                return TypeInformation.of(new TypeHint<Tuple3<?, ?, ?>>(){});
+            //}
+        }
+    }
+
+    public class KeySelectorFunctionKeyType implements KeySelector<InputType, KeyType>, ResultTypeQueryable<KeyType>, Serializable {
+
+        public Function<InputType, KeyType> impl;
+        public Class<KeyType> type;
+
+        public KeySelectorFunctionKeyType(TransformationDescriptor transformationDescriptor) {
+            this.impl = transformationDescriptor.getJavaImplementation();
+            this.type = transformationDescriptor.getOutputType().getTypeClass();
+        }
+
+        public KeyType getKey(InputType object){
+            return this.impl.apply(object);
+        }
+
+        @Override
+        public TypeInformation getProducedType() {
+            //if(this.type == Tuple3.class){
+                return TypeInformation.of(new TypeHint<Tuple3<scala.Long, scala.Int, scala.Int>>(){});
+            /*}else {
+                return TypeInformation.of(this.type);
+            }*/
+            /*new PojoTypeInfo(Tuple3.class, Arrays.asList(
+                    Arrays.stream(Tuple3.class.getFields()).map(
+                            field -> new PojoField(field, TypeInformation.of(Object.class))
+                    ).collect(Collectors.toList())
+            ));*/
+        }
+    }
+
 }

@@ -36,7 +36,7 @@ class SimWords(plugins: Plugin*) {
         jobName = s"SimWords ($inputFile, reach=$neighborhoodReach, clusters=$numClusters, $numIterations iterations)"
       ).withExperiment(experiment)
       .withUdfJarsOf(this.getClass)
-
+      .onlySave()
     // Create the word dictionary
     val _minWordOccurrences = minWordOccurrences
     val wordIds = planBuilder
@@ -108,9 +108,10 @@ class SimWords(plugins: Plugin*) {
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 ++ c2._2)).withName("Create clusters")
       .map(_._2).withName("Discard cluster IDs")
       .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
-      .collect()
+    //  .collect()
 
-    //clusters.writeTextFile(outputUrl, list => list.toString() )
+    clusters.writeTextFile(outputUrl, list => list.toString() )
+    planBuilder.rheemplan
   }
 
 }
@@ -148,7 +149,7 @@ object SimWords extends ExperimentDescriptor {
     } else new ProbabilisticDoubleInterval(100, 10000, 0.9)
 
     val simWords = new SimWords(plugins: _*)
-    val result = simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine, outputUrl)
+    simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine, outputUrl)
 
     // Store experiment data.
     val inputFileSize = FileSystems.getFileSize(inputFile)
