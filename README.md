@@ -1,6 +1,7 @@
 # Rheem <img align="right" width="128px" src="http://da.qcri.org/rheem/images/rheem.png" alt="Rheem logo">
 
-[![Build Status](https://jenkins.qcri.org/buildStatus/icon?job=rheem-build)](https://jenkins.qcri.org/job/rheem-build/)
+[![Build Status (Jenkins)](https://jenkins.qcri.org/buildStatus/icon?job=rheem-build)](https://jenkins.qcri.org/job/rheem-build/)
+[![Build Status (Travis)](https://travis-ci.org/rheem-ecosystem/rheem.svg?branch=master)](https://travis-ci.org/rheem-ecosystem/rheem)
 [![Gitter chat](https://badges.gitter.im/rheem-ecosystem/Lobby.png)](https://gitter.im/rheem-ecosystem/Lobby)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.qcri.rheem/rheem/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.qcri.rheem/rheem)
 
@@ -27,7 +28,7 @@ Rheem is available via Maven Central. To use it with Maven, for instance, includ
 <dependency> 
   <groupId>org.qcri.rheem</groupId>
   <artifactId>rheem-***</artifactId>
-  <version>0.2.1</version> 
+  <version>0.3.0</version> 
 </dependency>
 ```
 Note the `***`: Rheem ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -262,8 +263,10 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.function.ExecutionContext
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
+
 import scala.util.Random
 import scala.collection.JavaConversions._
 
@@ -271,9 +274,10 @@ object kmeans {
   def main(args: Array[String]) {
 
     // Settings
-    val inputUrl = "file:/tmp_kmeans.txt"
+    val inputUrl = "file:/kmeans.txt"
     val k = 5
     val iterations = 100
+    val configuration = new Configuration
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -331,7 +335,10 @@ object kmeans {
     // Do the k-means loop.
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
       points
-        .mapJava(new SelectNearestCentroid)
+        .mapJava(new SelectNearestCentroid,
+          udfLoad = LoadProfileEstimators.createFromSpecification(
+            "my.udf.costfunction.key", configuration
+          ))
         .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
         .reduceByKey(_.cluster, _.add_points(_)).withName("Add up points")
         .withCardinalityEstimator(k)

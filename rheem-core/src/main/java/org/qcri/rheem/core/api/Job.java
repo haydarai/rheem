@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.api;
 
+import org.json.JSONObject;
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
@@ -121,7 +122,7 @@ public class Job extends OneTimeExecutable {
     private final Set<String> udfJarPaths = new HashSet<>();
 
     private Monitor monitor;
-    
+
     /**
      * Name for this instance.
      */
@@ -156,7 +157,6 @@ public class Job extends OneTimeExecutable {
      */
     Job(RheemContext rheemContext, String name, Monitor monitor, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
         this.rheemContext = rheemContext;
-        this.debugContext = this.rheemContext.getDebugContext();
         this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork(this.name);
         this.rheemPlan = rheemPlan;
@@ -182,9 +182,8 @@ public class Job extends OneTimeExecutable {
 
         // Configure job monitor.
         if (Monitor.isEnabled(this.configuration)) {
-            this.monitor = monitor==null ? new FileMonitor() : monitor;
-        }
-        else {
+            this.monitor = monitor == null ? new FileMonitor() : monitor;
+        } else {
             this.monitor = new DisabledMonitor();
         }
     }
@@ -220,8 +219,7 @@ public class Job extends OneTimeExecutable {
 
         // Get initial execution plan.
         ExecutionPlan executionPlan = this.createInitialExecutionPlan();
-
-        return  executionPlan;
+        return executionPlan;
     }
 
     // TODO: Move outside of Job class
@@ -252,27 +250,41 @@ public class Job extends OneTimeExecutable {
             this.estimateKeyFigures();
 
             // Get an execution plan.
+            int executionId = 0;
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
             //add execution a rheem for after will can compare the stages
            /* if(ModeRun.isDebugMode()){
                 ((RheemPlanDebug)this.rheemPlan).addExecutionPlan(executionPlan);
             }*/
             this.optimizationRound.stop();
+            if (this.experiment != null) {
+                this.experiment.addMeasurement(ExecutionPlanMeasurement.capture(
+                        executionPlan,
+                        String.format("execution-plan-%d", executionId)
+                ));
+            }
 
             // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
             String runId = "1";
             try {
                 monitor.initialize(this.configuration, runId, executionPlan.toJsonList());
-            }catch (Exception e) {
-                this.logger.warn("Failed to initalize monitor: {}", e);
+            } catch (Exception e) {
+                this.logger.warn("Failed to initialize monitor: {}", e);
             }
 
 
             // Take care of the execution.
-            int executionId = 0;
             while (!this.execute(executionPlan, executionId)) {
                 this.optimizationRound.start();
-                if (this.postProcess(executionPlan, executionId)) executionId++;
+                if (this.postProcess(executionPlan, executionId)) {
+                    executionId++;
+                    if (this.experiment != null) {
+                        this.experiment.addMeasurement(ExecutionPlanMeasurement.capture(
+                                executionPlan,
+                                String.format("execution-plan-%d", executionId)
+                        ));
+                    }
+                }
                 this.optimizationRound.stop();
             }
 

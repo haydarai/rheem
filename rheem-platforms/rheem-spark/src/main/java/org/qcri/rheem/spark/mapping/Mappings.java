@@ -31,6 +31,7 @@ public class Mappings {
             new IntersectMapping(),
             new CartesianMapping(),
             new JoinMapping(),
+            new CoGroupMapping(),
             new LoopMapping(),
             new DoWhileMapping(),
             new RepeatMapping(),
@@ -38,6 +39,7 @@ public class Mappings {
             new ZipWithIdMapping(),
             new JSONSourceMapping(),
             new SnifferMapping()
+            new ZipWithIdMapping()
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
