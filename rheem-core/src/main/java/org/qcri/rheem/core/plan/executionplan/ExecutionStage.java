@@ -227,10 +227,10 @@ public class ExecutionStage {
         if( ! this.containsSniffer() ){
             return null;
         }
-        return this.getTerminalTasks().stream()
+        return this.getAllTasks().stream()
                 .filter(
                     task -> {
-                        return task.getOperator().isManyOutput();
+                        return task.getOperator().isSniffer();
                     }
                 )
                 .flatMap(

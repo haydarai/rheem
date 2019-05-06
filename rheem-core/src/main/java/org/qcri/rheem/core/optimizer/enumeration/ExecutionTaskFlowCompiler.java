@@ -406,6 +406,7 @@ public class ExecutionTaskFlowCompiler
 
                 this.createActivation(targetInput.unchecked(), collector);
             }
+
         }
 
         private Junction getJunction(OutputSlot<?> output) {

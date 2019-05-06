@@ -14,9 +14,7 @@ public abstract class MultiplexCollection<T> extends AbstractCollection<T> {
     public static int INDEX = 1;
     public String name = "coleccion_"+(INDEX++);
 
-    protected MultiplexStatus status;
-
-    {
+    protected MultiplexStatus status;{
         this.iterators = new ArrayList<>();
         this.status  = MultiplexStatus.WAITING;
         MultiplexConfiguration.load(null);

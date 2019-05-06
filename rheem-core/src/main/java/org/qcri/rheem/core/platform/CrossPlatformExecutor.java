@@ -204,9 +204,31 @@ public class CrossPlatformExecutor implements ExecutionState {
      * @return whether an activation took place
      */
     private boolean tryToActivate(StageActivator activator) {
+        System.out.println("LALALALLALAL");
+        if(activator.isDebugMode()){
+            if( this.runningStageDebug.contains(activator.getStage()) ){
+                System.out.println("DASDAS");
+                return false;
+            }else{
+                logger.info("Activating {}.", activator.getStage());
+                // Activate the activator by moving it.
+                this.pendingStageActivators.remove(activator.getStage());
+                synchronized (this.activatedStageActivators){
+                    assert this.activatedStageActivators.stream().noneMatch(a -> a.getStage().equals(activator.getStage())) :
+                            String.format("Must not activate %s twice.", activator.getStage());
+
+                    this.activatedStageActivators.add(activator);
+                }
+                activator.noteActivation();
+                return true;
+            }
+        }
         if (activator.updateInputChannelInstances()) {
+            /*System.out.println("LALALL2");
             if(activator.isDebugMode()){
+                System.out.println("dasdasdas");
                 if( this.runningStageDebug.contains(activator.getStage()) ){
+                    System.out.println("DASDAS");
                     return false;
                 }
             }
@@ -314,7 +336,7 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         for (int i = 1; i <= numActiveStages ; ++i) {
             StageActivator current_activator_stage = this.activatedStageActivators.peek();
-            System.out.println("WEAS ACTIVADAS: "+current_activator_stage);
+            System.out.println("WEAS ACTIVADAS: "+current_activator_stage.stage.toString());
 
             Thread thread = this.createThreadDebug(current_activator_stage, i, isBreakpointsDisabled);
 
@@ -336,8 +358,8 @@ public class CrossPlatformExecutor implements ExecutionState {
             Collection<StageActivator> candidates_remove = new ArrayList<>();
             int outputs_sniffer = 0;
             for(StageActivator stage_with_sniffer: snifferStages){
-                System.out.println("ACTIVADAS: ::::::."+ stage_with_sniffer);
-                if(stage_with_sniffer.getStage().allSnifferIsActivated()){
+                System.out.println("ACTIVADAS: ::::::."+ stage_with_sniffer.stage.toString());
+                if(!stage_with_sniffer.getStage().allSnifferIsActivated()){
                     for(ChannelInstance channelInstance: stage_with_sniffer.getStage().getChannelInstanceDebug()) {
                         this.register(channelInstance);
                     }
@@ -346,7 +368,8 @@ public class CrossPlatformExecutor implements ExecutionState {
 
                     do {
                         StageActivator stage_after_sniffer = this.activatedStageActivators.peek();
-                        System.out.println("POST SNIFFER::::::::"+stage_after_sniffer.stage);
+                        System.out.println(stage_after_sniffer);
+                      //  System.out.println("POST SNIFFER::::::::"+stage_after_sniffer.stage);
                         createThreadDebug(stage_after_sniffer, outputs_sniffer++, isBreakpointsDisabled);
                         this.runningStageDebug.add(stage_after_sniffer.getStage());
                     }while(this.activatedStageActivators.size() > 0);
@@ -375,7 +398,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         // TODO: Better pass the stage to the thread rather than letting the thread retrieve the stage itself (to avoid concurrency issues).
         Thread thread = new Thread(new ParallelExecutionThread(isBreakpointsDisabled, "T" + String.valueOf(i), this));
         // Start thread execution
-        thread.setName( "stage numero "+i+" "+ current_activator_stage.getStage());
+        thread.setName( "stage numero "+i+" "+ current_activator_stage);
         thread.start();
         return thread;
     }
@@ -536,17 +559,24 @@ public class CrossPlatformExecutor implements ExecutionState {
         // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
         final Collection<Channel> outboundChannels = processedStage.getOutboundChannelsOfSniffer();
         Set<ExecutionStage> successorStages = new HashSet<>(processedStage.getNumberOfSniffers());
-
+        System.out.println("HEREREEE"+ outboundChannels);
         for (Channel outboundChannel : outboundChannels) {
+            System.out.println("hjdasjkdhkja");
             for (ExecutionTask consumer : outboundChannel.getConsumers()) {
                 System.out.println("CONSUMER::::::::"+consumer);
-                if (this.getChannelInstance(outboundChannel, consumer.isFeedbackInput(outboundChannel)) != null) {
+                System.out.println(outboundChannel);
+                System.out.println(consumer.isFeedbackInput(outboundChannel));
+                System.out.println(this.getChannelInstance(outboundChannel, consumer.isFeedbackInput(outboundChannel)));
+                /*if (this.getChannelInstance(outboundChannel, consumer.isFeedbackInput(outboundChannel)) != null) {*/
                     final ExecutionStage consumerStage = consumer.getStage();
                     // We must be careful: outbound Channels still can have consumers within the producer's ExecutionStage.
                     if (consumerStage != processedStage && !consumerStage.isInFinishedLoop()) {
+                        System.out.println("pre  "+successorStages.size());
                         successorStages.add(consumerStage);
+                        System.out.println("post "+successorStages.size());
+
                     }
-                }
+               // }
             }
         }
 

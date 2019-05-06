@@ -50,8 +50,9 @@ public class SnifferOperator<Type, TypeTuple extends Tuple> extends SnifferBase<
     }
 
 
-    public void setFunction(Function<Type, TypeTuple> function){
+    public SnifferOperator<Type, TypeTuple> setFunction(Function<Type, TypeTuple> function){
         this.function = function;
+        return this;
     }
 
     @Override

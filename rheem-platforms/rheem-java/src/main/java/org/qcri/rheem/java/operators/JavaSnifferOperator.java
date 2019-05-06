@@ -48,7 +48,7 @@ public class JavaSnifferOperator<Type, TypeTuple extends org.qcri.rheem.core.dat
 
             FunctionDescriptor.SerializablePredicate<Type> function =
                     element -> {
-                    //    out.println(element);
+                        //    out.println(element);
                         return true;
                     };
 

@@ -389,11 +389,11 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        System.out.println(executionPlans.size());
-        for (PlanImplementation im: executionPlans){
-            System.out.println(im.getOperators());
+        System.out.println("dasdas" +executionPlans.size());
+       /* for (PlanImplementation im: executionPlans){
+            System.out.println("reqrwqewq"+im.getOperators());
         }
-        System.exit(0);
+        System.exit(0);*/
         this.pickBestExecutionPlan(executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.costEstimates.add(planImplementation.getCostEstimate());
