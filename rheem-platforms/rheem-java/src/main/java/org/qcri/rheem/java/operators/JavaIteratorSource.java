@@ -11,7 +11,6 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
-import sun.awt.windows.ThemeReader;
 
 import java.util.*;
 import java.util.function.Function;

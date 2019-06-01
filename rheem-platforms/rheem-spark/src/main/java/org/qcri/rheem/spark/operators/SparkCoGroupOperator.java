@@ -17,7 +17,7 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.compiler.MetaFunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
@@ -82,7 +82,7 @@ public class SparkCoGroupOperator<In0, In1, Key> extends CoGroupOperator<In0, In
         final JavaRDD<In0> inputRdd0 = input0.provideRdd();
         final JavaRDD<In1> inputRdd1 = input1.provideRdd();
 
-        FunctionCompiler compiler = sparkExecutor.getCompiler();
+        MetaFunctionCompiler compiler = sparkExecutor.getCompiler();
         final PairFunction<In0, Key, In0> keyExtractor0 = compiler.compileToKeyExtractor(this.keyDescriptor0);
         final PairFunction<In1, Key, In1> keyExtractor1 = compiler.compileToKeyExtractor(this.keyDescriptor1);
         JavaPairRDD<Key, In0> pairRdd0 = inputRdd0.mapToPair(keyExtractor0);

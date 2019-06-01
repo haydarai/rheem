@@ -40,6 +40,10 @@ public class RheemContext {
 
     public RheemContext(Configuration configuration) {
         this.configuration = configuration.fork(String.format("RheemContext(%s)", configuration.getName()));
+        if(System.getProperty("os.name").toLowerCase().contains("windows")){
+            //TODO recovery from the configurations
+            System.setProperty("hadoop.home.dir", "D:\\rheem-debug-mode\\rheem");
+        }
     }
 
     /**

@@ -1,4 +1,4 @@
-package org.qcri.rheem.spark.compiler;
+package org.qcri.rheem.spark.compiler.adapter;
 
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.core.function.ExecutionContext;

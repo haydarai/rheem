@@ -1,6 +1,6 @@
 package org.qcri.rheem.java.debug.stream;
 
-import org.qcri.rheem.basic.operators.JSONSource;
+//import org.qcri.rheem.basic.operators.JSONSource;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.debug.ModeRun;
@@ -41,12 +41,12 @@ public class FileStream extends StreamRheem{
         this.modeRun = mode;
     }
 
-    public FileStream(JSONSource op, ModeRun mode) {
+    /*public FileStream(JSONSource op, ModeRun mode) {
         super();
         this.path = op.getInputUrl().trim();
         setElements();
         this.modeRun = mode;
-    }
+    }*/
 
     private void setElements(){
         this.reader   = openFile();

@@ -37,8 +37,8 @@ public class Mappings {
             new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping(),
-            new JSONSourceMapping(),
-            new SnifferMapping()
+            //new JSONSourceMapping(),
+            new SnifferMapping(),
             new ZipWithIdMapping()
     );
 

@@ -31,11 +31,11 @@ public class MultiplexOperator<InputType extends Tuple, OutputType extends Tuple
     public void setFunction(int index, FunctionDescriptor.SerializableFunction<InputType, ?> function) throws Exception {
         if(index < 0 || index > converts.length ){
             throw new Exception("error    ");
-            //TODO: generate exception for this case
+            //TODO: build exception for this case
         }
         if(this.converts[index] != null){
             throw new Exception("error2    ");
-            //TODO: generate exception for this case
+            //TODO: build exception for this case
         }
         this.converts[index] = function;
     }

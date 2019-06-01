@@ -2,7 +2,6 @@ package org.qcri.rheem.core.store;
 
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.util.MultiMap;
-import sun.security.provider.MD5;
 
 import java.nio.ByteBuffer;
 import java.util.Base64;

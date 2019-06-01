@@ -1,7 +1,8 @@
-package org.qcri.rheem.spark.compiler;
+package org.qcri.rheem.spark.compiler.adapter;
 
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.core.function.ExecutionContext;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 
@@ -9,27 +10,28 @@ import org.qcri.rheem.spark.execution.SparkExecutionContext;
  * Implements a {@link Function} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
-public class ExtendedPredicateAdapater<Type> implements Function<Type, Boolean> {
+public class ExtendedMapFunctionAdapter<InputType, OutputType> implements Function<InputType, OutputType> {
 
-    private final PredicateDescriptor.ExtendedSerializablePredicate<Type> impl;
+    private final FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> impl;
 
     private final SparkExecutionContext executionContext;
 
     private boolean isFirstRun = true;
 
-    public ExtendedPredicateAdapater(PredicateDescriptor.ExtendedSerializablePredicate<Type> extendedFunction,
-                                     SparkExecutionContext sparkExecutionContext) {
+    public ExtendedMapFunctionAdapter(FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> extendedFunction,
+                                      SparkExecutionContext sparkExecutionContext) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
     }
 
     @Override
-    public Boolean call(Type dataQuantume) throws Exception {
+    public OutputType call(InputType dataQuantume) throws Exception {
         if (this.isFirstRun) {
             this.impl.open(this.executionContext);
+            this.isFirstRun = false;
         }
 
-        return this.impl.test(dataQuantume);
+        return this.impl.apply(dataQuantume);
     }
 
 }

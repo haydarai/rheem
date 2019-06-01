@@ -49,7 +49,7 @@ public class JavaMultiplexOperator<InputType extends Tuple, OutputType extends T
 
         final int size_output = outputs.length;
         if(size_output != this.getNumOutputs()){
-            //TODO: generate exception
+            //TODO: build exception
             return null;
         }
 

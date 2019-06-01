@@ -1,6 +1,5 @@
 package org.qcri.rheem.tests;
 
-
 import org.qcri.rheem.basic.data.Tuple1;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.data.Tuple3;

@@ -1,5 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -10,6 +12,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.debug.DebugTextInputFormat;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
@@ -50,6 +53,16 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
 
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         final JavaRDD<String> rdd = sparkExecutor.sc.textFile(this.getInputUrl());
+       /* final JavaRDD<String> rdd = sparkExecutor.sc
+                                        .hadoopFile(
+                                            this.getInputUrl(),
+                                            DebugTextInputFormat.class,
+                                            LongWritable.class,
+                                            Text.class
+                                        )
+                                        .map(
+                                            pair -> pair._2().toString()
+                                        );*/
         this.name(rdd);
         output.accept(rdd, sparkExecutor);
 

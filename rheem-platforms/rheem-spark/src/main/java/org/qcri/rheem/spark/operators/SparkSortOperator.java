@@ -13,9 +13,8 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.compiler.MetaFunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
-import scala.Tuple2;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -62,7 +61,7 @@ public class SparkSortOperator<Type, Key>
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
         
-        FunctionCompiler compiler = sparkExecutor.getCompiler();
+        MetaFunctionCompiler compiler = sparkExecutor.getCompiler();
         final PairFunction<Type, Key, Type> keyExtractor = compiler.compileToKeyExtractor(this.keyDescriptor);
 
         final JavaPairRDD<Key, Type> keyedRdd = inputRdd.mapToPair(keyExtractor);

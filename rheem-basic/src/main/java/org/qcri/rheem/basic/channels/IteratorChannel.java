@@ -23,7 +23,7 @@ import java.util.*;
 import java.util.function.Function;
 
 /**
- * Represents a {@link Channel} that is realized via a Iterator that permit generate differet struct
+ * Represents a {@link Channel} that is realized via a Iterator that permit build differet struct
  */
 public class IteratorChannel extends Channel {
 

@@ -1,6 +1,5 @@
 package org.qcri.rheem.java.mapping;
 
-import com.sun.org.apache.xpath.internal.operations.Mult;
 import org.qcri.rheem.basic.operators.MultiplexOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;

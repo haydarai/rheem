@@ -319,7 +319,7 @@ public class OperatorProfilers {
      * Creates a default {@link SparkJoinOperator} profiler.
      */
     public static BinaryOperatorProfiler createSparkJoinProfiler() {
-        // NB: If we generate the Strings from within Spark, we will have two different reservoirs for each input.
+        // NB: If we build the Strings from within Spark, we will have two different reservoirs for each input.
         final DataGenerators.Generator<String> stringGenerator = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20);
         return createSparkJoinProfiler(
                 stringGenerator, String.class, String::new,

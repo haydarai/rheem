@@ -14,7 +14,9 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.compiler.DebugFunctionCompiler;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.compiler.MetaFunctionCompiler;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -42,7 +44,7 @@ public class SparkExecutor extends PushExecutorTemplate {
     /**
      * Compiler to create Spark UDFs.
      */
-    public FunctionCompiler compiler = new FunctionCompiler();
+    public MetaFunctionCompiler compiler;
 
     /**
      * Reference to the {@link SparkPlatform} that provides the {@link #sparkContextReference}.
@@ -65,9 +67,14 @@ public class SparkExecutor extends PushExecutorTemplate {
         this.sparkContextReference = this.platform.getSparkContext(job);
         this.sparkContextReference.noteObtainedReference();
         this.sc = this.sparkContextReference.get();
-        /*if(ModeRun.isDebugMode()){
-            RheemPlanDebug.addExecutor(this);
-        }*/
+
+        if(job.getConfiguration().getBooleanProperty("rheem.debug.wrapper.function", false)){
+            System.out.println("USIING THE DEBUG COMPILER");
+            this.compiler = new DebugFunctionCompiler();
+        }else{
+            this.compiler = new FunctionCompiler();
+        }
+
         if (this.sc.getConf().contains("spark.executor.cores")) {
             this.numDefaultPartitions = 2 * this.sc.getConf().getInt("spark.executor.cores", -1);
         } else {
@@ -188,7 +195,7 @@ public class SparkExecutor extends PushExecutorTemplate {
      *
      * @return the {@link FunctionCompiler}
      */
-    public FunctionCompiler getCompiler() {
+    public MetaFunctionCompiler getCompiler() {
         return this.compiler;
     }
 }

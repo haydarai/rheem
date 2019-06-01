@@ -17,10 +17,10 @@ public abstract class SnifferBase<InputType, OutputType0, OutputType1 extends Tu
                        DataSetType<OutputType0> outputType0,
                        DataSetType<OutputType1> outputType1,
                        boolean isSupportingBroadcastInputs) {
-        super(1, 2, isSupportingBroadcastInputs);
+        super(1, 1, isSupportingBroadcastInputs);
         this.inputSlots[0] = new InputSlot<>("in", this, inputType);
         this.outputSlots[0] = new OutputSlot<>("out0", this, outputType0);
-        this.outputSlots[1] = new OutputSlot<>("out1", this, outputType1);
+      //  this.outputSlots[1] = new OutputSlot<>("out1", this, outputType1);
     }
 
     /*
@@ -33,7 +33,7 @@ public abstract class SnifferBase<InputType, OutputType0, OutputType1 extends Tu
         super(that);
         this.inputSlots[0] = new InputSlot<>("in", this, that.getInputType());
         this.outputSlots[0] = new OutputSlot<>("out0", this, that.getOutputType0());
-        this.outputSlots[1] = new OutputSlot<>("out1", this, that.getOutputType1());
+       // this.outputSlots[1] = new OutputSlot<>("out1", this, that.getOutputType1());
     }
 
     @SuppressWarnings("unchecked")
@@ -46,12 +46,12 @@ public abstract class SnifferBase<InputType, OutputType0, OutputType1 extends Tu
         return ((OutputSlot<OutputType0>) this.getOutput(0)).getType();
     }
 
-
+/*
     @SuppressWarnings("unchecked")
     public DataSetType<OutputType1> getOutputType1() {
         return ((OutputSlot<OutputType1>) this.getOutput(1)).getType();
     }
-
+*/
     public abstract void selfKill();
 
     public abstract Function<InputType, OutputType1> getFunction();

@@ -18,7 +18,7 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.compiler.MetaFunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.*;
@@ -66,7 +66,7 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         final JavaRDD<InputType0> inputRdd0 = input0.provideRdd();
         final JavaRDD<InputType1> inputRdd1 = input1.provideRdd();
 
-        FunctionCompiler compiler = sparkExecutor.getCompiler();
+        MetaFunctionCompiler compiler = sparkExecutor.getCompiler();
         final PairFunction<InputType0, KeyType, InputType0> keyExtractor0 = compiler.compileToKeyExtractor(this.keyDescriptor0);
         final PairFunction<InputType1, KeyType, InputType1> keyExtractor1 = compiler.compileToKeyExtractor(this.keyDescriptor1);
         JavaPairRDD<KeyType, InputType0> pairStream0 = inputRdd0.mapToPair(keyExtractor0);

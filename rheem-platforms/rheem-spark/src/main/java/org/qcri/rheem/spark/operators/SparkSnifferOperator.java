@@ -1,5 +1,12 @@
 package org.qcri.rheem.spark.operators;
 
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import org.apache.directory.api.util.Base64;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.SnifferOperator;
@@ -14,9 +21,15 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.debug.SnifferDispacher;
 import org.qcri.rheem.spark.debug.SocketSerializable;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +40,7 @@ import java.util.List;
  */
 public class SparkSnifferOperator<Type, TypeTuple extends org.qcri.rheem.core.data.Tuple>
         extends SnifferOperator<Type, TypeTuple>
-        implements SparkExecutionOperator{
+        implements SparkExecutionOperator {
 
     /**
      * Creates a new instance.
@@ -57,19 +70,13 @@ public class SparkSnifferOperator<Type, TypeTuple extends org.qcri.rheem.core.da
         assert outputs.length == this.getNumOutputs();
 
         PredicateDescriptor<Type> predicateDescriptor = null;
-       //Socket s = new Socket("localhost", 9090);
-        // PrintWriter out = new PrintWriter(s.getOutputStream());
 
-        SocketSerializable<Type> socket = new SocketSerializable<>(""+Math.random(), "localhost", 9090);
-        FunctionDescriptor.SerializablePredicate<Type> funct =
-                element -> {
-                    socket.sendMessage(element);
-                    return true;
-                };
+        //SocketSerializable<Type> socket = new SocketSerializable<>(""+Math.random(), "localhost", 9090);
+        FunctionDescriptor.SerializablePredicate<Type> funct = new SnifferDispacher<>();
 
         predicateDescriptor = new PredicateDescriptor<>(
-                funct,
-                this.getInputType().getDataUnitType().getTypeClass()
+            funct,
+            this.getInputType().getDataUnitType().getTypeClass()
         );
 
         final Function<Type, Boolean> filterFunction = sparkExecutor.getCompiler().compile(

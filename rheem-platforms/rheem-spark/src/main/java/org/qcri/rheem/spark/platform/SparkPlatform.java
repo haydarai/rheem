@@ -1,7 +1,10 @@
 package org.qcri.rheem.spark.platform;
 
+import com.google.api.client.http.HttpContent;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.qcri.rheem.basic.data.debug.DebugHeader;
+import org.qcri.rheem.basic.data.debug.DebugKey;
 import org.qcri.rheem.basic.plugin.RheemBasic;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
@@ -131,6 +134,7 @@ public class SparkPlatform extends Platform {
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasic.class)); // rheem-basic
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(HttpContent.class)); // rheem-core
             final Set<String> udfJarPaths = job.getUdfJarPaths();
             if (udfJarPaths.isEmpty()) {
                 this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
@@ -149,6 +153,15 @@ public class SparkPlatform extends Platform {
     @Override
     public void configureDefaults(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
+        if(configuration.getBooleanProperty("rheem.debug", false)){
+            try {
+                String class_name = configuration.getStringProperty("rheem.debug.tuple.header.key");
+                DebugHeader.setGenerator((Class<DebugKey>) Class.forName(class_name));
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     @Override

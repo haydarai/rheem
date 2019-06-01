@@ -1,44 +1,27 @@
 package org.qcri.rheem.tests;
 
-import io.netty.util.internal.chmv8.ConcurrentHashMapV8;
 import org.qcri.rheem.basic.collection.MultiplexCollection;
 import org.qcri.rheem.basic.collection.MultiplexList;
 import org.qcri.rheem.basic.collection.MultiplexStatus;
 import org.qcri.rheem.basic.data.Tuple1;
 import org.qcri.rheem.basic.data.Tuple3;
-import org.qcri.rheem.basic.data.Tuple4;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.data.Tuple;
-import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.debug.rheemplan.RheemPlanDebug;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.types.TupleType;
-import org.qcri.rheem.core.util.MultiMap;
-import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.java.Java;
-import org.qcri.rheem.spark.Spark;
-import org.qcri.rheem.spark.debug.SparkDebug;
-import sun.reflect.generics.reflectiveObjects.TypeVariableImpl;
 
-import javax.ws.rs.core.MultivaluedMap;
+import org.qcri.rheem.java.Java;
+
 import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**

@@ -1,10 +1,21 @@
 package org.qcri.rheem.core.debug;
 
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+
+import java.io.IOException;
+import java.net.URI;
+
 /**
  * Created by bertty on 10-05-17.
  */
 public class ModeRun {
     private static ModeRun NORMAL_MODE;
+    private HttpRequestFactory requestFactory;
+    private HttpRequest request;
+    private int counter;
 
     static {
         NORMAL_MODE = new ModeRun();
@@ -17,6 +28,13 @@ public class ModeRun {
     public ModeRun(){
         this.process = TypeStatusProcess.CONTINUE;
         this.mode    = TypeRunMode.NORMAL;
+        try {
+            URI uri = URI.create("http://localhost:8080/debug/");
+            this.requestFactory = new NetHttpTransport().createRequestFactory();
+            this.request = requestFactory.buildGetRequest(new GenericUrl(uri));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setMode(TypeRunMode mode){
@@ -48,10 +66,23 @@ public class ModeRun {
     }
 
     private TypeStatusProcess getProcess(){
+        try {
+            counter++;
+            if (counter % 100 == 0) {
+                String status_current = this.request
+                        .execute()
+                        .parseAsString();
+
+                this.process = TypeStatusProcess.valueOf(status_current);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return this.process;
     }
 
     public boolean isPauseProcess(){
+
         return this.process.isPaused();
     }
 

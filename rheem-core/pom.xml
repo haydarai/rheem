@@ -78,6 +78,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>1.29.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 </project>

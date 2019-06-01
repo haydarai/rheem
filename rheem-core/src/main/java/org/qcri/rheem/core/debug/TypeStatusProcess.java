@@ -19,4 +19,18 @@ public enum TypeStatusProcess {
     public boolean isContinues(){
         return this == CONTINUE;
     }
+
+    public TypeStatusProcess getValue(String original){
+        String tmp = original.toLowerCase();
+        if(tmp.contains("resume")){
+            return TypeStatusProcess.CONTINUE;
+        }
+        if(tmp.contains("pause")){
+            return TypeStatusProcess.PAUSE;
+        }
+        if(tmp.contains("stop")){
+            return TypeStatusProcess.STOP;
+        }
+        return null;
+    }
 }

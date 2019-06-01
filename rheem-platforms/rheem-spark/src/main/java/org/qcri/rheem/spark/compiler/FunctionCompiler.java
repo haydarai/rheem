@@ -4,10 +4,20 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.spark.compiler.adapter.BinaryOperatorAdapter;
+import org.qcri.rheem.spark.compiler.adapter.ExtendedBinaryOperatorAdapter;
+import org.qcri.rheem.spark.compiler.adapter.ExtendedFlatMapFunctionAdapter;
+import org.qcri.rheem.spark.compiler.adapter.ExtendedFunction;
+import org.qcri.rheem.spark.compiler.adapter.ExtendedMapFunctionAdapter;
+import org.qcri.rheem.spark.compiler.adapter.ExtendedMapPartitionsFunctionAdapter;
+import org.qcri.rheem.spark.compiler.adapter.ExtendedPredicateAdapater;
+import org.qcri.rheem.spark.compiler.adapter.FlatMapFunctionAdapter;
+import org.qcri.rheem.spark.compiler.adapter.MapFunctionAdapter;
+import org.qcri.rheem.spark.compiler.adapter.MapPartitionsFunctionAdapter;
+import org.qcri.rheem.spark.compiler.adapter.PredicateAdapter;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
@@ -18,16 +28,16 @@ import java.util.function.Predicate;
 /**
  * A compiler translates Rheem functions into executable Java functions.
  */
-public class FunctionCompiler {
+public class FunctionCompiler extends MetaFunctionCompiler{
 
     /**
      * Create an appropriate {@link Function} for deploying the given {@link TransformationDescriptor}
      * on Apache Spark.
      *
      * @param descriptor      describes the transformation function
-     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      * @param operatorContext contains optimization information for the {@code operator}
-     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      */
     public <I, O> Function<I, O> compile(TransformationDescriptor<I, O> descriptor,
                                          SparkExecutionOperator operator,
@@ -49,9 +59,9 @@ public class FunctionCompiler {
      * on Apache Spark's {@link JavaRDD#mapPartitions(FlatMapFunction)}.
      *
      * @param descriptor      describes the function
-     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      * @param operatorContext contains optimization information for the {@code operator}
-     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      */
     public <I, O> FlatMapFunction<Iterator<I>, O> compile(MapPartitionsDescriptor<I, O> descriptor,
                                                           SparkExecutionOperator operator,
@@ -73,7 +83,7 @@ public class FunctionCompiler {
      *
      * @return a compiled function
      */
-    public <T, K> KeyExtractor<T, K> compileToKeyExtractor(TransformationDescriptor<T, K> descriptor) {
+    public <T, K> MetaFunctionCompiler.KeyExtractor<T, K> compileToKeyExtractor(TransformationDescriptor<T, K> descriptor) {
         return new KeyExtractor<>(descriptor.getJavaImplementation());
     }
 
@@ -83,9 +93,9 @@ public class FunctionCompiler {
      * on Apache Spark.
      *
      * @param descriptor      describes the function
-     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      * @param operatorContext contains optimization information for the {@code operator}
-     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      */
     public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, O> descriptor,
                                                 SparkExecutionOperator operator,
@@ -126,7 +136,7 @@ public class FunctionCompiler {
      * on Apache Spark.
      *
      * @param predicateDescriptor describes the function
-     * @param operator            that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param operator            that executes the {@link Function}; only required if the {@code descriptor} describes an {@link org.qcri.rheem.spark.compiler.adapter.ExtendedFunction}
      * @param operatorContext     contains optimization information for the {@code operator}
      * @param inputs              that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
      */
@@ -150,7 +160,7 @@ public class FunctionCompiler {
     /**
      * Spark function for building pair RDDs.
      */
-    public static class KeyExtractor<T, K> implements PairFunction<T, K, T>, RheemSparkFunction {
+    public static class KeyExtractor<T, K> implements MetaFunctionCompiler.KeyExtractor<T, K> {
 
         private final java.util.function.Function<T, K> impl;
 
@@ -163,46 +173,6 @@ public class FunctionCompiler {
             K key = this.impl.apply(t);
             return new scala.Tuple2<>(key, t);
         }
-
-        @Override
-        public Object getRheemFunction() {
-            return this.impl;
-        }
-    }
-
-
-    /**
-     * Spark function for aggregating data quanta.
-     */
-    public static class Reducer<Type> implements Function2<Type, Type, Type>, RheemSparkFunction {
-
-        private final BinaryOperator<Type> impl;
-
-        public Reducer(BinaryOperator<Type> impl) {
-            this.impl = impl;
-        }
-
-        @Override
-        public Type call(Type i0, Type i1) throws Exception {
-            return this.impl.apply(i0, i1);
-        }
-
-        @Override
-        public Object getRheemFunction() {
-            return this.impl;
-        }
-    }
-
-
-    /**
-     * Describes functions coming from Rheem, designated for Spark.
-     */
-    public interface RheemSparkFunction {
-
-        /**
-         * @return the original code object as has been defined in the Rheem API
-         */
-        Object getRheemFunction();
 
     }
 }

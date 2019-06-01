@@ -11,7 +11,6 @@ import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
-import sun.awt.windows.ThemeReader;
 
 import java.util.*;
 

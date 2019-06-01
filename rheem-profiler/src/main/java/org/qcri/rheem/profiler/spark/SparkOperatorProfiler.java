@@ -92,7 +92,7 @@ public abstract class SparkOperatorProfiler {
     protected abstract void prepareInput(int inputIndex, long inputCardinality);
 
     /**
-     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}. Uses an implementation
+     * Helper method to build data quanta and provide them as a cached {@link JavaRDD}. Uses an implementation
      * based on the {@code rheem.profiler.datagen.location} property.
      */
     protected <T> JavaRDD<T> prepareInputRdd(long cardinality, int inputIndex) {
@@ -108,7 +108,7 @@ public abstract class SparkOperatorProfiler {
     }
 
     /**
-     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}.
+     * Helper method to build data quanta and provide them as a cached {@link JavaRDD}.
      */
     protected <T> JavaRDD<T> prepareInputRddInDriver(long cardinality, int inputIndex) {
         @SuppressWarnings("unchecked")
@@ -137,7 +137,7 @@ public abstract class SparkOperatorProfiler {
     }
 
     /**
-     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}.
+     * Helper method to build data quanta and provide them as a cached {@link JavaRDD}.
      */
     protected <T> JavaRDD<T> prepareInputRddInWorker(long cardinality, int inputIndex) {
 

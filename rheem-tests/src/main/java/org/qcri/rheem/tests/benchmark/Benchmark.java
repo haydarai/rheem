@@ -1,11 +1,9 @@
 package org.qcri.rheem.tests.benchmark;
 
-import org.apache.zookeeper.Op;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.data.Tuple3;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.debug.DebugContext;
 import org.qcri.rheem.core.debug.ModeRun;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
@@ -13,8 +11,6 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.plugin.JavaBasicPlugin;
-import org.qcri.rheem.spark.Spark;
-import org.qcri.rheem.tests.DiscoveryTest;
 
 import java.util.Arrays;
 import java.util.HashMap;

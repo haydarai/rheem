@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.debug.stream;
 
 import org.qcri.rheem.basic.operators.CollectionSource;
-import org.qcri.rheem.basic.operators.JSONSource;
+//import org.qcri.rheem.basic.operators.JSONSource;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.debug.DebugContext;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -37,9 +37,9 @@ public class StreamDebug {
             return new FileStreamV2((TextFileSource) op, dc.getModeRun());
         }
 
-        if( op instanceof JSONSource ){
+        /*if( op instanceof JSONSource ){
             return new FileStreamV2((JSONSource) op, dc.getModeRun());
-        }
+        }*/
 
         return null;
     }
