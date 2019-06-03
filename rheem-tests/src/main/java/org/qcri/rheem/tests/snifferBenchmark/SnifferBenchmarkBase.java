@@ -72,6 +72,11 @@ public abstract class SnifferBenchmarkBase {
             ReflectionUtils.getDeclaringJar(SparkPlatform.class),
             ReflectionUtils.getDeclaringJar(HttpRequestFactory.class),
             ReflectionUtils.getDeclaringJar(com.google.api.client.http.HttpContent.class),
+            ReflectionUtils.getDeclaringJar(com.google.api.client.http.HttpRequest.class),
+            ReflectionUtils.getDeclaringJar(io.opencensus.trace.propagation.TextFormat.class),
+            ReflectionUtils.getDeclaringJar(io.opencensus.contrib.http.util.HttpPropagationUtil.class),
+            ReflectionUtils.getDeclaringJar(com.google.api.client.http.OpenCensusUtils.class),
+            ReflectionUtils.getDeclaringJar(io.grpc.Context.class),
             ReflectionUtils.getDeclaringJar(RheemBasic.class),
             ReflectionUtils.getDeclaringJar(JavaPlatform.class),
             ReflectionUtils.getDeclaringJar(WordCountSpecial.class)

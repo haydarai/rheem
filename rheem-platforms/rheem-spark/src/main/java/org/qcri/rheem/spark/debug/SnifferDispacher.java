@@ -23,7 +23,7 @@ public class SnifferDispacher<Type> implements FunctionDescriptor.SerializablePr
 
     public SnifferDispacher(){
         try {
-            uri = URI.create("http://10.4.4.32:8080/debug/add");
+            uri = URI.create("http://10.4.4.49:8080/debug/add");
             this.requestFactory = new NetHttpTransport().createRequestFactory();
             this.request = requestFactory.buildPostRequest(new GenericUrl(uri), null);
             this.bos = new ByteArrayOutputStream();

@@ -336,41 +336,43 @@ public class RheemUUID implements java.io.Serializable, Comparable<RheemUUID> {
             int size = (Long.BYTES * 2) + ((this.correlative != null)?(Integer.BYTES * this.correlative.length): 0);
             byte[] result = new byte[size];
 
-            result[0] = (byte)((int)(this.mostSigBits >> 56));
-            result[1] = (byte)((int)(this.mostSigBits >> 48));
-            result[2] = (byte)((int)(this.mostSigBits >> 40));
-            result[3] = (byte)((int)(this.mostSigBits >> 32));
-            result[4] = (byte)((int)(this.mostSigBits >> 24));
-            result[5] = (byte)((int)(this.mostSigBits >> 16));
-            result[6] = (byte)((int)(this.mostSigBits >> 8));
-            result[7] = (byte)((int)(this.mostSigBits ));
-
-            result[8] = (byte)((int)(this.leastSigBits >> 56));
-            result[9] = (byte)((int)(this.leastSigBits >> 48));
-            result[10] = (byte)((int)(this.leastSigBits >> 40));
-            result[11] = (byte)((int)(this.leastSigBits >> 32));
-            result[12] = (byte)((int)(this.leastSigBits >> 24));
-            result[13] = (byte)((int)(this.leastSigBits >> 16));
-            result[14] = (byte)((int)(this.leastSigBits >> 8));
-            result[15] = (byte)((int)(this.leastSigBits ));
-
-         //   System.arraycopy(Longs.toByteArray(this.mostSigBits), 0, result, 0, Long.BYTES);
-          //  System.arraycopy(Longs.toByteArray(this.leastSigBits), 0, result, Long.BYTES, Long.BYTES);
+            long tmp = this.mostSigBits;
+            result[7] = (byte)((int)(tmp));
+            result[6] = (byte)((int)(tmp >>= 8));
+            result[5] = (byte)((int)(tmp >>= 8));
+            result[4] = (byte)((int)(tmp >>= 8));
+            result[3] = (byte)((int)(tmp >>= 8));
+            result[2] = (byte)((int)(tmp >>= 8));
+            result[1] = (byte)((int)(tmp >>= 8));
+            result[0] = (byte)((int)(tmp >> 8));
+            tmp = this.leastSigBits;
+            result[15] = (byte)((int)(tmp));
+            result[14] = (byte)((int)(tmp >>= 8));
+            result[13] = (byte)((int)(tmp >>= 8));
+            result[12] = (byte)((int)(tmp >>= 8));
+            result[11] = (byte)((int)(tmp >>= 8));
+            result[10] = (byte)((int)(tmp >>= 8));
+            result[9] = (byte)((int)(tmp >>= 8));
+            result[8] = (byte)((int)(tmp >> 8));
+            //   System.arraycopy(Longs.toByteArray(this.mostSigBits), 0, result, 0, Long.BYTES);
+            //  System.arraycopy(Longs.toByteArray(this.leastSigBits), 0, result, Long.BYTES, Long.BYTES);
             if (this.correlative != null) {
                 //int position = (Long.BYTES * 2);
                 int position = 16;
                 for (int i = 0; i < this.correlative.length; i++) {
-                  //  System.arraycopy(Ints.toByteArray(this.correlative[i]), 0, result, position, Integer.BYTES);
-                   // position += Integer.BYTES;
+                    //  System.arraycopy(Ints.toByteArray(this.correlative[i]), 0, result, position, Integer.BYTES);
+                    // position += Integer.BYTES;
                     int current = this.correlative[i];
-                    result[position++] = (byte) (current >> 24);
-                    result[position++] = (byte) (current >> 16);
-                    result[position++] = (byte) (current >> 8);
-                    result[position++] = (byte) (current);
+                    result[position+3] = (byte) (current );
+                    result[position+2] = (byte) (current >>= 8);
+                    result[position+1] = (byte) (current >>= 8);
+                    result[position] = (byte) (current >> 8);
+                    position += 4;
                 }
             }
             this.bytes = result;
         }
         return this.bytes;
     }
+
 }

@@ -5,8 +5,13 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.storage.StorageLevel;
+import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.basic.data.debug.DebugTuple;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.api.Configuration;
+
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -22,6 +27,8 @@ import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
+
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -70,12 +77,37 @@ public class SparkReduceByOperator<Type, KeyType>
                 sparkExecutor.getCompiler().compileToKeyExtractor(this.keyDescriptor);
         Function2<Type, Type, Type> reduceFunc =
                 sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
-        final JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
+        JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
         this.name(pairRdd);
+
+        JavaPairRDD<KeyType, DebugTuple<Type>> persisted = (JavaPairRDD<KeyType, DebugTuple<Type>>)
+                                                            pairRdd
+                                                                    .cache()
+                                                                    //.persist(StorageLevel.DISK_ONLY())
+                                                            ;
+
+        JavaPairRDD<KeyType, Type> newpair = persisted.mapValues(DebugTuple<Type>::getValue);
+        pairRdd = newpair;
+
+
+        //FunctionDescriptor.SerializableBinaryOperator<Type> reducer = (FunctionDescriptor.SerializableBinaryOperator<Type>) this.reduceDescriptor.getJavaImplementation();
+        /*final JavaRDD outputRdd = pairRdd.groupByKey(sparkExecutor.getNumDefaultPartitions()).values().map(
+            iterable -> {
+                Iterator<DebugTuple<Type>> iterator = (Iterator<DebugTuple<Type>>) iterable;
+                DebugTuple<Type> first = iterator.next();
+                Type result = first.getValue();
+                /*while(iterator.hasNext()){
+                    result = reducer.apply(result, iterator.next().getValue());
+                }* /
+                return  first.setValue(result);
+            }
+        );*/
+        //Function2 reduceFunc = new TestReducer();
         final JavaPairRDD<KeyType, Type> reducedPairRdd =
                 pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());
         this.name(reducedPairRdd);
-        final JavaRDD<Type> outputRdd = reducedPairRdd.map(new TupleConverter<>());
+        final Class<Type> class_output = this.reduceDescriptor.getOutputType().getTypeClass();
+        final JavaRDD outputRdd = reducedPairRdd.map( tuple -> {return new DebugTuple<Type>(tuple._2, class_output);});//.map(new TupleConverter<>());
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
@@ -100,6 +132,7 @@ public class SparkReduceByOperator<Type, KeyType>
             return scalaTuple._2;
         }
     }
+
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
@@ -135,4 +168,16 @@ public class SparkReduceByOperator<Type, KeyType>
         return false;
     }
 
+
+    public class TestReducer implements Function2<DebugTuple<Tuple2<String, Integer>>,
+            DebugTuple<Tuple2<String, Integer>>,
+            DebugTuple<Tuple2<String, Integer>>>, Serializable {
+
+        FunctionDescriptor.SerializableBinaryOperator<Tuple2<String, Integer>> reducer = (a, b) -> {a.field1 += b.field1; return a;};
+
+        @Override
+        public DebugTuple<Tuple2<String, Integer>> call(DebugTuple<Tuple2<String, Integer>> v1, DebugTuple<Tuple2<String, Integer>> v2) throws Exception {
+            return v1.setValue(this.reducer.apply(v1.getValue(), v2.getValue()));
+        }
+    }
 }

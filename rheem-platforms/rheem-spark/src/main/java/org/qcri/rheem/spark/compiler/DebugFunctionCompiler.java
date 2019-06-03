@@ -37,14 +37,16 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
 
         return new DebugMapFunctionAdapter(
             function,
-            (function instanceof FunctionDescriptor.ExtendedSerializableFunction) ?
+            ((function instanceof FunctionDescriptor.ExtendedSerializableFunction) ?
                 new SparkExecutionContext(
                     operator,
                     inputs,
                     operatorContext.getOptimizationContext().getIterationNumber()
                 )
-            :
+                :
                 null
+            ),
+            descriptor.getOutputType().getTypeClass()
         );
     }
 
@@ -74,7 +76,8 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
     @Override
     public <T, K>  KeyExtractor<T, K> compileToKeyExtractor(TransformationDescriptor<T, K> descriptor) {
         return new DebugKeyExtractorAdapter<T, K>(
-                (FunctionDescriptor.SerializableFunction<T, K>) descriptor.getJavaImplementation()
+                (FunctionDescriptor.SerializableFunction<T, K>) descriptor.getJavaImplementation(),
+                descriptor.getOutputType().getTypeClass()
         );
     }
 
@@ -90,14 +93,16 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
 
         return new DebugFlatMapFunctionAdapter(
             function,
-            (function instanceof FunctionDescriptor.ExtendedSerializableFunction) ?
+            ((function instanceof FunctionDescriptor.ExtendedSerializableFunction) ?
                 new SparkExecutionContext(
                     operator,
                     inputs,
                     operatorContext.getOptimizationContext().getIterationNumber()
                 )
-            :
+                :
                 null
+            ),
+            descriptor.getOutputType().getTypeClass()
         );
     }
 
@@ -110,11 +115,9 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
     ) {
         FunctionDescriptor.SerializableBinaryOperator<T> function =
                 (FunctionDescriptor.SerializableBinaryOperator<T>) descriptor.getJavaImplementation();
-        //if(true){
-            System.out.println("USING THE DEBUG TUPLE");
-            return new DebugBinaryOperatorAdapterDebugTuple(
+        /*    return new DebugBinaryOperatorAdapterDebugTuple(
                 function,
-                (function instanceof FunctionDescriptor.ExtendedSerializableBinaryOperator) ?
+                ((function instanceof FunctionDescriptor.ExtendedSerializableBinaryOperator) ?
                     new SparkExecutionContext(
                         operator,
                         inputs,
@@ -122,8 +125,10 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
                     )
                     :
                     null
+                ),
+                descriptor.getOutputType().getTypeClass()
             );
-        /*}else {
+         }else {*/
             System.out.println("USING THE CASTING VERSION");
             return new DebugBinaryOperatorAdapter(
                 function,
@@ -136,7 +141,7 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
                     :
                     null
             );
-        }*/
+         //}
      }
 
     @Override

@@ -23,9 +23,9 @@ import java.net.URI;
  * Implements a {@link Function2} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function2#call(Object, Object)}.
  */
-public class DebugBinaryOperatorAdapter<Type> implements Function2<Object, Object, Object> {
+public class DebugBinaryOperatorAdapter<Type> implements Function2<Type, Type, Type> {
 
-    private final FunctionDescriptor.SerializableBinaryOperator impl;
+    private final FunctionDescriptor.SerializableBinaryOperator<Type> impl;
 
     private final SparkExecutionContext executionContext;
 
@@ -42,7 +42,7 @@ public class DebugBinaryOperatorAdapter<Type> implements Function2<Object, Objec
     private transient ObjectOutputStream oos;
     *END TEST*/
 
-    public DebugBinaryOperatorAdapter(FunctionDescriptor.SerializableBinaryOperator extendedFunction,
+    public DebugBinaryOperatorAdapter(FunctionDescriptor.SerializableBinaryOperator<Type> extendedFunction,
                                       SparkExecutionContext sparkExecutionContext) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
@@ -67,7 +67,7 @@ public class DebugBinaryOperatorAdapter<Type> implements Function2<Object, Objec
     }
 
     @Override
-    public Object call(Object dataQuantum0, Object dataQuantum1) throws Exception {
+    public Type call(Type dataQuantum0, Type dataQuantum1) throws Exception {
         if (this.isFirstRun) {
             this.isDebugTuple = dataQuantum0.getClass() == DebugTuple.class;
             if(isOpenFunction) {
@@ -75,7 +75,7 @@ public class DebugBinaryOperatorAdapter<Type> implements Function2<Object, Objec
             }
             this.isFirstRun = false;
         }
-        if(this.isDebugTuple){
+      /*  if(this.isDebugTuple){
             DebugTuple tuple0 = ((DebugTuple)dataQuantum0);
             DebugTuple tuple1 = ((DebugTuple)dataQuantum1);
 
@@ -104,7 +104,7 @@ public class DebugBinaryOperatorAdapter<Type> implements Function2<Object, Objec
                         .addParent(key0.getValue())
                         .addParent(key1.getValue());
                 nextTuple = new DebugTuple(nextKey, null);
-            }*/
+            }*
             key0.getBytes();
             key1.getBytes();
             //nextTuple.getHeader().getBytes();
@@ -121,14 +121,12 @@ public class DebugBinaryOperatorAdapter<Type> implements Function2<Object, Objec
                     .executeAsync();
             } catch (Exception e) {
                 e.printStackTrace();
-            }*/
+            }*
 
             return  nextTuple.setValue(this.impl.apply(value0, value1));
-        }else{
-            Object value0 = dataQuantum0;
-            Object value1 = dataQuantum1;
-            return new DebugTuple(this.impl.apply(value0, value1));
-        }
+        }else{*/
+            return this.impl.apply(dataQuantum0, dataQuantum1);
+       // }
     }
 
 }

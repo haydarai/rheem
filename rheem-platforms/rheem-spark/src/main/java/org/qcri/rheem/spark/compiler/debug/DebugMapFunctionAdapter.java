@@ -14,20 +14,25 @@ import java.util.UUID;
  * Implements a {@link Function} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
-public class DebugMapFunctionAdapter<InputType, OutputType> implements Function<InputType, DebugTuple> {
+public class DebugMapFunctionAdapter<InputType, OutputType> implements Function<InputType, DebugTuple<OutputType>> {
 
-    private final FunctionDescriptor.SerializableFunction impl;
+    private final FunctionDescriptor.SerializableFunction<InputType, OutputType> impl;
 
     private final SparkExecutionContext executionContext;
 
     private boolean isFirstRun = true;
     private boolean isOpenFunction = true;
     private boolean isDebugTuple = false;
+   // private boolean changeType = false;
+    private Class<OutputType> outputTypeClass;
 
     public DebugMapFunctionAdapter(FunctionDescriptor.SerializableFunction<InputType, OutputType> extendedFunction,
-                                   SparkExecutionContext sparkExecutionContext) {
+                                   SparkExecutionContext sparkExecutionContext,
+                                   Class<OutputType> outputTypeClass
+                                   ) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
+        this.outputTypeClass = outputTypeClass;
         if(this.executionContext == null){
             this.isOpenFunction = false;
         }else{
@@ -38,19 +43,28 @@ public class DebugMapFunctionAdapter<InputType, OutputType> implements Function<
     }
 
     @Override
-    public DebugTuple call(InputType dataQuantume) throws Exception {
+    public DebugTuple<OutputType> call(InputType dataQuantume) throws Exception {
         if (this.isFirstRun) {
-            this.isDebugTuple = dataQuantume.getClass() == DebugTuple.class;
+            if(dataQuantume.getClass() == DebugTuple.class) {
+                this.isDebugTuple = true;
+               /* if(((DebugTuple)dataQuantume).getType() != outputTypeClass){
+                    this.changeType = true;
+                }*/
+            }
             if(isOpenFunction) {
                 ((FunctionDescriptor.ExtendedSerializableFunction) this.impl).open(this.executionContext);
             }
             this.isFirstRun = false;
         }
         if(this.isDebugTuple){
-            DebugTuple tuple = (DebugTuple)dataQuantume;
-            return tuple.setValue(this.impl.apply(tuple.getValue()));
+            DebugTuple<InputType> tuple = (DebugTuple<InputType>)dataQuantume;
+            //if(changeType){
+                return tuple.setValue(this.impl.apply(tuple.getValue()), this.outputTypeClass);
+            /*}else {
+                return tuple.setValue(this.impl.apply(tuple.getValue()));
+            }*/
         }else{
-            return new DebugTuple(this.impl.apply(dataQuantume));
+            return new DebugTuple<OutputType>(this.impl.apply(dataQuantume), this.outputTypeClass);
         }
 
     }

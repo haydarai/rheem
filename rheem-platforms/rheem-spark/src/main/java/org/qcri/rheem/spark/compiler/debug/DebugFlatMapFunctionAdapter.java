@@ -2,13 +2,11 @@ package org.qcri.rheem.spark.compiler.debug;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
-import org.qcri.rheem.basic.data.debug.DebugHeader;
 import org.qcri.rheem.basic.data.debug.DebugKey;
 import org.qcri.rheem.basic.data.debug.DebugTuple;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.util.stream.Streams;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 
 import java.util.Iterator;
@@ -17,7 +15,7 @@ import java.util.Iterator;
  * Implements a {@link FlatMapFunction} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
-public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatMapFunction<InputType, DebugTuple> {
+public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatMapFunction<InputType, DebugTuple<OutputType>> {
 
     private final FunctionDescriptor.SerializableFunction<InputType, Iterable<OutputType>> impl;
 
@@ -26,11 +24,15 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
     private boolean isFirstRun = true;
     private boolean isOpenFunction = true;
     private boolean isDebugTuple = true;
+    private Class<OutputType> outputTypeClass;
 
     public DebugFlatMapFunctionAdapter(FunctionDescriptor.SerializableFunction extendedFunction,
-                                       SparkExecutionContext sparkExecutionContext) {
+                                       SparkExecutionContext sparkExecutionContext,
+                                       Class<OutputType> outputTypeClass
+                                       ) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
+        this.outputTypeClass = outputTypeClass;
         if(this.executionContext == null){
             this.isOpenFunction = false;
         }else{
@@ -41,7 +43,7 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
     }
 
     @Override
-    public Iterator<DebugTuple> call(InputType v1) throws Exception {
+    public Iterator<DebugTuple<OutputType>> call(InputType v1) throws Exception {
         if (this.isFirstRun) {
             this.isDebugTuple = v1.getClass() == DebugTuple.class;
             if(isOpenFunction) {
@@ -52,12 +54,13 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
         InputType value;
         DebugKey parent;
         if(this.isDebugTuple){
-            value = (InputType) ((DebugTuple)v1).getValue();
-            parent = ((DebugTuple)v1).getHeader();
+            DebugTuple<InputType> tuple = (DebugTuple<InputType>) v1;
+            value = tuple.getValue();
+            parent = tuple.getHeader();
             return new IteratorDebug<>(
                     this.impl.apply(value),
                     element -> {
-                        return new DebugTuple(parent.createChild(), element);
+                        return new DebugTuple<OutputType>(parent.createChild(), element, outputTypeClass);
                     }
             );
         }else{
@@ -65,7 +68,7 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
             return new IteratorDebug<>(
                     this.impl.apply(value),
                     element -> {
-                        return new DebugTuple(element);
+                        return new DebugTuple<OutputType>(element, outputTypeClass);
                     }
             );
         }
