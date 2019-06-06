@@ -63,16 +63,16 @@ public class DebugPredicateAdapater<Type> implements Function<Type, Boolean> {
         if(this.isDebugTuple){
             DebugTuple<Type> tuple = ((DebugTuple<Type>)dataQuantume);
             value = tuple.getValue();
-            long start = System.currentTimeMillis();
+            //* long start = System.currentTimeMillis();
             test_result = this.impl.test( value);
-            long end = System.currentTimeMillis();
+            //*long end = System.currentTimeMillis();
             tuple.addTag(
                 new MonitorDebugTag(
                     this.operator_name,
                     this.myIp
                 )
-                .setTimeStart(start)
-                .setTimeEnd(end)
+                        //*.setTimeStart(start)
+                    //*.setTimeEnd(end)
             );
 
         }else{
