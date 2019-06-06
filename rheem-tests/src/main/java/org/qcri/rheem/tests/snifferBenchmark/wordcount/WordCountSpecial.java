@@ -35,6 +35,7 @@ public class WordCountSpecial extends SnifferBenchmarkBase {
     @Override
     protected Operator[] generateBasePlan() {
         Class type = String.class;
+        boolean sniffer = false;
         ArrayList<Operator> operators = new ArrayList<>();
         int index = 0;
         operators.add( new TextFileSource(args[0]) );
@@ -49,6 +50,13 @@ public class WordCountSpecial extends SnifferBenchmarkBase {
         );
         operators.get(index).setName("identity");
         index++;
+        sniffer = true;
+        if(sniffer) {
+            operators.add(new SnifferOperator<String, Tuple1>(String.class, Tuple1.class));
+            operators.get(index).setName("sniffer1");
+            index++;
+        }
+        sniffer = false;
 
         // for each line (input) output an iterator of the words
         operators.add( new FlatMapOperator<>(
@@ -60,9 +68,21 @@ public class WordCountSpecial extends SnifferBenchmarkBase {
         operators.get(index).setName("Split words");
         index++;
 
+        if(sniffer) {
+            operators.add(new SnifferOperator<String, Tuple1>(String.class, Tuple1.class));
+            operators.get(index).setName("sniffer2");
+            index++;
+        }
+
         operators.add( new FilterOperator<>(str -> !str.isEmpty(), String.class) );
         operators.get(index).setName("Filter empty words");
         index++;
+        if(sniffer) {
+            operators.add(new SnifferOperator<String, Tuple1>(String.class, Tuple1.class));
+            operators.get(index).setName("sniffer3");
+            index++;
+        }
+
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         operators.add( new MapOperator<>(
@@ -76,6 +96,11 @@ public class WordCountSpecial extends SnifferBenchmarkBase {
         operators.get(index).setName("To lower case, add counter");
         type = Tuple2.class;
         index++;
+        if(sniffer) {
+            operators.add(new SnifferOperator<Tuple2, Tuple1>(Tuple2.class, Tuple1.class));
+            operators.get(index).setName("sniffer4");
+            index++;
+        }
 
         // groupby the key (word) and add up the values (frequency)
         final RheemUUID one = RheemUUID.randomUUID();
@@ -107,6 +132,13 @@ public class WordCountSpecial extends SnifferBenchmarkBase {
 
         // write results to a sink
         //Class
+        sniffer = true;
+        if(sniffer) {
+            operators.add(new SnifferOperator<Tuple2, Tuple1>(Tuple2.class, Tuple1.class));
+            operators.get(index).setName("sniffer5");
+            index++;
+        }
+        sniffer = false;
 
         operators.add( new FilterOperator<>(element -> false, type) );
         operators.get(index).setName("cleaner");

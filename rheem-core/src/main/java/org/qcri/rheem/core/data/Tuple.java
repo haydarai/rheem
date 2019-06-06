@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * A type for tuples. Might be replaced by existing classes for this purpose, such as from the Scala library.
  */
-public abstract class Tuple implements Serializable {
+public abstract class Tuple implements Serializable, Cloneable {
 
     private static final long serialVersionUID = 1L;
 

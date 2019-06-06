@@ -32,10 +32,10 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
     private boolean isFirstRun = true;
     private boolean isDebugTuple = false;
 
-    private transient URI uri;
+  /*  private transient URI uri;
     private transient HttpRequestFactory requestFactory;
     private transient HttpRequest request;
-    private transient SenderThread<K> sender;
+    private transient SenderThread<K> sender;*/
     private Class<K> keyClass;
 
     public DebugKeyExtractorAdapter(FunctionDescriptor.SerializableFunction<T, K> impl, Class<K> keyClass) {
@@ -48,7 +48,7 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
         if(this.isFirstRun){
             this.isDebugTuple = t.getClass() == DebugTuple.class;
             this.isFirstRun = false;
-            try {
+           /* try {
                 uri = URI.create("http://10.4.4.49:8080/debug/add");
                 this.requestFactory = new NetHttpTransport().createRequestFactory();
 
@@ -56,8 +56,8 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
 
             } catch (IOException e) {
                 e.printStackTrace();
-            }
-            this.sender = new SenderThread<K>(this.request, this.keyClass);
+            }*/
+            //this.sender = new SenderThread<K>(this.request, this.keyClass);
         }
         T value;
         K key;
@@ -75,7 +75,7 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
         key = this.impl.apply(value);
         return new scala.Tuple2<>(key, t);
     }
-
+/*
     public class SenderThread<K> implements Runnable, Serializable {
         private transient HttpRequest request;
         private transient ByteArrayOutputStream bos;
@@ -137,7 +137,7 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
                 if(index == SIZE){
                     Thread thread = new Thread(this);
                     thread.start();
-                }*/
+                }* /
             this.content.append(key_value)
                         .append(debugKey_value.toString())
             ;
@@ -182,9 +182,9 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
                     }*/
                /* } catch (IOException e) {
                     e.printStackTrace();
-                }*/
+                }* /
                 buffer_index = 0;
             }
         }
-    }
+    }*/
 }

@@ -46,7 +46,8 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
                 :
                 null
             ),
-            descriptor.getOutputType().getTypeClass()
+            descriptor.getOutputType().getTypeClass(),
+            operator.getName()
         );
     }
 
@@ -102,7 +103,8 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
                 :
                 null
             ),
-            descriptor.getOutputType().getTypeClass()
+            descriptor.getOutputType().getTypeClass(),
+            operator.getName()
         );
     }
 
@@ -156,14 +158,16 @@ public class DebugFunctionCompiler extends MetaFunctionCompiler {
 
         return new DebugPredicateAdapater<>(
             function,
-            (function instanceof PredicateDescriptor.ExtendedSerializablePredicate) ?
+            ((function instanceof PredicateDescriptor.ExtendedSerializablePredicate) ?
                 new SparkExecutionContext(
                     operator,
                     inputs,
                     operatorContext.getOptimizationContext().getIterationNumber()
                 )
-            :
+                :
                 null
+            ),
+            operator.getName()
         );
     }
 }

@@ -79,35 +79,30 @@ public class SparkReduceByOperator<Type, KeyType>
                 sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
         JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
         this.name(pairRdd);
+        if(operatorContext.getOptimizationContext().getJob().getConfiguration().getBooleanProperty("rheem.debug", false) ) {
+            JavaPairRDD<KeyType, DebugTuple<Type>> persisted = (JavaPairRDD<KeyType, DebugTuple<Type>>)
+                    pairRdd
+                      .cache()
+                    //  .persist(StorageLevel.DISK_ONLY())
+                    //    .persist(StorageLevel.MEMORY_AND_DISK_SER())
+                    ;
 
-        JavaPairRDD<KeyType, DebugTuple<Type>> persisted = (JavaPairRDD<KeyType, DebugTuple<Type>>)
-                                                            pairRdd
-                                                                    .cache()
-                                                                    //.persist(StorageLevel.DISK_ONLY())
-                                                            ;
+            JavaPairRDD<KeyType, Type> newpair = persisted.mapValues(DebugTuple<Type>::getValue);
+            pairRdd = newpair;
+        }
 
-        JavaPairRDD<KeyType, Type> newpair = persisted.mapValues(DebugTuple<Type>::getValue);
-        pairRdd = newpair;
-
-
-        //FunctionDescriptor.SerializableBinaryOperator<Type> reducer = (FunctionDescriptor.SerializableBinaryOperator<Type>) this.reduceDescriptor.getJavaImplementation();
-        /*final JavaRDD outputRdd = pairRdd.groupByKey(sparkExecutor.getNumDefaultPartitions()).values().map(
-            iterable -> {
-                Iterator<DebugTuple<Type>> iterator = (Iterator<DebugTuple<Type>>) iterable;
-                DebugTuple<Type> first = iterator.next();
-                Type result = first.getValue();
-                /*while(iterator.hasNext()){
-                    result = reducer.apply(result, iterator.next().getValue());
-                }* /
-                return  first.setValue(result);
-            }
-        );*/
-        //Function2 reduceFunc = new TestReducer();
         final JavaPairRDD<KeyType, Type> reducedPairRdd =
                 pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());
         this.name(reducedPairRdd);
-        final Class<Type> class_output = this.reduceDescriptor.getOutputType().getTypeClass();
-        final JavaRDD outputRdd = reducedPairRdd.map( tuple -> {return new DebugTuple<Type>(tuple._2, class_output);});//.map(new TupleConverter<>());
+        final JavaRDD outputRdd;
+
+        if(operatorContext.getOptimizationContext().getJob().getConfiguration().getBooleanProperty("rheem.debug", false) ) {
+            final Class<Type> class_output = this.reduceDescriptor.getOutputType().getTypeClass();
+            outputRdd = reducedPairRdd.map( tuple -> {return new DebugTuple<Type>(tuple._2, class_output);});
+        }else {
+            outputRdd = reducedPairRdd.map(new TupleConverter<>());
+        }
+
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);

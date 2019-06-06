@@ -5,11 +5,15 @@ import org.qcri.rheem.core.api.exception.RheemException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class DebugKey<KeyType> implements Serializable {
     protected KeyType value;
     protected transient List<KeyType> parent = null;
+    protected Map<DebugTagType, DebugTag> tags;
+
 
     public DebugKey(){
         this(true);
@@ -94,6 +98,25 @@ public abstract class DebugKey<KeyType> implements Serializable {
 
     public abstract byte[] getBytes();
 
+    public void addTag(DebugTag tag){
+        if(this.tags == null){
+            this.tags = new HashMap<>();
+        }
+        this.tags.put(tag.type, tag);
+    }
+
+    public DebugTag getTag(DebugTagType tagType){
+        if(this.tags == null){
+            return null;
+        }
+        return this.tags.get(tagType);
+    }
+
+    public DebugKey<KeyType> cleanTag(){
+        if(this.tags == null) return this;
+        this.tags.clear();
+        return this;
+    }
 
 
 

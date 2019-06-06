@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class DebugController {
 
     private static String status="pause";
+    private static int counter = 0;
 
     @RequestMapping(value = "/", method = RequestMethod.GET, produces="text/plain")
     @ResponseBody
@@ -39,6 +40,7 @@ public class DebugController {
 //application/octet-stream
     @RequestMapping(value = "/add", method = RequestMethod.POST, produces="text/plain", consumes = "*/*")
     public String addProcessing() {
+        counter++;
         return "";
     }
 
@@ -46,5 +48,18 @@ public class DebugController {
     public String reduceProcessing() {
         return "";
     }
+
+
+    @RequestMapping(value = "/counter", method = RequestMethod.POST, produces="text/plain", consumes = "*/*")
+    public String getCounterProcessing() {
+        return String.valueOf(counter);
+    }
+
+    @RequestMapping(value = "/counterTo0", method = RequestMethod.POST, produces="text/plain", consumes = "*/*")
+    public String setCounterIn0Processing() {
+        counter = 0;
+        return "";
+    }
+
 
 }

@@ -14,7 +14,7 @@ public class DebugHeader implements Serializable {
 
     private DebugKey id;
 
-    private List<DebugTimeMark> timers = null;
+    private List<DebugTag> timers = null;
 
     static {
         setGenerator(RheemUUIDKey.class);
@@ -36,14 +36,14 @@ public class DebugHeader implements Serializable {
         return this.id;
     }
 
-    public List<DebugTimeMark> getTimers() {
+    public List<DebugTag> getTimers() {
         if(this.timers == null){
             this.timers = new ArrayList<>();
         }
         return timers;
     }
 
-    public DebugHeader addTimer(DebugTimeMark timeMark){
+    public DebugHeader addTimer(DebugTag timeMark){
         if(this.timers == null){
             this.timers = new ArrayList<>();
         }

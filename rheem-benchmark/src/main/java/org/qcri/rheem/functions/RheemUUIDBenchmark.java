@@ -1,5 +1,7 @@
 package org.qcri.rheem.functions;
 
+//import com.esotericsoftware.kryo.Kryo;
+//import com.esotericsoftware.kryo.io.Output;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.CompilerControl;
@@ -19,12 +21,16 @@ import org.qcri.rheem.basic.data.debug.DebugTuple;
 import org.qcri.rheem.basic.data.debug.key.RheemUUIDKey;
 import org.qcri.rheem.core.util.RheemUUID;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 @BenchmarkMode(Mode.Throughput)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Fork(value = 1)
+@Fork(value = 1, jvmArgs = {"-Xms10G", "-Xmx10G"})
 @Warmup(iterations = 2)
 @Measurement(iterations = 3)
 @CompilerControl(CompilerControl.Mode.DONT_INLINE)
@@ -37,11 +43,20 @@ public class RheemUUIDBenchmark {
     private RheemUUID base;
     private DebugKey key;
     private String word;
+    private String[] words;
+    private DebugTuple<String>[] tuples;
+    private ByteArrayOutputStream bos;
+    private ObjectOutputStream oos;
+    /*private Kryo kryo;
+    private Output saver;*/
+
+    @Param({"1000"})
+    private int SIZE;
 
     @Setup
     public void setup() {
         this.base = RheemUUID.randomUUID().createChild().createChild();
-        this.key = new RheemUUIDKey();
+        this.key = new RheemUUIDKey().createChild().createChild();
         this.word = "QfDXCGrCDl" +
         //          "OqHcWtsZ4r" +
         //        "3NvVagxR5niDWwZ9EXHm" +
@@ -50,6 +65,35 @@ public class RheemUUIDBenchmark {
         //        "KipX7OTnHt5tMyzpD8TI" +
                   ""
         ;
+
+        this.words = new String[this.SIZE];
+        this.tuples = new DebugTuple[this.SIZE];
+        Random random = new Random();
+        for(int i =0 ; i < this.words.length; i++){
+            char[] word = new char[random.nextInt(8)+3]; // words of length 3 through 10. (1 and 2 letter words are boring.)
+            for(int j = 0; j < word.length; j++)
+            {
+                word[j] = (char)('a' + random.nextInt(26));
+            }
+            this.words[i] = new String(word);
+            this.tuples[i] = new DebugTuple<String>(this.key.createChild(), this.words[i], String.class);
+        }
+
+        try {
+            this.bos = new ByteArrayOutputStream();
+            this.oos = new ObjectOutputStream(bos);
+         /*   this.kryo = new Kryo();
+            this.kryo.register(DebugTuple.class);
+            this.kryo.register(DebugTuple[].class);
+            this.kryo.register(RheemUUID.class);
+            this.kryo.register(RheemUUIDKey.class);
+            this.kryo.register(DebugKey.class);
+            this.kryo.register(int[].class);
+            this.kryo.register(Class.class);
+            this.saver = new Output(this.bos);*/
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //@Benchmark
@@ -112,24 +156,24 @@ public class RheemUUIDBenchmark {
         blackhole.consume(uuid);
     }
 
-    @Benchmark
+    //@Benchmark
     public void rheemUUIDtoBytes(){
         RheemUUID key = this.base;
         key.tobyte();
         key.bytes = null;
     }
 
-    @Benchmark
+    //@Benchmark
     public void rheemUUIDtoString2(){
         RheemUUID key = this.base;
         Arrays.toString(key.tobyte());
         key.bytes = null;
     }
 
-    @Benchmark
+    //@Benchmark
     public void rheemUUIDtoString(Blackhole hole){
         RheemUUID key = this.base;
-        hole.consume(key.toString());
+        key.toString();
     }
    // @Benchmark
     public void rheemUUIDtoBytesNew(){
@@ -175,4 +219,129 @@ public class RheemUUIDBenchmark {
         RheemUUID key = this.base;
         key.tobyte();
     }
+
+    //@Benchmark
+    public void timeStramp(Blackhole hole){
+        System.currentTimeMillis();
+    }
+
+    //@Benchmark
+    public void serializeOneByOneString(){
+        for(int i = 0; i < this.words.length; i++) {
+            try {
+                this.oos.writeObject(this.words[i]);
+                this.oos.flush();
+                bos.toByteArray();
+                this.bos.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //@Benchmark
+    public void serializeBatchString(){
+        for(int i = 0; i < this.words.length; i++) {
+            try {
+                this.oos.writeObject(this.words[i]);
+                if(i % 1000 == 0) {
+                    this.oos.flush();
+                    bos.toByteArray();
+                    this.bos.reset();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    //@Benchmark
+    public void serializeVectorString(){
+        try {
+            this.oos.writeObject(this.words);
+            this.oos.flush();
+            bos.toByteArray();
+            this.bos.reset();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Benchmark
+    public void serializeOneByOneTuple(){
+        for(int i = 0; i < this.tuples.length; i++) {
+            try {
+                this.oos.writeObject(this.tuples[i]);
+                this.oos.flush();
+                bos.toByteArray();
+                this.bos.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Benchmark
+    public void serializeBatchTuple(){
+        for(int i = 0; i < this.tuples.length; i++) {
+            try {
+                this.oos.writeObject(this.tuples[i]);
+                if(i % 1000 == 0) {
+                    this.oos.flush();
+                    bos.toByteArray();
+                    this.bos.reset();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    @Benchmark
+    public void serializeVectorTuple(){
+        try {
+            this.oos.writeObject(this.tuples);
+            this.oos.flush();
+            bos.toByteArray();
+            this.bos.reset();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+/*
+    @Benchmark
+    public void serializeKryoOneByOneTuple(){
+        for(int i = 0; i < this.tuples.length; i++) {
+            this.kryo.writeObject(this.saver, this.tuples[i]);
+            this.saver.toBytes();
+            this.saver.reset();
+            this.bos.reset();
+        }
+    }
+
+    @Benchmark
+    public void serializeKryoBatchTuple(){
+        for(int i = 0; i < this.tuples.length; i++) {
+            this.kryo.writeObject(this.saver, this.tuples[i]);
+            if(i % 1000 == 0) {
+                this.saver.toBytes();
+                this.saver.reset();
+                this.bos.reset();
+            }
+        }
+    }
+
+    @Benchmark
+    public void serializeKryoVectorTuple(){
+        //for(int i =1; i < 9; i++) {
+            this.kryo.writeObject(this.saver, this.tuples);
+            this.saver.flush();
+            this.saver.toBytes();
+            this.saver.reset();
+            this.bos.reset();
+     /*   }
+        this.kryo.writeObject(this.saver, Arrays.copyOfRange(this.tuples, 9001, 9999));
+        this.saver.toBytes();
+        this.saver.reset();* /
+    } */
 }

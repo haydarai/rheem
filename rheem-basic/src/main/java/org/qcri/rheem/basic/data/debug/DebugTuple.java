@@ -56,6 +56,35 @@ public class DebugTuple<Type> implements Serializable {
         return this.type;
     }
 
+    public DebugTuple<Type> addTag(DebugTag tag){
+        this.getHeader().addTag(tag);
+        return this;
+    }
+
+    public DebugTag getTag(DebugTagType tagType){
+        return this.getHeader().getTag(tagType);
+    }
+
+    public DebugTuple<Type> cleanTag(){
+        this.getHeader().cleanTag();
+        return this;
+    }
+    public DebugTuple<Type> clean(){
+        this.getHeader()
+            .cleanTag()
+            .cleanParent()
+        ;
+        return this;
+    }
+
+    public byte[] getByte(){
+        byte[] result = this.getHeader().getBytes();
+        for(int i =17; i < 27; i++){
+            result[i] = (byte)1;
+        }
+        return result;
+
+    }
     @Override
     public String toString() {
         return "DebugTuple{" +

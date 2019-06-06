@@ -8,6 +8,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import org.apache.directory.api.util.Base64;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.SnifferOperator;
 import org.qcri.rheem.core.function.FunctionDescriptor;
@@ -69,22 +70,11 @@ public class SparkSnifferOperator<Type, TypeTuple extends org.qcri.rheem.core.da
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        PredicateDescriptor<Type> predicateDescriptor = null;
 
-        //SocketSerializable<Type> socket = new SocketSerializable<>(""+Math.random(), "localhost", 9090);
-        FunctionDescriptor.SerializablePredicate<Type> funct = new SnifferDispacher<>();
-
-        predicateDescriptor = new PredicateDescriptor<>(
-            funct,
-            this.getInputType().getDataUnitType().getTypeClass()
-        );
-
-        final Function<Type, Boolean> filterFunction = sparkExecutor.getCompiler().compile(
-                predicateDescriptor, this, operatorContext, inputs
-        );
+        FlatMapFunction<Type, Type> snifferDispacher = new SnifferDispacher<>();
 
         final JavaRDD<Type> inputRdd = ((RddChannel.Instance) inputs[0]).provideRdd();
-        final JavaRDD<Type> outputRdd = inputRdd.filter(filterFunction);
+        final JavaRDD<Type> outputRdd = inputRdd.flatMap(snifferDispacher);
         this.name(outputRdd);
         ((RddChannel.Instance) outputs[0]).accept(outputRdd, sparkExecutor);
 

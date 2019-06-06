@@ -242,7 +242,7 @@ public class RheemUUID implements java.io.Serializable, Comparable<RheemUUID> {
      * @return  A string representation of this {@code UUID}
      */
     public String toString() {
-        return (digits(mostSigBits >> 32, 8) + "-" +
+        /*return (digits(mostSigBits >> 32, 8) + "-" +
                 digits(mostSigBits >> 16, 4) + "-" +
                 digits(mostSigBits, 4) + "-" +
                 digits(leastSigBits >> 48, 4) + "-" +
@@ -254,7 +254,19 @@ public class RheemUUID implements java.io.Serializable, Comparable<RheemUUID> {
                         .collect(Collectors.joining( "" )):
                     ""
                 )
-                ;
+                ;*/
+        StringBuilder builder = new StringBuilder(50);
+        builder.append(this.mostSigBits);
+        builder.append("-");
+        builder.append(this.leastSigBits);
+
+        if(this.correlative != null) {
+            for (int i = 0; i < this.correlative.length; i++) {
+                builder.append("-");
+                builder.append(this.correlative[i]);
+            }
+        }
+        return builder.toString();
     }
 
     /** Returns val represented by the specified number of hex digits. */
@@ -333,7 +345,8 @@ public class RheemUUID implements java.io.Serializable, Comparable<RheemUUID> {
 
     public byte[] tobyte(){
         if(this.bytes == null) {
-            int size = (Long.BYTES * 2) + ((this.correlative != null)?(Integer.BYTES * this.correlative.length): 0);
+            //int size = (Long.BYTES * 2) + ((this.correlative != null)?(Integer.BYTES * this.correlative.length): 0) ;
+            int size = 100 ;
             byte[] result = new byte[size];
 
             long tmp = this.mostSigBits;
