@@ -51,7 +51,7 @@ public abstract class DebugKey<KeyType> implements Serializable {
 
     public DebugKey<KeyType> addParent(KeyType parent){
         if(this.parent == null){
-            this.parent = new ArrayList<>();
+            this.parent = new ArrayList<>(2);
         }
         this.parent.add(parent);
         return this;

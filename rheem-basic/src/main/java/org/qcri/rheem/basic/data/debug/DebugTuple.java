@@ -10,6 +10,8 @@ public class DebugTuple<Type> implements Serializable {
     private DebugKey key;
     private Type content;
     private Class<Type> type;
+    private boolean skip = false;
+    private boolean debug = false;
 
     public DebugTuple(){ }
 
@@ -108,5 +110,24 @@ public class DebugTuple<Type> implements Serializable {
     }
     static {
         setGenerator(RheemUUIDKey.class);
+    }
+
+    public boolean isSkip(){
+        return this.skip;
+    }
+
+    public boolean isDebug(){
+        return this.debug;
+    }
+
+    public DebugTuple<Type> setSkiped(){
+        this.skip = true;
+        return this;
+    }
+
+
+    public DebugTuple<Type> setDebuged(){
+        this.debug = true;
+        return this;
     }
 }

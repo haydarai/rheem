@@ -76,9 +76,9 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
             value = tuple.getValue();
             parent = tuple.getHeader();
 
-           //* long start_time = System.currentTimeMillis();
+            //*long start_time = System.currentTimeMillis();
             Iterable<OutputType> iter = this.impl.apply(value);
-           //* long end_time = System.currentTimeMillis();
+            //*long end_time = System.currentTimeMillis();
 
 
             return new IteratorDebug<>(
@@ -90,17 +90,17 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
                                         this.operator_name,
                                         this.myIp
                                     )
-                              //*      .setTimeStart(start_time)
-                              //*      .setTimeEnd(end_time)
+                                            //*.setTimeStart(start_time)
+                                        //*.setTimeEnd(end_time)
                                 )
                         ;
                     }
             );
         }else{
             value = v1;
-          //*  long start_time = System.currentTimeMillis();
+            //* long start_time = System.currentTimeMillis();
             Iterable<OutputType> iter = this.impl.apply(value);
-          //*  long end_time = System.currentTimeMillis();
+            //* long end_time = System.currentTimeMillis();
             return new IteratorDebug<>(
                     iter,
                     element -> {
@@ -110,8 +110,8 @@ public class DebugFlatMapFunctionAdapter<InputType, OutputType> implements FlatM
                                                 this.operator_name,
                                                 this.myIp
                                         )
-                      //*                          .setTimeStart(start_time)
-                      //*                          .setTimeEnd(end_time)
+                                                //*.setTimeStart(start_time)
+                                        //*.setTimeEnd(end_time)
                                 )
                         ;
                     }

@@ -39,7 +39,7 @@ public abstract class SnifferBenchmarkBase {
         return op;
     }
 
-    private RheemPlan generatePlan(){
+    protected RheemPlan generatePlan(){
         Operator current = this.normalOperator[0];
         Operator next = null;
         for(int i = 1; i < this.normalOperator.length; i++){

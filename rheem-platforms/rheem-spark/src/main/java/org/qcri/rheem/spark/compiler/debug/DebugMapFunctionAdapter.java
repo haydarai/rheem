@@ -66,7 +66,7 @@ public class DebugMapFunctionAdapter<InputType, OutputType> implements Function<
         if(this.isDebugTuple){
             DebugTuple<InputType> tuple = (DebugTuple<InputType>)dataQuantume;
            // if(changeType){
-            //* long start = System.currentTimeMillis();
+            //*long start = System.currentTimeMillis();
             OutputType new_value = this.impl.apply(tuple.getValue());
             //*long end = System.currentTimeMillis();
 
@@ -76,8 +76,8 @@ public class DebugMapFunctionAdapter<InputType, OutputType> implements Function<
                                     this.operator_name,
                                     this.myIp
                             )
-                        //*    .setTimeStart(start)
-                        //*    .setTimeEnd(end)
+                                    //*.setTimeStart(start)
+                            //*.setTimeEnd(end)
                     );
            // }else {
            //     return tuple.setValue(this.impl.apply(tuple.getValue()));
@@ -93,7 +93,7 @@ public class DebugMapFunctionAdapter<InputType, OutputType> implements Function<
                                     this.operator_name,
                                     this.myIp
                             )
-                            //*.setTimeStart(start)
+                                    //*.setTimeStart(start)
                             //*.setTimeEnd(end)
                     )
                     ;

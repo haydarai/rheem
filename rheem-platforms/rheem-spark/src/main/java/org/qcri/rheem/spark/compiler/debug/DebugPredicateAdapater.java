@@ -16,7 +16,9 @@ import java.net.InetAddress;
  */
 public class DebugPredicateAdapater<Type> implements Function<Type, Boolean> {
 
-    private final PredicateDescriptor.SerializablePredicate impl;
+    private final PredicateDescriptor.SerializablePredicate<Type> impl;
+    private final PredicateDescriptor.SerializablePredicate<Type> debug;
+    private final PredicateDescriptor.SerializablePredicate<Type> skip;
 
     private final SparkExecutionContext executionContext;
 
@@ -32,6 +34,14 @@ public class DebugPredicateAdapater<Type> implements Function<Type, Boolean> {
                                   String operator_name
                                     ) {
         this.impl = extendedFunction;
+/*
+10 fabel
+100 arcos
+1000 amor
+10000 mike
+*/
+        this.debug = value -> value.toString().compareToIgnoreCase("arcos") == 0 ;
+        this.skip = value -> value.toString().compareToIgnoreCase("arcos") == 0;
         this.executionContext = sparkExecutionContext;
         this.operator_name = operator_name;
         if(this.executionContext == null){
@@ -58,14 +68,17 @@ public class DebugPredicateAdapater<Type> implements Function<Type, Boolean> {
             this.myIp = InetAddress.getLocalHost().getHostAddress();
 
         }
-        Object value;
+        Type value;
         boolean test_result;
         if(this.isDebugTuple){
             DebugTuple<Type> tuple = ((DebugTuple<Type>)dataQuantume);
             value = tuple.getValue();
-            //* long start = System.currentTimeMillis();
+            //*long start = System.currentTimeMillis();
             test_result = this.impl.test( value);
             //*long end = System.currentTimeMillis();
+
+
+
             tuple.addTag(
                 new MonitorDebugTag(
                     this.operator_name,
@@ -74,6 +87,12 @@ public class DebugPredicateAdapater<Type> implements Function<Type, Boolean> {
                         //*.setTimeStart(start)
                     //*.setTimeEnd(end)
             );
+            if(this.debug.test(value)){
+                tuple.setDebuged();
+            }
+            /*if(this.skip.test(value)){
+                tuple.setSkiped();
+            }*/
 
         }else{
             value = dataQuantume;

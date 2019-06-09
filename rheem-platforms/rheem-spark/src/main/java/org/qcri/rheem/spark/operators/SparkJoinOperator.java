@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.basic.data.debug.DebugTuple;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -77,8 +78,16 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         this.name(outputPair);
 
         // convert from scala tuple to rheem tuple
-        final JavaRDD<Tuple2<InputType0, InputType1>> outputRdd = outputPair
-                .map(new TupleConverter<>());
+        Function converter;
+        if(sparkExecutor.getConfiguration().getBooleanProperty("rheem.debug", false)){
+            converter = new TupleConverterDebug();
+        }else{
+            converter = new TupleConverter();
+        }
+
+
+        final JavaRDD outputRdd = outputPair
+                .map(converter);
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
@@ -102,6 +111,40 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         @Override
         public Tuple2<InputType0, InputType1> call(scala.Tuple2<KeyType, scala.Tuple2<InputType0, InputType1>> scalaTuple) throws Exception {
             return new Tuple2<>(scalaTuple._2._1, scalaTuple._2._2);
+        }
+    }
+
+    private static class TupleConverterDebug<InputType0, InputType1, KeyType>
+            implements Function<
+                            scala.Tuple2<
+                                KeyType,
+                                scala.Tuple2<
+                                    DebugTuple<InputType0>,
+                                    DebugTuple<InputType1>
+                                >
+                            >,
+                            DebugTuple<
+                                Tuple2<InputType0, InputType1>
+                            >
+                        >
+    {
+        @Override
+        public DebugTuple<Tuple2<InputType0, InputType1>> call(scala.Tuple2<KeyType, scala.Tuple2<DebugTuple<InputType0>, DebugTuple<InputType1>>> debugTuple) throws Exception {
+
+            DebugTuple tuple = new DebugTuple<>(
+                                    new Tuple2<>(
+                                            debugTuple._2._1.getValue(),
+                                            debugTuple._2._2.getValue()
+                                    )
+                                )
+            ;
+            tuple
+                .getHeader()
+                .addParent(debugTuple._2._1.getHeader())
+                .addParent(debugTuple._2._2.getHeader());
+
+
+            return tuple;
         }
     }
 

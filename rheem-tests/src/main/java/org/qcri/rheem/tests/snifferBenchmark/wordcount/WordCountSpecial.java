@@ -77,11 +77,13 @@ public class WordCountSpecial extends SnifferBenchmarkBase {
         operators.add( new FilterOperator<>(str -> !str.isEmpty(), String.class) );
         operators.get(index).setName("Filter empty words");
         index++;
+        sniffer = true;
         if(sniffer) {
             operators.add(new SnifferOperator<String, Tuple1>(String.class, Tuple1.class));
             operators.get(index).setName("sniffer3");
             index++;
         }
+        sniffer = false;
 
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
