@@ -5,7 +5,7 @@ import org.apache.commons.collections.ResettableIterator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class IteratorOneElement<Type> implements Iterator<Type>{
+public class IteratorOneElement<Type> implements Iterator<Type>, Iterable<Type>{
 
     private final boolean removeAllowed;
     private boolean beforeFirst;
@@ -51,5 +51,10 @@ public class IteratorOneElement<Type> implements Iterator<Type>{
 
     public void reset() {
         this.beforeFirst = true;
+    }
+
+    @Override
+    public Iterator<Type> iterator() {
+        return this;
     }
 }

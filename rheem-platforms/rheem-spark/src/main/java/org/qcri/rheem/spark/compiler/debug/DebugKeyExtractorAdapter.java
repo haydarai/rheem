@@ -73,7 +73,7 @@ public class DebugKeyExtractorAdapter<T, K> implements MetaFunctionCompiler.KeyE
             value = t;
         }
         key = this.impl.apply(value);
-        return new scala.Tuple2<>(key, t);
+        return new scala.Tuple2<>(key, value);
     }
 /*
     public class SenderThread<K> implements Runnable, Serializable {

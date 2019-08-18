@@ -81,9 +81,9 @@ public class DebugTuple<Type> implements Serializable {
 
     public byte[] getByte(){
         byte[] result = this.getHeader().getBytes();
-        for(int i =17; i < 27; i++){
+        /*for(int i =17; i < 27; i++){
             result[i] = (byte)1;
-        }
+        }*/
         return result;
 
     }

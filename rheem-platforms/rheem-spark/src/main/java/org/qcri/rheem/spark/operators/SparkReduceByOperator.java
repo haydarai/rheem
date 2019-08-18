@@ -79,17 +79,17 @@ public class SparkReduceByOperator<Type, KeyType>
                 sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
         JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
         this.name(pairRdd);
-        if(operatorContext.getOptimizationContext().getJob().getConfiguration().getBooleanProperty("rheem.debug", false) ) {
+       /* if(operatorContext.getOptimizationContext().getJob().getConfiguration().getBooleanProperty("rheem.debug", false) ) {
             JavaPairRDD<KeyType, DebugTuple<Type>> persisted = (JavaPairRDD<KeyType, DebugTuple<Type>>)
                     pairRdd
-                      .cache()
+                   //   .cache()
                     //  .persist(StorageLevel.DISK_ONLY())
                     //    .persist(StorageLevel.MEMORY_AND_DISK_SER())
                     ;
 
-            JavaPairRDD<KeyType, Type> newpair = persisted.mapValues(DebugTuple<Type>::getValue);
+            //JavaPairRDD<KeyType, Type> newpair = persisted.mapValues(DebugTuple<Type>::getValue);
             pairRdd = newpair;
-        }
+        }*/
 
         final JavaPairRDD<KeyType, Type> reducedPairRdd =
                 pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());

@@ -66,6 +66,18 @@
             <version>${spring.framework.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>1.29.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client</artifactId>
+            <version>1.29.1</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
 

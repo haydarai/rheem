@@ -34,7 +34,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class SnifferDispacher<Type> implements FlatMapFunction<Type, Type> {
-    private static int BUFFER_SIZE = 800000;
+    private static int BUFFER_SIZE = 1000;
     private transient int internal_counter = 0;
     private transient int current_buffer = 0;
     private transient URI uri;
@@ -71,8 +71,8 @@ public class SnifferDispacher<Type> implements FlatMapFunction<Type, Type> {
                 uri = URI.create("http://10.4.4.49:8080/debug/add");
                 this.requestFactory = new NetHttpTransport().createRequestFactory();
                 this.request = requestFactory.buildPostRequest(new GenericUrl(uri), null);
-                this.bos = new ByteArrayOutputStream();
-                this.oos = new ObjectOutputStream(bos);
+                //this.bos = new ByteArrayOutputStream();
+                //this.oos = new ObjectOutputStream(bos);
                 this.pool = new ThreadPoolExecutor(1, 1,
                       0L, TimeUnit.MILLISECONDS,
                       new LinkedBlockingQueue<Runnable>());
@@ -82,8 +82,8 @@ public class SnifferDispacher<Type> implements FlatMapFunction<Type, Type> {
                 e.printStackTrace();
             }*/
            //this.buffer = new Object[BUFFER_SIZE];
-          // this.bytes_content = new byte[BUFFER_SIZE*100];
-            this.bytes_buffer = ByteBuffer.wrap(new byte[BUFFER_SIZE*100]);
+           this.bytes_content = new byte[BUFFER_SIZE*100];
+          //  this.bytes_buffer = ByteBuffer.wrap(new byte[BUFFER_SIZE*100]);
           // this.buffer = new byte[BUFFER_SIZE][];
            this.index_content = 0;
         }
@@ -104,15 +104,17 @@ public class SnifferDispacher<Type> implements FlatMapFunction<Type, Type> {
 
             if(this.isDebugTuple) {
                 byte[] byte_value = tuple.getByte();
-                this.bytes_buffer.put(byte_value);
+                System.arraycopy(byte_value, 0, bytes_content, internal_counter*100, 100);
+                //this.bytes_buffer.put(byte_value);
             }
             internal_counter++;
             if(internal_counter >= BUFFER_SIZE) {
             //    final Object[] old_buffer = this.buffer;
             //    this.buffer = new Object[BUFFER_SIZE];
                    // this.bytes_buffer.hasArray();
-                    final byte[] lala = this.bytes_buffer.array();
-                    this.bytes_buffer = ByteBuffer.wrap(new byte[BUFFER_SIZE*100]);
+                    final byte[] lala = bytes_content;
+                    bytes_content = new byte[BUFFER_SIZE*100];
+                    //this.bytes_buffer = ByteBuffer.wrap(new byte[BUFFER_SIZE*100]);
                     if (((ThreadPoolExecutor) pool).getActiveCount() == 0) {
                         this.pool.execute(() -> {
                             try {
@@ -130,7 +132,7 @@ public class SnifferDispacher<Type> implements FlatMapFunction<Type, Type> {
                         });
                     }
 
-                bytes_content = null;
+                //bytes_content = null;
 
                 this.internal_counter = 0;
                 this.index_content = 0;

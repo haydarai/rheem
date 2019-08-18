@@ -86,8 +86,7 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         }
 
 
-        final JavaRDD outputRdd = outputPair
-                .map(converter);
+        final JavaRDD outputRdd = outputPair.map(converter);
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
@@ -119,8 +118,8 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
                             scala.Tuple2<
                                 KeyType,
                                 scala.Tuple2<
-                                    DebugTuple<InputType0>,
-                                    DebugTuple<InputType1>
+                                    InputType0,
+                                    InputType1
                                 >
                             >,
                             DebugTuple<
@@ -129,20 +128,20 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
                         >
     {
         @Override
-        public DebugTuple<Tuple2<InputType0, InputType1>> call(scala.Tuple2<KeyType, scala.Tuple2<DebugTuple<InputType0>, DebugTuple<InputType1>>> debugTuple) throws Exception {
+        public DebugTuple<Tuple2<InputType0, InputType1>> call(scala.Tuple2<KeyType, scala.Tuple2<InputType0, InputType1>> debugTuple) throws Exception {
 
             DebugTuple tuple = new DebugTuple<>(
                                     new Tuple2<>(
-                                            debugTuple._2._1.getValue(),
-                                            debugTuple._2._2.getValue()
-                                    )
+                                            debugTuple._2._1,
+                                            debugTuple._2._2
+                                    ),
+                                    Tuple2.class
                                 )
             ;
-            tuple
+            /*tuple
                 .getHeader()
                 .addParent(debugTuple._2._1.getHeader())
-                .addParent(debugTuple._2._2.getHeader());
-
+                .addParent(debugTuple._2._2.getHeader());*/
 
             return tuple;
         }

@@ -43,6 +43,7 @@ public class SyntheticPlan extends SnifferBenchmarkBase {
                 tuple -> tuple.toString(),
                 String.class
         );
+
         return operators;
     }
 }
