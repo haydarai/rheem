@@ -2,7 +2,7 @@ package org.qcri.rheem.api.graph
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.basic.data.Record
-import org.qcri.rheem.basic.operators.{MapOperator, PageRankOperator}
+import org.qcri.rheem.basic.operators.{MapOperator, PageRankOperator, ShortestPathOperator}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 
 /**
@@ -25,6 +25,18 @@ class EdgeDataQuanta(dataQuanta: DataQuanta[Edge]) {
     val pageRankOperator = new PageRankOperator(numIterations, dampingFactor, graphDensity)
     dataQuanta.connectTo(pageRankOperator, 0)
     wrap[PageRank](pageRankOperator)
+  }
+
+  /**
+   * Feed this instance into a [[ShortestPathOperator]].
+   *
+   * @return a new instance representing the [[MapOperator]]'s output
+   */
+  def shortestPath():
+  DataQuanta[ShortestPath] = {
+    val shortestPathOperator = new ShortestPathOperator()
+    dataQuanta.connectTo(shortestPathOperator, 0)
+    wrap[ShortestPath](shortestPathOperator)
   }
 
 }

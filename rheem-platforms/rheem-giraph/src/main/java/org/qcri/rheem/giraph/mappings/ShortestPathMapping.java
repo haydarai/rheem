@@ -1,17 +1,16 @@
 package org.qcri.rheem.giraph.mappings;
 
 import org.qcri.rheem.basic.operators.PageRankOperator;
+import org.qcri.rheem.basic.operators.ShortestPathOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.giraph.operators.GiraphPageRankOperator;
+import org.qcri.rheem.giraph.operators.GiraphShortestPathOperator;
 import org.qcri.rheem.giraph.platform.GiraphPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * Maps {@link PageRankOperator}s to {@link GiraphPageRankOperator}s.
- */
-public class PageRankMapping implements Mapping {
+public class ShortestPathMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -27,13 +26,14 @@ public class PageRankMapping implements Mapping {
     @SuppressWarnings("unchecked")
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "pageRank", new PageRankOperator(1), false);
+                "shortestPath", new ShortestPathOperator(), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<PageRankOperator>(
-                (matchedOperator, epoch) -> new GiraphPageRankOperator(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<ShortestPathOperator>(
+                (matchedOperator, epoch) -> new GiraphShortestPathOperator(matchedOperator).at(epoch)
         );
     }
 }
+

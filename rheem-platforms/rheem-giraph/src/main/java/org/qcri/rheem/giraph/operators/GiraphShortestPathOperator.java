@@ -8,11 +8,11 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
+import org.qcri.rheem.basic.operators.ShortestPathOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
@@ -20,36 +20,30 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.giraph.Algorithm.PageRankAlgorithm;
-import org.qcri.rheem.giraph.Algorithm.PageRankParameters;
+import org.qcri.rheem.giraph.Algorithm.ShortestPathAlgorithm;
 import org.qcri.rheem.giraph.execution.GiraphExecutor;
 import org.qcri.rheem.giraph.platform.GiraphPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
-/**
- * PageRank {@link Operator} implementation for the {@link GiraphPlatform}.
- */
-public class GiraphPageRankOperator extends PageRankOperator implements GiraphExecutionOperator {
+public class GiraphShortestPathOperator extends ShortestPathOperator implements GiraphExecutionOperator {
+
+    public GiraphShortestPathOperator(ShortestPathOperator shortestPathOperator) {
+        super(shortestPathOperator);
+        setPathOut(null, null);
+    }
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private String path_out;
-
-    public GiraphPageRankOperator(Integer numIterations) {
-        super(numIterations);
-        setPathOut(null, null);
-    }
-    public GiraphPageRankOperator(PageRankOperator pageRankOperator) {
-        super(pageRankOperator);
-        setPathOut(null, null);
-    }
 
     @Override
     public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> execute(
@@ -86,7 +80,8 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         Configuration configuration = operatorContext.getOptimizationContext().getConfiguration();
         String tempDirPath = this.getPathOut(configuration);
 
-        PageRankParameters.setParameter(PageRankParameters.PageRankEnum.ITERATION, this.getNumIterations());
+//        PageRankParameters.setParameter(PageRankParameters.PageRankEnum.ITERATION, this.getNumIterations());
+
 
         FileSystem fs = FileSystems.getFileSystem(tempDirPath).orElseThrow(
                 () -> new RheemException(String.format("Cannot access file system of %s.", tempDirPath))
@@ -105,16 +100,16 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         conf.setWorkerConfiguration(1, 1, 100.0f);
         conf.set("giraph.SplitMasterWorker", "false");
         conf.set("mapreduce.output.fileoutputformat.outputdir", tempDirPath);
-        conf.setComputationClass(PageRankAlgorithm.class);
+        conf.setComputationClass(ShortestPathAlgorithm.class);
         conf.setVertexInputFormatClass(
-                PageRankAlgorithm.PageRankVertexInputFormat.class);
+                ShortestPathAlgorithm.ShortestPathVertexInputFormat.class);
         conf.setWorkerContextClass(
-                PageRankAlgorithm.PageRankWorkerContext.class);
+                ShortestPathAlgorithm.ShortestPathWorkerContext.class);
         conf.setMasterComputeClass(
-                PageRankAlgorithm.PageRankMasterCompute.class);
+                ShortestPathAlgorithm.ShortestPathMasterCompute.class);
         conf.setNumComputeThreads((int)configuration.getLongProperty("rheem.giraph.numThread"));
 
-        conf.setVertexOutputFormatClass(PageRankAlgorithm.PageRankVertexOutputFormat.class);
+        conf.setVertexOutputFormatClass(ShortestPathAlgorithm.ShortestPathVertexOutputFormat.class);
         Limits.init(conf);
 
         GiraphJob job = new GiraphJob(conf, "rheem-giraph");
@@ -141,15 +136,9 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         return mainExecutionLineage.collectAndMark();
     }
 
-
     @Override
     public Platform getPlatform() {
         return GiraphPlatform.getInstance();
-    }
-
-    @Override
-    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.giraph.pagerank.load.main", "rheem.giraph.pagerank.load.output");
     }
 
     @Override
@@ -162,21 +151,19 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-
-    public void setPathOut(String path, Configuration configuration){
+    public void setPathOut(String path, Configuration configuration) {
         if(path == null && configuration != null) {
             path = configuration.getStringProperty("rheem.giraph.hdfs.tempdir");
         }
         this.path_out = path;
     }
 
-    public String getPathOut(Configuration configuration){
+    public String getPathOut(Configuration configuration) {
         if(this.path_out == null){
             setPathOut(null, configuration);
         }
         return this.path_out;
     }
-
 
     private Stream<Tuple2<Long, Float>> createStream(String path) {
         return org.qcri.rheem.core.util.fs.FileUtils.streamLines(path).map(line -> {
@@ -184,8 +171,4 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
             return new Tuple2<>(Long.parseLong(part[0]), Float.parseFloat(part[1]));
         });
     }
-
-
-
-
 }

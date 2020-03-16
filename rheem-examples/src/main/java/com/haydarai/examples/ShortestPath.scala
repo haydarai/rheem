@@ -1,19 +1,17 @@
 package com.haydarai.examples
 
 import org.qcri.rheem.api.PlanBuilder
-import org.qcri.rheem.api.graph._
-import org.qcri.rheem.api.graph.{Edge, Vertex}
+import org.qcri.rheem.api.graph.{Edge, Vertex, _}
 import org.qcri.rheem.basic.RheemBasics
+import org.qcri.rheem.basic.data.Tuple2
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.giraph.Giraph
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
-import org.qcri.rheem.basic.data.Tuple2
-import org.qcri.rheem.giraph.Giraph
 
-object PageRank {
+object ShortestPath {
   def main(args: Array[String]) {
     val inputUrl = "file:" + args(0)
-    val iterations = 10
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -23,7 +21,7 @@ object PageRank {
       .withPlugin(Spark.basicPlugin)
       .withPlugin(Giraph.plugin)
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("PageRank")
+      .withJobName("Shortest Path")
       .withUdfJarsOf(this.getClass)
 
     val edges = planBuilder
@@ -63,9 +61,9 @@ object PageRank {
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
       .withName("Set target vertex ID")
 
-    val pageRanks = idEdges.pageRank(iterations)
+    val shortestPath = idEdges.shortestPath()
 
-    val result = pageRanks
+    val result = shortestPath
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
       .withName("Join page ranks with vertex IDs")
 

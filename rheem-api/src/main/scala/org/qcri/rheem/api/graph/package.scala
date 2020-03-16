@@ -13,6 +13,8 @@ package object graph {
 
   type PageRank = T2[Vertex, java.lang.Float]
 
+  type ShortestPath = T2[Vertex, java.lang.Float]
+
   implicit def elevateEdgeDataQuanta(dataQuanta: DataQuanta[Edge]): EdgeDataQuanta =
     new EdgeDataQuanta(dataQuanta)
 
