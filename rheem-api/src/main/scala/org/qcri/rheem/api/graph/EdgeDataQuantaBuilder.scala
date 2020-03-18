@@ -19,6 +19,7 @@ trait EdgeDataQuantaBuilder[+This <: EdgeDataQuantaBuilder[This]]
     */
   def pageRank(numIterations: Int): PageRankDataQuantaBuilder = new PageRankDataQuantaBuilder(this, numIterations)
 
+  def shortestPath(): ShortestPathDataQuantaBuilder = new ShortestPathDataQuantaBuilder(this)
 }
 
 /**
@@ -75,5 +76,24 @@ class PageRankDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Edge],
   }
 
   override protected def build = inputDataQuanta.dataQuanta().pageRank(numIterations, this.dampingFactor, this.graphDensity)
+
+}
+
+/**
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ShortestPathOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ */
+class ShortestPathDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Edge])
+                               (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[ShortestPathDataQuantaBuilder, ShortestPath] {
+
+  // We statically know input and output data types.
+  locally {
+    inputDataQuanta.outputTypeTrap.dataSetType = dataSetType[Edge]
+    this.outputTypeTrap.dataSetType = dataSetType[ShortestPath]
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().shortestPath()
 
 }
