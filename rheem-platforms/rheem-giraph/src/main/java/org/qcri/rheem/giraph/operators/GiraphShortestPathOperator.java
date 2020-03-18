@@ -7,7 +7,6 @@ import org.apache.hadoop.mapreduce.counters.Limits;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.basic.operators.ShortestPathOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -20,7 +19,7 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.giraph.Algorithm.ShortestPathAlgorithm;
+import org.qcri.rheem.giraph.algorithms.ShortestPathAlgorithm;
 import org.qcri.rheem.giraph.execution.GiraphExecutor;
 import org.qcri.rheem.giraph.platform.GiraphPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -55,9 +54,9 @@ public class GiraphShortestPathOperator extends ShortestPathOperator implements 
         assert outputChannelInstances.length == this.getNumOutputs();
 
         final FileChannel.Instance inputChannel = (FileChannel.Instance) inputChannelInstances[0];
-        final StreamChannel.Instance outputChanne = (StreamChannel.Instance) outputChannelInstances[0];
+        final StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputChannelInstances[0];
         try {
-            return this.runGiraph(inputChannel, outputChanne, giraphExecutor, operatorContext);
+            return this.runGiraph(inputChannel, outputChannel, giraphExecutor, operatorContext);
         } catch (IOException e) {
             throw new RheemException(String.format("Running %s failed.", this), e);
         } catch (URISyntaxException e) {

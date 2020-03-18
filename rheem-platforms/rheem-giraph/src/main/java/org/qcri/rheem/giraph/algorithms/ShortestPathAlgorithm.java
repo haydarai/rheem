@@ -1,9 +1,6 @@
-package org.qcri.rheem.giraph.Algorithm;
+package org.qcri.rheem.giraph.algorithms;
 
 import com.google.common.collect.Lists;
-import org.apache.giraph.aggregators.DoubleMaxAggregator;
-import org.apache.giraph.aggregators.DoubleMinAggregator;
-import org.apache.giraph.aggregators.LongSumAggregator;
 import org.apache.giraph.edge.Edge;
 import org.apache.giraph.edge.EdgeFactory;
 import org.apache.giraph.examples.GeneratedVertexReader;
