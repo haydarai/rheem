@@ -93,10 +93,11 @@ public class GiraphShortestPathOperator extends ShortestPathOperator implements 
         GiraphConfiguration conf = giraphExecutor.getGiraphConfiguration();
         //vertex reader
         conf.set("giraph.vertex.input.dir", inputPath);
-        conf.set("mapred.job.tracker", "local");
-        conf.set("mapreduce.job.counters.limit", "5242880");
-        conf.set("mapreduce.job.counters.max", "5242880");
-        conf.setWorkerConfiguration(1, 1, 100.0f);
+        conf.set("mapred.job.tracker", configuration.getStringProperty("rheem.giraph.job.tracker"));
+        conf.set("mapreduce.job.counters.limit", configuration.getStringProperty("rheem.mapreduce.job.counters.limit"));
+        conf.setWorkerConfiguration((int)configuration.getLongProperty("rheem.giraph.minWorkers"),
+                (int)configuration.getLongProperty("rheem.giraph.maxWorkers"),
+                100.0f);
         conf.set("giraph.SplitMasterWorker", "false");
         conf.set("mapreduce.output.fileoutputformat.outputdir", tempDirPath);
         conf.setComputationClass(ShortestPathAlgorithm.class);
