@@ -2,6 +2,7 @@ package org.qcri.rheem.giraph.mappings;
 
 import org.qcri.rheem.core.mapping.Mapping;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -10,7 +11,8 @@ import java.util.Collections;
  */
 public class Mappings {
 
-    public static final Collection<Mapping> ALL = Collections.singletonList(
-            new PageRankMapping()
+    public static final Collection<Mapping> ALL = Arrays.asList(
+            new PageRankMapping(),
+            new ShortestPathMapping()
     );
 }

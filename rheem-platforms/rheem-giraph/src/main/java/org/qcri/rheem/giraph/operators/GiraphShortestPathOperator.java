@@ -79,8 +79,6 @@ public class GiraphShortestPathOperator extends ShortestPathOperator implements 
         Configuration configuration = operatorContext.getOptimizationContext().getConfiguration();
         String tempDirPath = this.getPathOut(configuration);
 
-//        PageRankParameters.setParameter(PageRankParameters.PageRankEnum.ITERATION, this.getNumIterations());
-
 
         FileSystem fs = FileSystems.getFileSystem(tempDirPath).orElseThrow(
                 () -> new RheemException(String.format("Cannot access file system of %s.", tempDirPath))
