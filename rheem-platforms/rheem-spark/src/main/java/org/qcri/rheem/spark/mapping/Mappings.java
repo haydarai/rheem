@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.spark.mapping.graph.DegreeCentralityMapping;
 import org.qcri.rheem.spark.mapping.graph.PageRankMapping;
 
 import java.util.Arrays;
@@ -40,6 +41,7 @@ public class Mappings {
     );
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
+            new DegreeCentralityMapping(),
             new PageRankMapping()
     );
 

@@ -30,6 +30,23 @@ class EdgeDataQuantaBuilderDecorator[This <: EdgeDataQuantaBuilderDecorator[This
 (baseBuilder: DataQuantaBuilder[_, Edge])
   extends DataQuantaBuilderDecorator[This, Edge](baseBuilder) with EdgeDataQuantaBuilder[This]
 
+class DegreeCentralityDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Edge],
+                                        numIterations: Int)
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[DegreeCentralityDataQuantaBuilder, DegreeCentrality] {
+  locally {
+    inputDataQuanta.outputTypeTrap.dataSetType = dataSetType[Edge]
+    this.outputTypeTrap.dataSetType = dataSetType[PageRank]
+  }
+
+  /**
+   * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
+   *
+   * @return the created and partially configured [[DataQuanta]]
+   */
+  override protected def build: DataQuanta[DegreeCentrality] = inputDataQuanta.dataQuanta().degreeCentrality()
+}
+
 /**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s.
   *

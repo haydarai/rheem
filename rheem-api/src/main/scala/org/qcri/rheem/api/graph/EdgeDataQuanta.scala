@@ -2,7 +2,7 @@ package org.qcri.rheem.api.graph
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.basic.data.Record
-import org.qcri.rheem.basic.operators.{MapOperator, PageRankOperator}
+import org.qcri.rheem.basic.operators.{DegreeCentralityOperator, MapOperator, PageRankOperator}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 
 /**
@@ -27,4 +27,10 @@ class EdgeDataQuanta(dataQuanta: DataQuanta[Edge]) {
     wrap[PageRank](pageRankOperator)
   }
 
+  def degreeCentrality():
+  DataQuanta[DegreeCentrality] = {
+    val degreeCentralityOperator = new DegreeCentralityOperator
+    dataQuanta.connectTo(degreeCentralityOperator, 0)
+    wrap[DegreeCentrality](degreeCentralityOperator)
+  }
 }

@@ -9,10 +9,9 @@ import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
 import org.qcri.rheem.basic.data.Tuple2
 
-object PageRank {
+object DegreeCentrality {
   def main(args: Array[String]) {
     val inputUrl = "file:" + args(0)
-    val iterations = 100
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -62,18 +61,18 @@ object PageRank {
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
       .withName("Set target vertex ID")
 
-    val pageRanks = idEdges.pageRank(iterations)
+    val degreeCentralities = idEdges.degreeCentrality()
 
-    val result = pageRanks
+    val result = degreeCentralities
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
-      .withName("Join page ranks with vertex IDs")
+      .withName("Join degree with vertex IDs")
 
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
       .withName("Make page ranks readable")
 
       .collect()
 
-    print(result.take(10))
+    print(result.take(100))
   }
 
   def parseTriple(raw: String): (String, String, String) = {
