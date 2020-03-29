@@ -15,6 +15,8 @@ package object graph {
 
   type DegreeCentrality = T2[Vertex, java.lang.Float]
 
+  type SingleSourceShortestPath = T2[Vertex, java.lang.Float]
+
   implicit def elevateEdgeDataQuanta(dataQuanta: DataQuanta[Edge]): EdgeDataQuanta =
     new EdgeDataQuanta(dataQuanta)
 

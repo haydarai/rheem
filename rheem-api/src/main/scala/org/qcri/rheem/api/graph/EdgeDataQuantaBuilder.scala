@@ -30,8 +30,7 @@ class EdgeDataQuantaBuilderDecorator[This <: EdgeDataQuantaBuilderDecorator[This
 (baseBuilder: DataQuantaBuilder[_, Edge])
   extends DataQuantaBuilderDecorator[This, Edge](baseBuilder) with EdgeDataQuantaBuilder[This]
 
-class DegreeCentralityDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Edge],
-                                        numIterations: Int)
+class DegreeCentralityDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Edge])
                                        (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[DegreeCentralityDataQuantaBuilder, DegreeCentrality] {
   locally {
@@ -45,6 +44,23 @@ class DegreeCentralityDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Ed
    * @return the created and partially configured [[DataQuanta]]
    */
   override protected def build: DataQuanta[DegreeCentrality] = inputDataQuanta.dataQuanta().degreeCentrality()
+}
+
+class SingleSourceShortestPathDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Edge],
+                                                sourceId: Long)
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[SingleSourceShortestPathDataQuantaBuilder, SingleSourceShortestPath] {
+  locally {
+    inputDataQuanta.outputTypeTrap.dataSetType = dataSetType[Edge]
+    this.outputTypeTrap.dataSetType = dataSetType[SingleSourceShortestPath]
+  }
+
+  /**
+   * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
+   *
+   * @return the created and partially configured [[DataQuanta]]
+   */
+  override protected def build: DataQuanta[SingleSourceShortestPath] = inputDataQuanta.dataQuanta().singleSourceShortestPath(sourceId)
 }
 
 /**

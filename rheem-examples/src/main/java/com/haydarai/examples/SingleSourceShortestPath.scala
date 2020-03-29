@@ -2,14 +2,13 @@ package com.haydarai.examples
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
-import org.qcri.rheem.api.graph.{Edge, Vertex}
 import org.qcri.rheem.basic.RheemBasics
+import org.qcri.rheem.basic.data.Tuple2
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
-import org.qcri.rheem.basic.data.Tuple2
 
-object DegreeCentrality {
+object SingleSourceShortestPath {
   def main(args: Array[String]) {
     val inputUrl = "file:" + args(0)
 
@@ -61,18 +60,18 @@ object DegreeCentrality {
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
       .withName("Set target vertex ID")
 
-    val degreeCentralities = idEdges.degreeCentrality()
+    val singleSourceShortestPath = idEdges.singleSourceShortestPath(0)
 
-    val result = degreeCentralities
+    val result = singleSourceShortestPath
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
       .withName("Join degree with vertex IDs")
 
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
-      .withName("Make degree centrality readable")
+      .withName("Make page ranks readable")
 
       .collect()
 
-    print(result.take(100))
+    print(result.take(10))
   }
 
   def parseTriple(raw: String): (String, String, String) = {
