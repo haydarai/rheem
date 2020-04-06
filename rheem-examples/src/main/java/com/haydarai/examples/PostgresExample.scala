@@ -23,9 +23,9 @@ object PostgresExample {
       .withJobName("SQLite")
       .withUdfJarsOf(this.getClass)
 
-    val records = planBuilder.readTable(new PostgresTableSource("dbpedia", "subject", "predicate", "object")).collect()
-//    val results = records.projectRecords(List("subject", "predicate")).collect()
+    val records = planBuilder.readTable(new PostgresTableSource("dbpedia", "subject", "predicate", "object"))
+    val results = records.projectRecords(List("object")).collect();
 
-    records.foreach(println)
+    results.foreach(println)
   }
 }

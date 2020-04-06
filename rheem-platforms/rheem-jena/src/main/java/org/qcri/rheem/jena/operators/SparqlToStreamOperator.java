@@ -1,21 +1,15 @@
 package org.qcri.rheem.jena.operators;
 
-import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.query.ResultSet;
 import org.apache.jena.query.ResultSetFormatter;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.algebra.Op;
-import org.apache.jena.sparql.algebra.op.OpBGP;
-import org.apache.jena.sparql.core.BasicPattern;
-import org.apache.jena.sparql.core.Var;
 import org.apache.jena.sparql.engine.QueryIterator;
 import org.apache.jena.sparql.engine.ResultSetStream;
 import org.json.JSONObject;
 import org.qcri.rheem.basic.data.Record;
-import org.qcri.rheem.basic.data.Tuple3;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -29,10 +23,10 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.platform.JenaPlatform;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
@@ -65,18 +59,8 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
 
         Model model = RDFDataMgr.loadModel(input.getModelUrl()) ;
 
-        Tuple3<String, String, String> variables = input.getTriple();
-        Triple triple = new Triple(
-                Var.alloc(variables.getField0()),
-                Var.alloc(variables.getField1()),
-                Var.alloc(variables.getField2())
-        );
-        BasicPattern bp = new BasicPattern();
-        bp.add(triple);
-        Op op = new OpBGP(bp);
-
-        QueryIterator queryIterator = Algebra.exec(op, model.getGraph());
-        List<String> resultVars = variables.asList();
+        QueryIterator queryIterator = Algebra.exec(input.getOp(), model.getGraph());
+        List<String> resultVars = input.getProjectedFields();
         ResultSet resultSet = new ResultSetStream(resultVars, model, queryIterator);
 
         List<QuerySolution> result = ResultSetFormatter.toList(resultSet);

@@ -18,7 +18,9 @@ object JenaExample {
       .withJobName("Jena")
       .withUdfJarsOf(this.getClass)
 
-    val results = planBuilder.readModel(new JenaModelSource(args(0), "s", "p", "o")).collect();
-    results.foreach(println)
+    var results = planBuilder.readModel(new JenaModelSource(args(0), "s", "p", "o"))
+    results = results.projectRecords(List("s"))
+    val res = results.collect();
+    res.foreach(println)
   }
 }
