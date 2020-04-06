@@ -4,7 +4,7 @@ import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.api
 import org.qcri.rheem.basic.data.Record
-import org.qcri.rheem.basic.operators.{CollectionSource, TableSource, TextFileSource}
+import org.qcri.rheem.basic.operators.{CollectionSource, ModelSource, TableSource, TextFileSource}
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.plan.rheemplan._
 import org.qcri.rheem.core.util.ReflectionUtils
@@ -100,6 +100,8 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
     * @return [[DataQuanta]] of [[Record]]s in the table
     */
   def readTable(source: TableSource): DataQuanta[Record] = load(source)
+
+  def readModel(source: ModelSource): DataQuanta[Record] = load(source)
 
   /**
     * Loads a [[java.util.Collection]] into Rheem and represents them as [[DataQuanta]].

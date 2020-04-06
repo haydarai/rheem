@@ -597,6 +597,20 @@
                 <artifactId>antlr4</artifactId>
                 <version>${antlr.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.7</version>
+            </dependency>
+
+            <!-- Jena -->
+            <dependency>
+                <groupId>org.apache.jena</groupId>
+                <artifactId>apache-jena-libs</artifactId>
+                <type>pom</type>
+                <version>3.14.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
