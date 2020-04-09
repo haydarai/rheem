@@ -6,7 +6,7 @@ import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.api.util.DataQuantaBuilderCache
 import org.qcri.rheem.basic.data.Record
-import org.qcri.rheem.basic.operators.{TableSource, TextFileSource}
+import org.qcri.rheem.basic.operators.{ModelSource, TableSource, TextFileSource}
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.plan.rheemplan._
 import org.qcri.rheem.core.types.DataSetType
@@ -49,6 +49,8 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
     * @return [[DataQuantaBuilder]] for the [[Record]]s in the table
     */
   def readTable(source: TableSource) = createSourceBuilder(source)(ClassTag(classOf[Record])).asRecords
+
+  def readModel(source: ModelSource) = createSourceBuilder(source)(ClassTag(classOf[Record])).asRecords
 
 
   /**
