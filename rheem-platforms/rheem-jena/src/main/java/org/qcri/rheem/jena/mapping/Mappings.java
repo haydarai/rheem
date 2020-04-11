@@ -8,6 +8,7 @@ import java.util.Collection;
 public class Mappings {
 
     public static final Collection<Mapping> ALL = Arrays.asList(
-            new ProjectionMapping()
+            new ProjectionMapping(),
+            new FilterMapping()
     );
 }

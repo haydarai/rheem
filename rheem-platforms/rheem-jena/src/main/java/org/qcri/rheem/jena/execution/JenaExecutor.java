@@ -14,6 +14,7 @@ import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
@@ -29,11 +30,13 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.operators.JenaExecutionOperator;
+import org.qcri.rheem.jena.operators.JenaFilterOperator;
 import org.qcri.rheem.jena.operators.JenaProjectionOperator;
 import org.qcri.rheem.jena.platform.JenaPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -65,13 +68,15 @@ public class JenaExecutor extends ExecutorTemplate {
         SparqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, optimizationContext);
 
         ExecutionTask projectionTask = null;
-//        Set<ExecutionTask> allTasks = stage.getAllTasks();
+        Collection<ExecutionTask> filterTasks = new ArrayList<>();
 
         ExecutionTask nextTask = this.findJenaExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null) {
             if (nextTask.getOperator() instanceof JenaProjectionOperator) {
                 assert projectionTask == null;
                 projectionTask = nextTask;
+            } else if (nextTask.getOperator() instanceof JenaFilterOperator) {
+                filterTasks.add(nextTask);
             } else {
                 throw new RheemException(String.format("Unsupported Jena execution task %s", nextTask.toString()));
             }
@@ -95,6 +100,11 @@ public class JenaExecutor extends ExecutorTemplate {
         Op op = new OpBGP(bp);
 
         List<String> fieldNames;
+
+        for (ExecutionTask executionTask : filterTasks) {
+            JenaFilterOperator operator = (JenaFilterOperator) executionTask.getOperator();
+            // TODO: extract Java/Scala function passed to operator to create respective Jena's operator
+        }
 
         if (projectionTask != null) {
             JenaProjectionOperator operator = (JenaProjectionOperator) projectionTask.getOperator();
