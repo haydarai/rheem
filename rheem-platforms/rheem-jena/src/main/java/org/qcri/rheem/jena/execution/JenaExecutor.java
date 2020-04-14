@@ -1,33 +1,35 @@
 package org.qcri.rheem.jena.execution;
 
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.StringValue;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.schema.Column;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpBGP;
+import org.apache.jena.sparql.algebra.op.OpFilter;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
-import org.qcri.rheem.basic.data.Record;
+import org.apache.jena.sparql.expr.*;
 import org.qcri.rheem.basic.data.Tuple3;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.ModelSource;
-import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.ExecutorTemplate;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.operators.JenaExecutionOperator;
 import org.qcri.rheem.jena.operators.JenaFilterOperator;
@@ -36,11 +38,10 @@ import org.qcri.rheem.jena.platform.JenaPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JenaExecutor extends ExecutorTemplate {
@@ -103,7 +104,60 @@ public class JenaExecutor extends ExecutorTemplate {
 
         for (ExecutionTask executionTask : filterTasks) {
             JenaFilterOperator operator = (JenaFilterOperator) executionTask.getOperator();
-            // TODO: extract Java/Scala function passed to operator to create respective Jena's operator
+            PredicateDescriptor predicateDescriptor = operator.getPredicateDescriptor();
+            String sqlImplementation = predicateDescriptor.getSqlImplementation();
+            Expr expr = null;
+            Expression conditionExpression = null;
+            try {
+                conditionExpression = CCJSqlParserUtil.parseCondExpression(sqlImplementation);
+            } catch (JSQLParserException e) {
+                e.printStackTrace();
+            }
+            if (conditionExpression instanceof EqualsTo) {
+                EqualsTo equalsTo = (EqualsTo) conditionExpression;
+                String columnName = ((Column) equalsTo.getLeftExpression()).getColumnName();
+                String columnValue = ((StringValue) equalsTo.getRightExpression()).getValue();
+
+                NodeValue nodeValue;
+                boolean valueIsIRI;
+                try {
+                    new URL(columnValue).toURI();
+                    valueIsIRI = true;
+                } catch (Exception e) {
+                    valueIsIRI = false;
+                }
+
+                if (valueIsIRI) {
+                    nodeValue = NodeValue.makeNode(NodeFactory.createURI(columnValue));
+                } else {
+                    nodeValue = NodeValue.makeString(columnValue);
+                }
+                expr = new E_Equals(new ExprVar(Var.alloc(columnName)), nodeValue);
+            } else if (conditionExpression instanceof NotEqualsTo) {
+                NotEqualsTo notEqualsTo = (NotEqualsTo) conditionExpression;
+                String columnName = ((Column) notEqualsTo.getLeftExpression()).getColumnName();
+                String columnValue = ((StringValue) notEqualsTo.getRightExpression()).getValue();
+
+                NodeValue nodeValue;
+                boolean valueIsIRI;
+                try {
+                    new URL(columnValue).toURI();
+                    valueIsIRI = true;
+                } catch (Exception e) {
+                    valueIsIRI = false;
+                }
+
+                if (valueIsIRI) {
+                    nodeValue = NodeValue.makeNode(NodeFactory.createURI(columnValue));
+                } else {
+                    nodeValue = NodeValue.makeString(columnValue);
+                }
+                expr = new E_NotEquals(new ExprVar(Var.alloc(columnName)), nodeValue);
+            }
+
+            if (expr != null) {
+                op = OpFilter.filter(expr, op);
+            }
         }
 
         if (projectionTask != null) {

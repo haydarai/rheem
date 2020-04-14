@@ -23,6 +23,10 @@ public class JenaJavaExample {
         Collection<Record> records = planBuilder
                 .readModel(new JenaModelSource(args[0], "s", "p", "o"))
                 .projectRecords(new String[] {"s"})
+
+                .filter(record -> record.getField(0).equals("http://dbpedia.org/ontology/Lock"))
+                .withSqlUdf("s = 'http://dbpedia.org/ontology/Lock'")
+
                 .collect();
         
         for (Record record : records) {

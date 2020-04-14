@@ -604,12 +604,10 @@
                 <version>1.7</version>
             </dependency>
 
-            <!-- Jena -->
             <dependency>
-                <groupId>org.apache.jena</groupId>
-                <artifactId>apache-jena-libs</artifactId>
-                <type>pom</type>
-                <version>3.14.0</version>
+                <groupId>com.github.jsqlparser</groupId>
+                <artifactId>jsqlparser</artifactId>
+                <version>3.1</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
