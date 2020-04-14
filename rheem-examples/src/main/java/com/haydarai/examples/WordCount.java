@@ -15,8 +15,7 @@ public class WordCount {
         String inputUrl = "file:" + args[0];
 
         RheemContext context = new RheemContext(new Configuration())
-                .withPlugin(Java.basicPlugin())
-                .withPlugin(Spark.basicPlugin());
+                .withPlugin(Java.basicPlugin());
 
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
                 .withJobName("WordCount")

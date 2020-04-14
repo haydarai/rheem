@@ -9,6 +9,7 @@ public class Mappings {
 
     public static final Collection<Mapping> ALL = Arrays.asList(
             new ProjectionMapping(),
-            new FilterMapping()
+            new FilterMapping(),
+            new JoinMapping()
     );
 }
