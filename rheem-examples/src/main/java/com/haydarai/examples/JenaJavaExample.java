@@ -1,13 +1,11 @@
 package com.haydarai.examples;
 
 import org.qcri.rheem.api.JavaPlanBuilder;
-import org.qcri.rheem.api.MapDataQuantaBuilder;
 import org.qcri.rheem.api.ProjectRecordsDataQuantaBuilder;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.java.Java;
 import org.qcri.rheem.jena.Jena;
 import org.qcri.rheem.jena.operators.JenaModelSource;
 
