@@ -1,21 +1,20 @@
 package org.qcri.rheem.jena.operators;
 
-import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 
-public class JenaJoinOperator extends JoinOperator<Record, Record, String>
+public class JenaJoinOperator<InputType0, InputType1, KeyType> extends JoinOperator<InputType0, InputType1, KeyType>
         implements JenaExecutionOperator {
 
-    public JenaJoinOperator(DataSetType<Record> inputType0,
-                            DataSetType<Record> inputType1,
-                            TransformationDescriptor<Record, String> keyDescriptor0,
-                            TransformationDescriptor<Record, String> keyDescriptor1) {
+    public JenaJoinOperator(DataSetType<InputType0> inputType0,
+                            DataSetType<InputType1> inputType1,
+                            TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
+                            TransformationDescriptor<InputType1, KeyType> keyDescriptor1) {
         super(keyDescriptor0, keyDescriptor1, inputType0, inputType1);
     }
 
-    public JenaJoinOperator(JoinOperator<Record, Record, String> that) {
+    public JenaJoinOperator(JoinOperator<InputType0, InputType1, KeyType> that) {
         super(that);
     }
 }

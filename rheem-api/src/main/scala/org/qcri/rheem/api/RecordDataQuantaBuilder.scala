@@ -4,7 +4,9 @@ import org.qcri.rheem.api.util.DataQuantaBuilderDecorator
 import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.basic.function.ProjectionDescriptor
 import org.qcri.rheem.basic.operators.MapOperator
+import org.qcri.rheem.core.function.FunctionDescriptor.SerializableFunction
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator
+import org.qcri.rheem.basic.data.{Tuple2 => T2}
 
 
 /**
@@ -22,6 +24,10 @@ trait RecordDataQuantaBuilder[+This <: RecordDataQuantaBuilder[This]]
   def projectRecords(fieldNames: Array[String]): ProjectRecordsDataQuantaBuilder =
   new ProjectRecordsDataQuantaBuilder(this, fieldNames)
 
+  def joinRecords(thisKeyUdf: SerializableFunction[Record, Object],
+                  that: DataQuantaBuilder[_, Record],
+                  thatKeyUdf: SerializableFunction[Record, Object]): JoinRecordsDataQuantaBuilder =
+    new JoinRecordsDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 }
 
 /**
@@ -87,5 +93,59 @@ class ProjectRecordsDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Reco
   }
 
   override protected def build = inputDataQuanta.dataQuanta().projectRecords(fieldNames.toSeq, this.udfCpuEstimator, this.udfRamEstimator)
+
+}
+
+class JoinRecordsDataQuantaBuilder(inputDataQuanta0: DataQuantaBuilder[_, Record],
+                                   inputDataQuanta1: DataQuantaBuilder[_, Record],
+                                   keyUdf0: SerializableFunction[Record, Object],
+                                   keyUdf1: SerializableFunction[Record, Object])
+                                     (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[JoinRecordsDataQuantaBuilder, T2[Record, Record]] {
+
+  /** SQL implementation of the projection. */
+  private var sqlUdf: String = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the projection. */
+  private var udfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the projection. */
+  private var udfRamEstimator: LoadEstimator = _
+
+  /**
+   * Set a [[LoadEstimator]] for the CPU load of the UDF.
+   *
+   * @param udfCpuEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+   * Set a [[LoadEstimator]] for the RAM load of the UDF.
+   *
+   * @param udfRamEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+  /**
+   * Add a SQL implementation of the projection.
+   *
+   * @param sqlUdf attribute names or `*` that can be plugged into a `SELECT` clause
+   * @return this instance
+   */
+  def withSqlUdf(sqlUdf: String) = {
+    this.sqlUdf = sqlUdf
+    this
+  }
+
+  override protected def build = inputDataQuanta0.dataQuanta()
+    .joinRecords(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)
 
 }

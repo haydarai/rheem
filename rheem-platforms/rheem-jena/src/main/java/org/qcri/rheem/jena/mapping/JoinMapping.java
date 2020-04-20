@@ -1,6 +1,5 @@
 package org.qcri.rheem.jena.mapping;
 
-import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
@@ -22,13 +21,13 @@ public class JoinMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern<>(
-                "join", new JoinOperator<>(null, null, DataSetType.createDefault(Record.class), DataSetType.createDefault(Record.class)), false
+                "join", new JoinOperator<>(null, null, DataSetType.none(), DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<JoinOperator<Record, Record, String>>(
+        return new ReplacementSubplanFactory.OfSingleOperators<JoinOperator<Object, Object, Object>>(
                 (matchedOperator, epoch) -> new JenaJoinOperator(matchedOperator).at(epoch)
         );
     }
