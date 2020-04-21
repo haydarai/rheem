@@ -7,6 +7,7 @@ import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.schema.Column;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.algebra.Op;
@@ -94,15 +95,24 @@ public class JenaExecutor extends ExecutorTemplate {
             nextTask = this.findJenaExecutionOperatorTaskInStage(nextTask, stage);
         }
 
-        Tuple3<String, String, String> variables = modelOp.getTriple();
-        Triple triple = new Triple(
-                Var.alloc(variables.getField0()),
-                Var.alloc(variables.getField1()),
-                Var.alloc(variables.getField2())
-        );
-
         BasicPattern bp = new BasicPattern();
-        bp.add(triple);
+        List<Tuple3<String, String, String>> variablesTriples = modelOp.getTriples();
+        for (Tuple3<String, String, String> variables : variablesTriples) {
+            Node[] fields = new Node[3];
+            List<String> variableNames = variables.asList();
+            for (int i = 0; i < variableNames.size(); i++) {
+                String variable = variableNames.get(i);
+                try {
+                    new URL(variable).toURI();
+                    fields[i] = NodeFactory.createURI(variable);
+                } catch (Exception e) {
+                    fields[i] = Var.alloc(variable);
+                }
+            }
+            Triple triple = new Triple(fields[0], fields[1], fields[2]);
+            bp.add(triple);
+        }
+
         Op op = new OpBGP(bp);
 
         List<String> fieldNames;
@@ -172,11 +182,10 @@ public class JenaExecutor extends ExecutorTemplate {
             List<Var> projectionFields = fieldNames.stream().map(Var::alloc).collect(Collectors.toList());
             op = new OpProject(op, projectionFields);
         } else {
-            fieldNames = variables.asList();
+            fieldNames = modelOp.getVariables();
         }
 
         tipChannelInstance.setModelUrl(modelOp.getInputUrl());
-        tipChannelInstance.setTriple(modelOp.getTriple());
         tipChannelInstance.setProjectedFields(fieldNames);
         tipChannelInstance.setOp(op);
 

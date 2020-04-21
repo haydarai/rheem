@@ -50,6 +50,12 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
     */
   def readTable(source: TableSource) = createSourceBuilder(source)(ClassTag(classOf[Record])).asRecords
 
+  /**
+   * Reads a RDF model and provides them as a dataset of [[Record]]s.
+   *
+   * @param source from that the [[Record]]s should be read
+   * @return [[DataQuantaBuilder]] for the [[Record]]s in the table
+   */
   def readModel(source: ModelSource) = createSourceBuilder(source)(ClassTag(classOf[Record])).asRecords
 
 

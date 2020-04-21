@@ -7,7 +7,7 @@ import java.util.List;
 
 public class JenaModelSource extends ModelSource implements JenaExecutionOperator {
 
-    public JenaModelSource(String inputUrl, String... variableNames) {
+    public JenaModelSource(String inputUrl, List<String[]> variableNames) {
         super(inputUrl, variableNames);
     }
 

@@ -7,7 +7,6 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.jena.platform.JenaPlatform;
 
@@ -73,18 +72,6 @@ public class SparqlQueryChannel extends Channel {
 
         public void setModelUrl(String modelUrl) {
             this.modelUrl = modelUrl;
-        }
-
-        public Tuple3<String, String, String> getTriple() {
-            return triple;
-        }
-
-        public void setTriple(Tuple3<String, String, String> triple) {
-            this.triple = triple;
-        }
-
-        public void setTriple(String... variables) {
-            this.triple = new Tuple3<>(variables[0], variables[1], variables[2]);
         }
 
         public Op getOp() {
