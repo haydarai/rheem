@@ -28,62 +28,102 @@ object JenaExample {
       .withJobName("Jena")
       .withUdfJarsOf(this.getClass)
 
+    // Define triples definition
     val triples = List[Array[String]](
       Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c"),
       Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c"),
       Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p")
     )
 
+    // Read RDF file and project selected variables
     val projectedRecords = planBuilder
-      .readModel(new JenaModelSource(args(0), triples.asJava))
-      .projectRecords(List("s", "p", "c"))
+      .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
+      .projectRecords(List("s", "p", "c")).withName("Project variables defined in triple definitions")
 
+    // Create list of edges that will be passed to PageRank algorithm (?p and ?c)
     val edgesPageRank = projectedRecords
       .map(record => (record.getField(0).toString, record.getField(1).toString))
+      .withName("Generate edges for PageRank algorithm")
 
+    // Create list of edges that will be passed to DegreeCentrality algorithm (?p and ?c)
     val edgesCentrality = projectedRecords
-      .flatMap(record => Seq((record.getField(0).toString, record.getField(2).toString), (record.getField(1).toString, record.getField(2).toString)))
+      .flatMap(record => Seq((record.getField(0).toString, record.getField(2).toString),
+        (record.getField(1).toString, record.getField(2).toString)))
+      .withName("Generate edges for DegreeCentrality algorithm")
 
     val vertexIds = projectedRecords
-      .flatMap(record => Seq(record.getField(0).toString, record.getField(1).toString, record.getField(2).toString))
+      .flatMap(record => Seq(record.getField(0).toString, record.getField(1).toString,
+        record.getField(2).toString))
+      .withName("List all vertices")
+
       .distinct
+      .withName("Remove duplicates")
+
       .zipWithId
+      .withName("Create ID for each individual vertex")
 
+    // Assign id to edges
     type VertexId = Tuple2[Vertex, String]
-    val idEdgesPageRank = edgesPageRank
-      .join[VertexId, String](_._1, vertexIds, _.field1)
-      .map { linkAndVertexId =>
-        (linkAndVertexId.field1.field0, linkAndVertexId.field0._2)
-      }
-      .join[VertexId, String](_._2, vertexIds, _.field1)
-      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
-    val idEdgesDegreeCentrality = edgesCentrality
-      .join[VertexId, String](_._1, vertexIds, _.field1)
-      .map { linkAndVertexId =>
-        (linkAndVertexId.field1.field0, linkAndVertexId.field0._2)
-      }
-      .join[VertexId, String](_._2, vertexIds, _.field1)
-      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
 
+    val idEdgesPageRank = edgesPageRank
+      .join[VertexId, String](_._1, vertexIds, _.field1).withName("Assign ID to vertices (left) on edges")
+      .map { linkAndVertexId => (linkAndVertexId.field1.field0, linkAndVertexId.field0._2) }
+      .withName("Remove unnecessary fields from join results")
+
+      .join[VertexId, String](_._2, vertexIds, _.field1).withName("Assign ID to vertices (right) on edges")
+      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
+      .withName("Remove unnecessary fields from join results")
+
+    val idEdgesDegreeCentrality = edgesCentrality
+      .join[VertexId, String](_._1, vertexIds, _.field1).withName("Assign ID to vertices (left) on edges")
+      .map { linkAndVertexId => (linkAndVertexId.field1.field0, linkAndVertexId.field0._2) }
+      .withName("Remove unnecessary fields from join results")
+
+      .join[VertexId, String](_._2, vertexIds, _.field1).withName("Assign ID to vertices (right) on edges")
+      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
+      .withName("Remove unnecessary fields from join results")
+
+    // Run graph algorithms
     val pageRanks = idEdgesPageRank.pageRank(10)
     val degreeCentrality = idEdgesDegreeCentrality.degreeCentrality()
 
+    // Convert algorithm results with vertex ID to the actual string
     val pageRankResults = pageRanks
-      .join[VertexId, Long](_.field0, vertexIds, _.field0)
-      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1.toString))
+      .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join back with vertex ID list")
+      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
+      .withName("Get the actual string representation and discard the vertex ID")
 
     val degreeCentralityResults = degreeCentrality
-      .join[VertexId, Long](_.field0, vertexIds, _.field0)
-      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1.toString))
+      .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join back with vertex ID list")
+      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
+      .withName("Get the actual string representation and discard the vertex ID")
 
-    val records = projectedRecords
-      .map(record => new Tuple3(record.getField(0).toString, record.getField(1).toString, record.getField(2).toString))
-      .join[(String, String), String](_.field1, pageRankResults, _._1)
+    // Join algorithm results to records, then apply filter based on the algorithm results
+    val results = projectedRecords
+      .map(record => new Tuple3(record.getField(0).toString, record.getField(1).toString,
+        record.getField(2).toString))
+      .withName("Get all relevant variables ?s ?p ?c")
+
+      .join[(String, java.lang.Float), String](_.field1, pageRankResults, _._1)
+      .withName("Join it with PageRank results")
+
       .map(tuple2 => new Tuple3(tuple2.field0.field0, tuple2.field1._2, tuple2.field0.field2))
-      .join[(String, String), String](_.field2, degreeCentralityResults, _._1)
+      .withName("Discard the variable string and keeping the PageRank value")
+
+      .join[(String, Integer), String](_.field2, degreeCentralityResults, _._1)
+      .withName("Join it with DegreeCentrality results")
+
       .map(tuple2 => new Tuple3(tuple2.field0.field0, tuple2.field0.field1, tuple2.field1._2))
+      .withName("Discard the variable string and keeping the DegreeCentrality value")
+
+      .filter(tuple3 => tuple3.field1 > 0.3 && tuple3.field2 > 1)
+      .withName("Filter based on PageRank and DegreeCentrality value")
+
+      .map(tuple3 => (tuple3.field0)).withName("Get only projected variable ?s")
+
       .collect()
 
-    records.foreach(println)
+    // Print query result
+    results.foreach(println)
   }
 }
