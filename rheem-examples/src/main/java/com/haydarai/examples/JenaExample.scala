@@ -81,12 +81,9 @@ object JenaExample {
       .join[(String, String), String](_.field1, pageRankResults, _._1)
       .map(tuple2 => new Tuple3(tuple2.field0.field0, tuple2.field1._2, tuple2.field0.field2))
       .join[(String, String), String](_.field2, degreeCentralityResults, _._1)
-//      .map(tuple2 => new Tuple3(tuple2.field0.field0, tuple2.field0.field1, tuple2.field1._2))
+      .map(tuple2 => new Tuple3(tuple2.field0.field0, tuple2.field0.field1, tuple2.field1._2))
       .collect()
 
-    print(records.take(10))
-
-//    print(pageRankResults.collect().take(10))
-//    print(vertexIds.collect().take(10))
+    records.foreach(println)
   }
 }
