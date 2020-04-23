@@ -12,7 +12,7 @@ import org.qcri.rheem.spark.Spark
 
 import scala.collection.JavaConverters._
 
-object JenaExample {
+object SpartexQuery1Scala {
   def main(args: Array[String]) {
 
     // Get a plan builder.
