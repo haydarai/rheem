@@ -43,7 +43,7 @@ public class Tuple3<T0, T1, T2> implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("(%s, %s)", this.field0, this.field1);
+        return String.format("(%s, %s, %s)", this.field0, this.field1, this.field2);
     }
 
     public T0 getField0() {
