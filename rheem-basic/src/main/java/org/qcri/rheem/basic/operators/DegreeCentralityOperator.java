@@ -10,7 +10,7 @@ import org.qcri.rheem.core.types.DataSetType;
  * is represented as {@code (source vertex ID, target vertex ID)} tuple. Its output are the page ranks, codified
  * as {@code (vertex ID, page rank)} tuples.
  */
-public class DegreeCentralityOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, Tuple2<Long, Float>> {
+public class DegreeCentralityOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, Tuple2<Long, Integer>> {
 
     /**
      * Creates a new instance.

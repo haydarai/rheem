@@ -13,7 +13,7 @@ package object graph {
 
   type PageRank = T2[Vertex, java.lang.Float]
 
-  type DegreeCentrality = T2[Vertex, java.lang.Float]
+  type DegreeCentrality = T2[Vertex, java.lang.Integer]
 
   type SingleSourceShortestPath = T2[Vertex, java.lang.Float]
 

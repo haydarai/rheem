@@ -45,7 +45,7 @@ class SparkDegreeCentralityOperator extends DegreeCentralityOperator() with Spar
     val graph = Graph.fromEdgeTuples(edgeRdd, null)
 
     val resultRdd = graph.degrees
-      .map { case (vertexId: VertexId, degree) => new T2(vertexId, degree.toFloat) }
+      .map { case (vertexId: VertexId, degree) => new T2(vertexId, degree.toInt) }
       .toJavaRDD()
 
     output.accept(resultRdd, sparkExecutor)

@@ -35,7 +35,7 @@ class DegreeCentralityDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Ed
   extends BasicDataQuantaBuilder[DegreeCentralityDataQuantaBuilder, DegreeCentrality] {
   locally {
     inputDataQuanta.outputTypeTrap.dataSetType = dataSetType[Edge]
-    this.outputTypeTrap.dataSetType = dataSetType[PageRank]
+    this.outputTypeTrap.dataSetType = dataSetType[DegreeCentrality]
   }
 
   /**
