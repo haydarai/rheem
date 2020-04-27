@@ -6,6 +6,7 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.java.Java;
 import org.qcri.rheem.jena.Jena;
 import org.qcri.rheem.jena.operators.JenaModelSource;
 
@@ -15,7 +16,7 @@ public class JenaJavaExample {
 
     public static void main(String[] args) {
         RheemContext context = new RheemContext(new Configuration())
-//                .withPlugin(Java.basicPlugin())
+                .withPlugin(Java.basicPlugin())
                 .withPlugin(Jena.plugin());
 
         JavaPlanBuilder planBuilder = new JavaPlanBuilder(context)
@@ -23,13 +24,14 @@ public class JenaJavaExample {
                 .withUdfJarOf(JenaJavaExample.class);
 
         ProjectRecordsDataQuantaBuilder sAndP = planBuilder
-                .readModel(new JenaModelSource(args[0], "s", "p", "o"))
-                .projectRecords(new String[] {"s", "p"});
+                .readModel(new JenaModelSource(args[0], "s", "p", "o")) // Triple definition
+                .projectRecords(new String[] {"s", "p"}); // Project ?s ?p
 
         ProjectRecordsDataQuantaBuilder sAndO = planBuilder
-                .readModel(new JenaModelSource(args[0], "s", "p", "o"))
-                .projectRecords(new String[] {"s", "o"});
+                .readModel(new JenaModelSource(args[0], "s", "p", "o")) // Triple definition
+                .projectRecords(new String[] {"s", "o"}); // Project ?s ?o
 
+        // Join ?s ?p and ?s ?o based on ?s
         Collection<Tuple2<Record, Record>> records = sAndP
                 .join(record -> record.getField(0), sAndO, (record -> record.getField(0)))
                 .collect();
