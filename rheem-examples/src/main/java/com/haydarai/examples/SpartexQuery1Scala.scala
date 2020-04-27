@@ -40,12 +40,13 @@ object SpartexQuery1Scala {
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
       .projectRecords(List("s", "p", "c")).withName("Project variables defined in triple definitions")
 
-    // Create list of edges that will be passed to PageRank algorithm (?p and ?c)
+    // Create list of edges that will be passed to PageRank algorithm (?s ?p and ?p ?c)
     val edgesPageRank = projectedRecords
-      .map(record => (record.getField(0).toString, record.getField(1).toString))
+      .flatMap(record => Seq((record.getField(0).toString, record.getField(1).toString),
+        (record.getField(1).toString, record.getField(2).toString)))
       .withName("Generate edges for PageRank algorithm")
 
-    // Create list of edges that will be passed to DegreeCentrality algorithm (?p and ?c)
+    // Create list of edges that will be passed to DegreeCentrality algorithm (?s ?c and ?p ?c)
     val edgesCentrality = projectedRecords
       .flatMap(record => Seq((record.getField(0).toString, record.getField(2).toString),
         (record.getField(1).toString, record.getField(2).toString)))
