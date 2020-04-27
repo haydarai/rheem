@@ -25,7 +25,7 @@ object Query1 {
       .withPlugin(Spark.graphPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("Jena")
+      .withJobName("Spartex: Query 1")
       .withUdfJarsOf(this.getClass)
 
     // Define triples definition
