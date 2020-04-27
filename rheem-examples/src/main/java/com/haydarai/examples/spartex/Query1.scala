@@ -1,4 +1,4 @@
-package com.haydarai.examples
+package com.haydarai.examples.spartex
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
@@ -12,7 +12,7 @@ import org.qcri.rheem.spark.Spark
 
 import scala.collection.JavaConverters._
 
-object SpartexQuery1Scala {
+object Query1 {
   def main(args: Array[String]) {
 
     // Get a plan builder.
@@ -128,3 +128,4 @@ object SpartexQuery1Scala {
     results.foreach(println)
   }
 }
+

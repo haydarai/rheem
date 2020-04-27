@@ -1,4 +1,4 @@
-package com.haydarai.examples
+package com.haydarai.examples.database
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.core.api.{Configuration, RheemContext}

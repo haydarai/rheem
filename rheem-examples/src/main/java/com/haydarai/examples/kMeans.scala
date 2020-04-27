@@ -69,7 +69,7 @@ object kMeans {
             nearestCentroidId = centroid.cluster
           }
         }
-        new TaggedPointCounter(point.x, point.y, nearestCentroidId, 1)
+        TaggedPointCounter(point.x, point.y, nearestCentroidId, 1)
       }
     }
 

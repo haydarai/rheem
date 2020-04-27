@@ -1,8 +1,7 @@
-package com.haydarai.examples;
+package com.haydarai.examples.rdf;
 
 import org.qcri.rheem.api.*;
 import org.qcri.rheem.basic.data.Record;
-import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.java.Java;

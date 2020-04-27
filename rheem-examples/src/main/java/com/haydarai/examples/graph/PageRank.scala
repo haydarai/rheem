@@ -1,4 +1,4 @@
-package com.haydarai.examples
+package com.haydarai.examples.graph
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
@@ -9,9 +9,10 @@ import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
 import org.qcri.rheem.basic.data.Tuple2
 
-object DegreeCentrality {
+object PageRank {
   def main(args: Array[String]) {
     val inputUrl = "file:" + args(0)
+    val iterations = 100
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -61,18 +62,18 @@ object DegreeCentrality {
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
       .withName("Set target vertex ID")
 
-    val degreeCentralities = idEdges.degreeCentrality()
+    val pageRanks = idEdges.pageRank(iterations)
 
-    val result = degreeCentralities
+    val result = pageRanks
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
-      .withName("Join degree with vertex IDs")
+      .withName("Join page ranks with vertex IDs")
 
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
-      .withName("Make degree centrality readable")
+      .withName("Make page ranks readable")
 
       .collect()
 
-    print(result.take(100))
+    print(result.take(10))
   }
 
   def parseTriple(raw: String): (String, String, String) = {
