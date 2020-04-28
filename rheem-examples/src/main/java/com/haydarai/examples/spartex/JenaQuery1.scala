@@ -12,7 +12,7 @@ import org.qcri.rheem.spark.Spark
 
 import scala.collection.JavaConverters._
 
-object Query1 {
+object JenaQuery1 {
   def main(args: Array[String]) {
 
     // Get a plan builder.
@@ -128,4 +128,3 @@ object Query1 {
     results.foreach(println)
   }
 }
-
