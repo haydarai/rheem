@@ -3,7 +3,7 @@ package com.haydarai.examples.spartex
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
 import org.qcri.rheem.basic.RheemBasics
-import org.qcri.rheem.basic.data.{Record, Tuple2, Tuple3}
+import org.qcri.rheem.basic.data.{Tuple2, Tuple3}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.jena.Jena
@@ -29,18 +29,15 @@ object SparkQuery1 {
       .withUdfJarsOf(this.getClass)
 
     // Define triples definition
-    val triples = List[Array[String]](Array("s", "p", "o"))
-
-//    val triples = List[Array[String]](
-//      Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c"),
-//      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c"),
-//      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p")
-//    )
+    val triples = List[Array[String]](
+      Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c"),
+      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c"),
+      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p")
+    )
 
     // Read RDF file and project selected variables
     val projectedRecords = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .flatMap(parseTriple)
       .map(record => (record.getField(3), record.getField(0), record.getField(2)))
       .withName("Project variables defined in triple definitions")
 
@@ -129,43 +126,5 @@ object SparkQuery1 {
 
     // Print query result
     results.foreach(println)
-  }
-
-  def parseTriple(raw: String): (Record) = {
-    // Find the first two spaces: Odds are that these are separate subject, predicated and object.
-    val firstSpacePos = raw.indexOf(' ')
-    val secondSpacePos = raw.indexOf(' ', firstSpacePos + 1)
-
-    // Find the end position.
-    var stopPos = raw.lastIndexOf('.')
-    while (raw.charAt(stopPos - 1) == ' ') stopPos -= 1
-
-    val s = raw.substring(0, firstSpacePos)
-    val p = raw.substring(firstSpacePos + 1, secondSpacePos)
-    val o = raw.substring(secondSpacePos + 1, stopPos)
-
-    if (p.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf")) {
-      new Record(s, )
-    }
-    new Record(s, p, o)
-  }
-
-  def parseTriple(record: Record) {
-    if (record.getField(1).toString.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf")) {
-      new Record(record.getField(0), record.getField(2))
-    } else if (record.getField(1).toString.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse")) {
-      new Record(record.getField(0), record.getField(2))
-    } else if ()
-//    // Find the first two spaces: Odds are that these are separate subject, predicated and object.
-//    val firstSpacePos = raw.indexOf(' ')
-//    val secondSpacePos = raw.indexOf(' ', firstSpacePos + 1)
-//
-//    // Find the end position.
-//    var stopPos = raw.lastIndexOf('.')
-//    while (raw.charAt(stopPos - 1) == ' ') stopPos -= 1
-//
-//    (raw.substring(0, firstSpacePos).stripPrefix("<").stripSuffix(">"),
-//      raw.substring(firstSpacePos + 1, secondSpacePos).stripPrefix("<").stripSuffix(">"),
-//      raw.substring(secondSpacePos + 1, stopPos).stripPrefix("<").stripSuffix(">"))
   }
 }
