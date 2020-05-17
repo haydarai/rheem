@@ -32,44 +32,44 @@ public class JenaJavaExample {
         triples.add(new String[]{"s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p"});
 
         // IDEAL IMPLEMENTATION
-//        ProjectRecordsDataQuantaBuilder sAndP = planBuilder
-//                .readModel(new JenaModelSource(args[0], triples))
-//                .projectRecords(new String[] {"s", "p"});
-//
-//        ProjectRecordsDataQuantaBuilder sAndC = planBuilder
-//                .readModel(new JenaModelSource(args[0], triples))
-//                .projectRecords(new String[] {"s", "c"});
-//
-//        JoinDataQuantaBuilder<Record, Record, Object> joinedRecords = sAndC
-//                .join(record -> record.getField(0), sAndP, record -> record.getField(0));
-//
-//        Collection<Tuple2<Record, Record>> records = joinedRecords.collect();
-//        for (Tuple2<Record, Record> record : records) {
-//            System.out.print(record.getField0().getField(0));
-//            System.out.print(record.getField0().getField(1));
-//            System.out.print(record.getField1().getField(0));
-//            System.out.println(record.getField1().getField(1));
-//        }
+        ProjectRecordsDataQuantaBuilder sAndP = planBuilder
+                .readModel(new JenaModelSource(args[0], triples))
+                .projectRecords(new String[] {"s", "p"});
+
+        ProjectRecordsDataQuantaBuilder sAndC = planBuilder
+                .readModel(new JenaModelSource(args[0], triples))
+                .projectRecords(new String[] {"s", "c"});
+
+        JoinDataQuantaBuilder<Record, Record, Object> joinedRecords = sAndC
+                .join(record -> record.getField(0), sAndP, record -> record.getField(0));
+
+        Collection<Tuple2<Record, Record>> records = joinedRecords.collect();
+        for (Tuple2<Record, Record> record : records) {
+            System.out.print(record.getField0().getField(0));
+            System.out.print(record.getField0().getField(1));
+            System.out.print(record.getField1().getField(0));
+            System.out.println(record.getField1().getField(1));
+        }
 
         // WORKING IMPLEMENTATION
-        MapDataQuantaBuilder<Record, Tuple2<String, String>> sAndP = planBuilder
-                .readModel(new JenaModelSource(args[0], triples))
-                .projectRecords(new String[]{"s", "p"})
-                .map(record -> new Tuple2<>(record.getField(0).toString(), record.getField(1).toString()));
-
-        MapDataQuantaBuilder<Record, Tuple2<String, String>> sAndC = planBuilder
-                .readModel(new JenaModelSource(args[0], triples))
-                .projectRecords(new String[]{"s", "c"})
-                .map(record -> new Tuple2<>(record.getField(0).toString(), record.getField(1).toString()));
-
-        JoinDataQuantaBuilder<Tuple2<String, String>, Tuple2<String, String>, String> joinedRecords = sAndP
-                .join(Tuple2::getField0, sAndC, Tuple2::getField0);
-        Collection<Tuple2<Tuple2<String, String>, Tuple2<String, String>>> records = joinedRecords.collect();
-        for (Tuple2<Tuple2<String, String>, Tuple2<String, String>> record : records) {
-            System.out.print(record.getField0().getField0() + ", ");
-            System.out.print(record.getField0().getField1() + ", ");
-            System.out.print(record.getField1().getField0() + ", ");
-            System.out.println(record.getField1().getField1());
-        }
+//        MapDataQuantaBuilder<Record, Tuple2<String, String>> sAndP = planBuilder
+//                .readModel(new JenaModelSource(args[0], triples))
+//                .projectRecords(new String[]{"s", "p"})
+//                .map(record -> new Tuple2<>(record.getField(0).toString(), record.getField(1).toString()));
+//
+//        MapDataQuantaBuilder<Record, Tuple2<String, String>> sAndC = planBuilder
+//                .readModel(new JenaModelSource(args[0], triples))
+//                .projectRecords(new String[]{"s", "c"})
+//                .map(record -> new Tuple2<>(record.getField(0).toString(), record.getField(1).toString()));
+//
+//        JoinDataQuantaBuilder<Tuple2<String, String>, Tuple2<String, String>, String> joinedRecords = sAndP
+//                .join(Tuple2::getField0, sAndC, Tuple2::getField0);
+//        Collection<Tuple2<Tuple2<String, String>, Tuple2<String, String>>> records = joinedRecords.collect();
+//        for (Tuple2<Tuple2<String, String>, Tuple2<String, String>> record : records) {
+//            System.out.print(record.getField0().getField0() + ", ");
+//            System.out.print(record.getField0().getField1() + ", ");
+//            System.out.print(record.getField1().getField0() + ", ");
+//            System.out.println(record.getField1().getField1());
+//        }
     }
 }

@@ -22,316 +22,319 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
-  * Trait/interface for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
-  * Java API for Rheem that compensates for lacking default and named arguments.
-  */
+ * Trait/interface for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
+ * Java API for Rheem that compensates for lacking default and named arguments.
+ */
 trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging {
 
   /**
-    * The type of the [[DataQuanta]] to be built.
-    */
+   * The type of the [[DataQuanta]] to be built.
+   */
   protected[api] def outputTypeTrap: TypeTrap
 
   /**
-    * Provide a [[JavaPlanBuilder]] to which this instance is associated.
-    */
+   * Provide a [[JavaPlanBuilder]] to which this instance is associated.
+   */
   protected[api] implicit def javaPlanBuilder: JavaPlanBuilder
 
   /**
-    * Set a name for the [[DataQuanta]] and its associated [[org.qcri.rheem.core.plan.rheemplan.Operator]]s.
-    *
-    * @param name the name
-    * @return this instance
-    */
+   * Set a name for the [[DataQuanta]] and its associated [[org.qcri.rheem.core.plan.rheemplan.Operator]]s.
+   *
+   * @param name the name
+   * @return this instance
+   */
   def withName(name: String): This
 
   /**
-    * Set an [[Experiment]] for the currently built [[org.qcri.rheem.core.api.Job]].
-    *
-    * @param experiment the [[Experiment]]
-    * @return this instance
-    */
+   * Set an [[Experiment]] for the currently built [[org.qcri.rheem.core.api.Job]].
+   *
+   * @param experiment the [[Experiment]]
+   * @return this instance
+   */
   def withExperiment(experiment: Experiment): This
 
   /**
-    * Explicitly set an output [[DataSetType]] for the currently built [[DataQuanta]]. Note that it is not
-    * always necessary to set it and that it can be inferred in some situations.
-    *
-    * @param outputType the output [[DataSetType]]
-    * @return this instance
-    */
+   * Explicitly set an output [[DataSetType]] for the currently built [[DataQuanta]]. Note that it is not
+   * always necessary to set it and that it can be inferred in some situations.
+   *
+   * @param outputType the output [[DataSetType]]
+   * @return this instance
+   */
   def withOutputType(outputType: DataSetType[Out]): This
 
   /**
-    * Explicitly set an output [[Class]] for the currently built [[DataQuanta]]. Note that it is not
-    * always necessary to set it and that it can be inferred in some situations.
-    *
-    * @param cls the output [[Class]]
-    * @return this instance
-    */
+   * Explicitly set an output [[Class]] for the currently built [[DataQuanta]]. Note that it is not
+   * always necessary to set it and that it can be inferred in some situations.
+   *
+   * @param cls the output [[Class]]
+   * @return this instance
+   */
   def withOutputClass(cls: Class[Out]): This
 
   /**
-    * Register a broadcast with the [[DataQuanta]] to be built
-    *
-    * @param sender        a [[DataQuantaBuilder]] constructing the broadcasted [[DataQuanta]]
-    * @param broadcastName the name of the broadcast
-    * @return this instance
-    */
+   * Register a broadcast with the [[DataQuanta]] to be built
+   *
+   * @param sender        a [[DataQuantaBuilder]] constructing the broadcasted [[DataQuanta]]
+   * @param broadcastName the name of the broadcast
+   * @return this instance
+   */
   def withBroadcast[Sender <: DataQuantaBuilder[_, _]](sender: Sender, broadcastName: String): This
 
   /**
-    * Set a [[CardinalityEstimator]] for the currently built [[DataQuanta]].
-    *
-    * @param cardinalityEstimator the [[CardinalityEstimator]]
-    * @return this instance
-    */
+   * Set a [[CardinalityEstimator]] for the currently built [[DataQuanta]].
+   *
+   * @param cardinalityEstimator the [[CardinalityEstimator]]
+   * @return this instance
+   */
   def withCardinalityEstimator(cardinalityEstimator: CardinalityEstimator): This
 
   /**
-    * Add a target [[Platform]] on which the currently built [[DataQuanta]] should be calculated. Can be invoked
-    * multiple times to set multiple possilbe target [[Platform]]s or not at all to impose no restrictions.
-    *
-    * @param platform the [[CardinalityEstimator]]
-    * @return this instance
-    */
+   * Add a target [[Platform]] on which the currently built [[DataQuanta]] should be calculated. Can be invoked
+   * multiple times to set multiple possilbe target [[Platform]]s or not at all to impose no restrictions.
+   *
+   * @param platform the [[CardinalityEstimator]]
+   * @return this instance
+   */
   def withTargetPlatform(platform: Platform): This
 
   /**
-    * Register the JAR file containing the given [[Class]] with the currently built [[org.qcri.rheem.core.api.Job]].
-    *
-    * @param cls the [[Class]]
-    * @return this instance
-    */
+   * Register the JAR file containing the given [[Class]] with the currently built [[org.qcri.rheem.core.api.Job]].
+   *
+   * @param cls the [[Class]]
+   * @return this instance
+   */
   def withUdfJarOf(cls: Class[_]): This
 
   /**
-    * Register a JAR file with the currently built [[org.qcri.rheem.core.api.Job]].
-    *
-    * @param path the path of the JAR file
-    * @return this instance
-    */
+   * Register a JAR file with the currently built [[org.qcri.rheem.core.api.Job]].
+   *
+   * @param path the path of the JAR file
+   * @return this instance
+   */
   def withUdfJar(path: String): This
 
   /**
-    * Provide a [[ClassTag]] for the constructed [[DataQuanta]].
-    *
-    * @return the [[ClassTag]]
-    */
+   * Provide a [[ClassTag]] for the constructed [[DataQuanta]].
+   *
+   * @return the [[ClassTag]]
+   */
   protected[api] implicit def classTag: ClassTag[Out] = ClassTag(outputTypeTrap.typeClass)
 
+  protected[api] implicit def recordClassTag: ClassTag[Out] = ClassTag(classOf[Record])
+
   /**
-    * Feed the built [[DataQuanta]] into a [[MapOperator]].
-    *
-    * @param udf the UDF for the [[MapOperator]]
-    * @return a [[MapDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[MapOperator]].
+   *
+   * @param udf the UDF for the [[MapOperator]]
+   * @return a [[MapDataQuantaBuilder]]
+   */
   def map[NewOut](udf: SerializableFunction[Out, NewOut]) = new MapDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[MapOperator]] with a [[org.qcri.rheem.basic.function.ProjectionDescriptor]].
-    *
-    * @param fieldNames field names for the [[org.qcri.rheem.basic.function.ProjectionDescriptor]]
-    * @return a [[MapDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[MapOperator]] with a [[org.qcri.rheem.basic.function.ProjectionDescriptor]].
+   *
+   * @param fieldNames field names for the [[org.qcri.rheem.basic.function.ProjectionDescriptor]]
+   * @return a [[MapDataQuantaBuilder]]
+   */
   def project[NewOut](fieldNames: Array[String]) = new ProjectionDataQuantaBuilder(this, fieldNames)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.FilterOperator]].
-    *
-    * @param udf filter UDF
-    * @return a [[FilterDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.FilterOperator]].
+   *
+   * @param udf filter UDF
+   * @return a [[FilterDataQuantaBuilder]]
+   */
   def filter(udf: SerializablePredicate[Out]) = new FilterDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.FlatMapOperator]].
-    *
-    * @param udf the UDF for the [[org.qcri.rheem.basic.operators.FlatMapOperator]]
-    * @return a [[FlatMapDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.FlatMapOperator]].
+   *
+   * @param udf the UDF for the [[org.qcri.rheem.basic.operators.FlatMapOperator]]
+   * @return a [[FlatMapDataQuantaBuilder]]
+   */
   def flatMap[NewOut](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]) = new FlatMapDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MapPartitionsOperator]].
-    *
-    * @param udf the UDF for the [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]
-    * @return a [[MapPartitionsDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MapPartitionsOperator]].
+   *
+   * @param udf the UDF for the [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]
+   * @return a [[MapPartitionsDataQuantaBuilder]]
+   */
   def mapPartitions[NewOut](udf: SerializableFunction[java.lang.Iterable[Out], java.lang.Iterable[NewOut]]) =
     new MapPartitionsDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
-    *
-    * @param sampleSize the absolute size of the sample
-    * @return a [[SampleDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
+   *
+   * @param sampleSize the absolute size of the sample
+   * @return a [[SampleDataQuantaBuilder]]
+   */
   def sample(sampleSize: Int): SampleDataQuantaBuilder[Out] = this.sample(new IntUnaryOperator {
     override def applyAsInt(operand: Int): Int = sampleSize
   })
 
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
-    *
-    * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
-    * @return a [[SampleDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
+   *
+   * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
+   * @return a [[SampleDataQuantaBuilder]]
+   */
   def sample(sampleSizeFunction: IntUnaryOperator) = new SampleDataQuantaBuilder[Out](this, sampleSizeFunction)
 
   /**
-    * Annotates a key to this instance.
-    * @param keyExtractor extracts the key from the data quanta
-    * @return a [[KeyedDataQuantaBuilder]]
-    */
+   * Annotates a key to this instance.
+   *
+   * @param keyExtractor extracts the key from the data quanta
+   * @return a [[KeyedDataQuantaBuilder]]
+   */
   def keyBy[Key](keyExtractor: SerializableFunction[Out, Key]) = new KeyedDataQuantaBuilder[Out, Key](this, keyExtractor)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[GlobalReduceOperator]].
-    *
-    * @param udf the UDF for the [[GlobalReduceOperator]]
-    * @return a [[GlobalReduceDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[GlobalReduceOperator]].
+   *
+   * @param udf the UDF for the [[GlobalReduceOperator]]
+   * @return a [[GlobalReduceDataQuantaBuilder]]
+   */
   def reduce(udf: SerializableBinaryOperator[Out]) = new GlobalReduceDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ReduceByOperator]].
-    *
-    * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
-    * @param udf    the UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
-    * @return a [[ReduceByDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ReduceByOperator]].
+   *
+   * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+   * @param udf    the UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+   * @return a [[ReduceByDataQuantaBuilder]]
+   */
   def reduceByKey[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
     new ReduceByDataQuantaBuilder(this, keyUdf, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]].
-    *
-    * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
-    * @return a [[GroupByDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]].
+   *
+   * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
+   * @return a [[GroupByDataQuantaBuilder]]
+   */
   def groupByKey[Key](keyUdf: SerializableFunction[Out, Key]) =
     new GroupByDataQuantaBuilder(this, keyUdf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]].
-    *
-    * @return a [[GlobalGroupDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]].
+   *
+   * @return a [[GlobalGroupDataQuantaBuilder]]
+   */
   def group() = new GlobalGroupDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[org.qcri.rheem.basic.operators.UnionAllOperator]].
-    *
-    * @param that the other [[DataQuantaBuilder]] to union with
-    * @return a [[UnionDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.qcri.rheem.basic.operators.UnionAllOperator]].
+   *
+   * @param that the other [[DataQuantaBuilder]] to union with
+   * @return a [[UnionDataQuantaBuilder]]
+   */
   def union(that: DataQuantaBuilder[_, Out]) = new UnionDataQuantaBuilder(this, that)
 
   /**
-    * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[org.qcri.rheem.basic.operators.IntersectOperator]].
-    *
-    * @param that the other [[DataQuantaBuilder]] to intersect with
-    * @return an [[IntersectDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.qcri.rheem.basic.operators.IntersectOperator]].
+   *
+   * @param that the other [[DataQuantaBuilder]] to intersect with
+   * @return an [[IntersectDataQuantaBuilder]]
+   */
   def intersect(that: DataQuantaBuilder[_, Out]) = new IntersectDataQuantaBuilder(this, that)
 
   /**
-    * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[org.qcri.rheem.basic.operators.JoinOperator]].
-    *
-    * @param thisKeyUdf the key extraction UDF for this instance
-    * @param that       the other [[DataQuantaBuilder]] to join with
-    * @param thatKeyUdf the key extraction UDF for `that` instance
-    * @return a [[JoinDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.qcri.rheem.basic.operators.JoinOperator]].
+   *
+   * @param thisKeyUdf the key extraction UDF for this instance
+   * @param that       the other [[DataQuantaBuilder]] to join with
+   * @param thatKeyUdf the key extraction UDF for `that` instance
+   * @return a [[JoinDataQuantaBuilder]]
+   */
   def join[ThatOut, Key](thisKeyUdf: SerializableFunction[Out, Key],
                          that: DataQuantaBuilder[_, ThatOut],
                          thatKeyUdf: SerializableFunction[ThatOut, Key]) =
     new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
   /**
-    * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[org.qcri.rheem.basic.operators.CoGroupOperator]].
-    *
-    * @param thisKeyUdf the key extraction UDF for this instance
-    * @param that       the other [[DataQuantaBuilder]] to join with
-    * @param thatKeyUdf the key extraction UDF for `that` instance
-    * @return a [[CoGroupDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.qcri.rheem.basic.operators.CoGroupOperator]].
+   *
+   * @param thisKeyUdf the key extraction UDF for this instance
+   * @param that       the other [[DataQuantaBuilder]] to join with
+   * @param thatKeyUdf the key extraction UDF for `that` instance
+   * @return a [[CoGroupDataQuantaBuilder]]
+   */
   def coGroup[ThatOut, Key](thisKeyUdf: SerializableFunction[Out, Key],
-                         that: DataQuantaBuilder[_, ThatOut],
-                         thatKeyUdf: SerializableFunction[ThatOut, Key]) =
+                            that: DataQuantaBuilder[_, ThatOut],
+                            thatKeyUdf: SerializableFunction[ThatOut, Key]) =
     new CoGroupDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
 
   /**
-    * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[org.qcri.rheem.basic.operators.SortOperator]].
-    *
-    * @param keyUdf the key extraction UDF for this instance
-    * @return a [[SortDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.qcri.rheem.basic.operators.SortOperator]].
+   *
+   * @param keyUdf the key extraction UDF for this instance
+   * @return a [[SortDataQuantaBuilder]]
+   */
   def sort[Key](keyUdf: SerializableFunction[Out, Key]) =
     new SortDataQuantaBuilder(this, keyUdf)
 
   /**
-    * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[org.qcri.rheem.basic.operators.CartesianOperator]].
-    *
-    * @return a [[CartesianDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] of this and the given instance into a
+   * [[org.qcri.rheem.basic.operators.CartesianOperator]].
+   *
+   * @return a [[CartesianDataQuantaBuilder]]
+   */
   def cartesian[ThatOut](that: DataQuantaBuilder[_, ThatOut]) = new CartesianDataQuantaBuilder(this, that)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ZipWithIdOperator]].
-    *
-    * @return a [[ZipWithIdDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.ZipWithIdOperator]]'s output
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ZipWithIdOperator]].
+   *
+   * @return a [[ZipWithIdDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.ZipWithIdOperator]]'s output
+   */
   def zipWithId = new ZipWithIdDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.DistinctOperator]].
-    *
-    * @return a [[DistinctDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.DistinctOperator]]'s output
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.DistinctOperator]].
+   *
+   * @return a [[DistinctDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.DistinctOperator]]'s output
+   */
   def distinct = new DistinctDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.CountOperator]].
-    *
-    * @return a [[CountDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.CountOperator]]'s output
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.CountOperator]].
+   *
+   * @return a [[CountDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.CountOperator]]'s output
+   */
   def count = new CountDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.DoWhileOperator]].
-    *
-    * @return a [[DoWhileDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.DoWhileOperator]].
+   *
+   * @return a [[DoWhileDataQuantaBuilder]]
+   */
   def doWhile[Conv](conditionUdf: SerializablePredicate[JavaCollection[Conv]],
                     bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
     new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.RepeatOperator]].
-    *
-    * @return a [[DoWhileDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.RepeatOperator]].
+   *
+   * @return a [[DoWhileDataQuantaBuilder]]
+   */
   def repeat(numRepetitions: Int, bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Out]]) =
     new RepeatDataQuantaBuilder(this, numRepetitions, bodyBuilder)
 
   /**
-    * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[org.qcri.rheem.core.plan.rheemplan.InputSlot]]
-    * and a single [[OutputSlot]].
-    *
-    * @param operator the custom [[Operator]]
-    * @tparam T the type of the output [[DataQuanta]]
-    * @return a [[CustomOperatorDataQuantaBuilder]]
-    */
+   * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[org.qcri.rheem.core.plan.rheemplan.InputSlot]]
+   * and a single [[OutputSlot]].
+   *
+   * @param operator the custom [[Operator]]
+   * @tparam T the type of the output [[DataQuanta]]
+   * @return a [[CustomOperatorDataQuantaBuilder]]
+   */
   def customOperator[T](operator: Operator) = {
     assert(operator.getNumInputs == 1, "customOperator(...) only allows for operators with a single input.")
     assert(operator.getNumOutputs == 1, "customOperator(...) only allows for operators with a single output.")
@@ -339,43 +342,43 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   }
 
   /**
-    * Feed the built [[DataQuanta]] into a [[LocalCallbackSink]] that collects all data quanta locally. This triggers
-    * execution of the constructed [[RheemPlan]].
-    *
-    * @return the collected data quanta
-    */
+   * Feed the built [[DataQuanta]] into a [[LocalCallbackSink]] that collects all data quanta locally. This triggers
+   * execution of the constructed [[RheemPlan]].
+   *
+   * @return the collected data quanta
+   */
   def collect(): JavaCollection[Out] = {
     import scala.collection.JavaConversions._
     this.dataQuanta().collect()
   }
 
   /**
-    * Feed the built [[DataQuanta]] into a [[JavaFunction]] that runs locally. This triggers
-    * execution of the constructed [[RheemPlan]].
-    *
-    * @param f the [[JavaFunction]]
-    * @return the collected data quanta
-    */
+   * Feed the built [[DataQuanta]] into a [[JavaFunction]] that runs locally. This triggers
+   * execution of the constructed [[RheemPlan]].
+   *
+   * @param f the [[JavaFunction]]
+   * @return the collected data quanta
+   */
   def forEach(f: Consumer[Out]): Unit = this.dataQuanta().foreachJava(f)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
-    * execution of the constructed [[RheemPlan]].
-    *
-    * @param url     the URL of the file to be written
-    * @param jobName optional name for the [[RheemPlan]]
-    * @return the collected data quanta
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
+   * execution of the constructed [[RheemPlan]].
+   *
+   * @param url     the URL of the file to be written
+   * @param jobName optional name for the [[RheemPlan]]
+   * @return the collected data quanta
+   */
   def writeTextFile(url: String, formatterUdf: SerializableFunction[Out, String], jobName: String): Unit =
     this.writeTextFile(url, formatterUdf, jobName, null)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
-    * execution of the constructed [[RheemPlan]].
-    *
-    * @param url the URL of the file to be written
-    * @return the collected data quanta
-    */
+   * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
+   * execution of the constructed [[RheemPlan]].
+   *
+   * @param url the URL of the file to be written
+   * @return the collected data quanta
+   */
   def writeTextFile(url: String,
                     formatterUdf: SerializableFunction[Out, String],
                     jobName: String,
@@ -385,12 +388,12 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   }
 
   /**
-    * Enriches the set of operations to [[Record]]-based ones. This instances must deal with data quanta of
-    * type [[Record]], though. Because of Java's type erasure, we need to leave it up to you whether this
-    * operation is applicable.
-    *
-    * @return a [[RecordDataQuantaBuilder]]
-    */
+   * Enriches the set of operations to [[Record]]-based ones. This instances must deal with data quanta of
+   * type [[Record]], though. Because of Java's type erasure, we need to leave it up to you whether this
+   * operation is applicable.
+   *
+   * @return a [[RecordDataQuantaBuilder]]
+   */
   def asRecords[T <: RecordDataQuantaBuilder[T]]: RecordDataQuantaBuilder[T] = {
     this match {
       case records: RecordDataQuantaBuilder[_] => records.asInstanceOf[RecordDataQuantaBuilder[T]]
@@ -399,12 +402,12 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   }
 
   /**
-    * Enriches the set of operations to [[Edge]]-based ones. This instances must deal with data quanta of
-    * type [[Edge]], though. Because of Java's type erasure, we need to leave it up to you whether this
-    * operation is applicable.
-    *
-    * @return a [[EdgeDataQuantaBuilder]]
-    */
+   * Enriches the set of operations to [[Edge]]-based ones. This instances must deal with data quanta of
+   * type [[Edge]], though. Because of Java's type erasure, we need to leave it up to you whether this
+   * operation is applicable.
+   *
+   * @return a [[EdgeDataQuantaBuilder]]
+   */
   def asEdges[T <: EdgeDataQuantaBuilder[T]]: EdgeDataQuantaBuilder[T] = {
     this match {
       case edges: RecordDataQuantaBuilder[_] => edges.asInstanceOf[EdgeDataQuantaBuilder[T]]
@@ -413,66 +416,66 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   }
 
   /**
-    * Get or create the [[DataQuanta]] built by this instance.
-    *
-    * @return the [[DataQuanta]]
-    */
+   * Get or create the [[DataQuanta]] built by this instance.
+   *
+   * @return the [[DataQuanta]]
+   */
   protected[api] def dataQuanta(): DataQuanta[Out]
 
 }
 
 /**
-  * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
-  * Java API for Rheem that compensates for lacking default and named arguments.
-  */
+ * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
+ * Java API for Rheem that compensates for lacking default and named arguments.
+ */
 abstract class BasicDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implicit _javaPlanBuilder: JavaPlanBuilder)
   extends Logging with DataQuantaBuilder[This, Out] {
 
   /**
-    * Lazy-initialized. The [[DataQuanta]] product of this builder.
-    */
+   * Lazy-initialized. The [[DataQuanta]] product of this builder.
+   */
   private var result: DataQuanta[Out] = _
 
   /**
-    * A name for the [[DataQuanta]] to be built.
-    */
+   * A name for the [[DataQuanta]] to be built.
+   */
   private var name: String = _
 
   /**
-    * An [[Experiment]] for the [[DataQuanta]] to be built.
-    */
+   * An [[Experiment]] for the [[DataQuanta]] to be built.
+   */
   private var experiment: Experiment = _
 
   /**
-    * Broadcasts for the [[DataQuanta]] to be built.
-    */
+   * Broadcasts for the [[DataQuanta]] to be built.
+   */
   private val broadcasts: ListBuffer[(String, DataQuantaBuilder[_, _])] = ListBuffer()
 
   /**
-    * [[CardinalityEstimator]] for the [[DataQuanta]] to be built.
-    */
+   * [[CardinalityEstimator]] for the [[DataQuanta]] to be built.
+   */
   private var cardinalityEstimator: CardinalityEstimator = _
 
   /**
-    * Target [[Platform]]s for the [[DataQuanta]] to be built.
-    */
+   * Target [[Platform]]s for the [[DataQuanta]] to be built.
+   */
   private val targetPlatforms: ListBuffer[Platform] = ListBuffer()
 
   /**
-    * Paths of UDF JAR files for the [[DataQuanta]] to be built.
-    */
+   * Paths of UDF JAR files for the [[DataQuanta]] to be built.
+   */
   private val udfJars: ListBuffer[String] = ListBuffer()
 
   /**
-    * The type of the [[DataQuanta]] to be built.
-    */
+   * The type of the [[DataQuanta]] to be built.
+   */
   protected[api] val outputTypeTrap = getOutputTypeTrap
 
   /**
-    * Retrieve an intialization value for [[outputTypeTrap]].
-    *
-    * @return the [[TypeTrap]]
-    */
+   * Retrieve an intialization value for [[outputTypeTrap]].
+   *
+   * @return the [[TypeTrap]]
+   */
   protected def getOutputTypeTrap = new TypeTrap
 
   override protected[api] implicit def javaPlanBuilder = _javaPlanBuilder
@@ -534,20 +537,20 @@ abstract class BasicDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](im
   }
 
   /**
-    * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
-    *
-    * @return the created and partially configured [[DataQuanta]]
-    */
+   * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
+   *
+   * @return the created and partially configured [[DataQuanta]]
+   */
   protected def build: DataQuanta[Out]
 
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.core.plan.rheemplan.UnarySource]]s.
-  *
-  * @param source          the [[UnarySource]]
-  * @param javaPlanBuilder the [[JavaPlanBuilder]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.core.plan.rheemplan.UnarySource]]s.
+ *
+ * @param source          the [[UnarySource]]
+ * @param javaPlanBuilder the [[JavaPlanBuilder]]
+ */
 class UnarySourceDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](source: UnarySource[Out])
                                                                           (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[This, Out] {
@@ -557,11 +560,11 @@ class UnarySourceDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](sourc
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CollectionSource]]s.
-  *
-  * @param collection      the [[JavaCollection]] to be loaded
-  * @param javaPlanBuilder the [[JavaPlanBuilder]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CollectionSource]]s.
+ *
+ * @param collection      the [[JavaCollection]] to be loaded
+ * @param javaPlanBuilder the [[JavaPlanBuilder]]
+ */
 class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[LoadCollectionDataQuantaBuilder[Out], Out] {
 
@@ -580,11 +583,11 @@ class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(impl
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[MapOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param udf             UDF for the [[MapOperator]]
+ */
 class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                     udf: SerializableFunction[In, Out])
                                    (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -607,11 +610,11 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
   }
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
@@ -622,12 +625,12 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s with
-  * [[org.qcri.rheem.basic.function.ProjectionDescriptor]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param fieldNames      field names for the [[org.qcri.rheem.basic.function.ProjectionDescriptor]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s with
+ * [[org.qcri.rheem.basic.function.ProjectionDescriptor]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param fieldNames      field names for the [[org.qcri.rheem.basic.function.ProjectionDescriptor]]
+ */
 class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In], fieldNames: Array[String])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[ProjectionDataQuantaBuilder[In, Out], Out] {
@@ -638,11 +641,11 @@ class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_,
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[MapOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param udf             UDF for the [[MapOperator]]
+ */
 class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: SerializablePredicate[T])
                                 (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[FilterDataQuantaBuilder[T], T] {
@@ -670,35 +673,35 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
 
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
   /**
-    * Add a SQL implementation of the UDF.
-    *
-    * @param sqlUdf a SQL condition that can be plugged into a `WHERE` clause
-    * @return this instance
-    */
+   * Add a SQL implementation of the UDF.
+   *
+   * @param sqlUdf a SQL condition that can be plugged into a `WHERE` clause
+   * @return this instance
+   */
   def withSqlUdf(sqlUdf: String) = {
     this.sqlUdf = sqlUdf
     this
   }
 
   /**
-    * Specify the selectivity of the UDF.
-    *
-    * @param lowerEstimate the lower bound of the expected selectivity
-    * @param upperEstimate the upper bound of the expected selectivity
-    * @param confidence    the probability of the actual selectivity being within these bounds
-    * @return this instance
-    */
+   * Specify the selectivity of the UDF.
+   *
+   * @param lowerEstimate the lower bound of the expected selectivity
+   * @param upperEstimate the upper bound of the expected selectivity
+   * @param confidence    the probability of the actual selectivity being within these bounds
+   * @return this instance
+   */
   def withSelectivity(lowerEstimate: Double, upperEstimate: Double, confidence: Double) = {
     this.selectivity = new ProbabilisticDoubleInterval(lowerEstimate, upperEstimate, confidence)
     this
@@ -712,11 +715,11 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SortOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param keyUdf             UDF for the [[org.qcri.rheem.basic.operators.SortOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SortOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param keyUdf          UDF for the [[org.qcri.rheem.basic.operators.SortOperator]]
+ */
 class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
                                     keyUdf: SerializableFunction[T, Key])
                                    (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -753,22 +756,22 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
 
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
+   *
+   * @param udfCpuEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThisKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
     this.keyUdfCpuEstimator = udfCpuEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
+   *
+   * @param udfRamEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThisKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
     this.keyUdfRamEstimator = udfRamEstimator
     this
@@ -781,11 +784,11 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.FlatMapOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.FlatMapOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.FlatMapOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param udf             UDF for the [[org.qcri.rheem.basic.operators.FlatMapOperator]]
+ */
 class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                         udf: SerializableFunction[In, java.lang.Iterable[Out]])
                                        (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -808,31 +811,31 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
     val originalClass = ReflectionUtils.getWrapperClass(parameters.get("Output"), 0)
     originalClass match {
       case cls: Class[Out] => {
-        this.outputTypeTrap.dataSetType= DataSetType.createDefault(cls)
+        this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
       }
       case _ => logger.warn("Could not infer types from {}.", udf)
     }
   }
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
   /**
-    * Specify the selectivity of the UDF.
-    *
-    * @param lowerEstimate the lower bound of the expected selectivity
-    * @param upperEstimate the upper bound of the expected selectivity
-    * @param confidence    the probability of the actual selectivity being within these bounds
-    * @return this instance
-    */
+   * Specify the selectivity of the UDF.
+   *
+   * @param lowerEstimate the lower bound of the expected selectivity
+   * @param upperEstimate the upper bound of the expected selectivity
+   * @param confidence    the probability of the actual selectivity being within these bounds
+   * @return this instance
+   */
   def withSelectivity(lowerEstimate: Double, upperEstimate: Double, confidence: Double) = {
     this.selectivity = new ProbabilisticDoubleInterval(lowerEstimate, upperEstimate, confidence)
     this
@@ -845,11 +848,11 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param udf             UDF for the [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]
+ */
 class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                               udf: SerializableFunction[java.lang.Iterable[In], java.lang.Iterable[Out]])
                                              (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -873,7 +876,7 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
     val originalClass = ReflectionUtils.getWrapperClass(parameters.get("Output"), 0)
     originalClass match {
       case cls: Class[Out] => {
-        this.outputTypeTrap.dataSetType= DataSetType.createDefault(cls)
+        this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
       }
       case _ => logger.warn("Could not infer types from {}.", udf)
     }
@@ -881,24 +884,24 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
 
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
   /**
-    * Specify the selectivity of the UDF.
-    *
-    * @param lowerEstimate the lower bound of the expected selectivity
-    * @param upperEstimate the upper bound of the expected selectivity
-    * @param confidence    the probability of the actual selectivity being within these bounds
-    * @return this instance
-    */
+   * Specify the selectivity of the UDF.
+   *
+   * @param lowerEstimate the lower bound of the expected selectivity
+   * @param upperEstimate the upper bound of the expected selectivity
+   * @param confidence    the probability of the actual selectivity being within these bounds
+   * @return this instance
+   */
   def withSelectivity(lowerEstimate: Double, upperEstimate: Double, confidence: Double) = {
     this.selectivity = new ProbabilisticDoubleInterval(lowerEstimate, upperEstimate, confidence)
     this
@@ -911,61 +914,61 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SampleOperator]]s.
-  *
-  * @param inputDataQuanta    [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SampleOperator]]s.
+ *
+ * @param inputDataQuanta    [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
+ */
 class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampleSizeFunction: IntUnaryOperator)
                                 (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[SampleDataQuantaBuilder[T], T] {
 
   /**
-    * Size of the dataset to be sampled.
-    */
+   * Size of the dataset to be sampled.
+   */
   private var datasetSize = SampleOperator.UNKNOWN_DATASET_SIZE
 
   /**
-    * Sampling method to use.
-    */
+   * Sampling method to use.
+   */
   private var sampleMethod = SampleOperator.Methods.ANY
 
   /**
-    * Seed to use.
-    */
+   * Seed to use.
+   */
   private var seed: Option[Long] = None
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
 
   /**
-    * Set the size of the dataset that should be sampled.
-    *
-    * @param datasetSize the size of the dataset
-    * @return this instance
-    */
+   * Set the size of the dataset that should be sampled.
+   *
+   * @param datasetSize the size of the dataset
+   * @return this instance
+   */
   def withDatasetSize(datasetSize: Long) = {
     this.datasetSize = datasetSize
     this
   }
 
   /**
-    * Set the sample method to be used.
-    *
-    * @param sampleMethod the sample method
-    * @return this instance
-    */
+   * Set the sample method to be used.
+   *
+   * @param sampleMethod the sample method
+   * @return this instance
+   */
   def withSampleMethod(sampleMethod: SampleOperator.Methods) = {
     this.sampleMethod = sampleMethod
     this
   }
 
   /**
-    * Set the sample method to be used.
-    *
-    * @param seed
-    * @return this instance
-    */
+   * Set the sample method to be used.
+   *
+   * @param seed
+   * @return this instance
+   */
   def withSeed(seed: Long) = {
     this.seed = Some(seed)
     this
@@ -977,12 +980,12 @@ class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampl
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ReduceByOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
-  * @param keyUdf          key extraction UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ReduceByOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param udf             UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+ * @param keyUdf          key extraction UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+ */
 class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
                                         keyUdf: SerializableFunction[T, Key],
                                         udf: SerializableBinaryOperator[T])
@@ -1026,11 +1029,11 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
   }
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
@@ -1042,11 +1045,11 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param keyUdf          key extraction UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param keyUdf          key extraction UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
+ */
 class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T], keyUdf: SerializableFunction[T, Key])
                                       (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[GroupByDataQuantaBuilder[Key, T], java.lang.Iterable[T]] {
@@ -1074,11 +1077,11 @@ class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
   }
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withKeyUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.keyUdfLoadProfileEstimator = udfLoadProfileEstimator
     this
@@ -1090,10 +1093,10 @@ class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ */
 class GlobalGroupDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])(implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[GlobalGroupDataQuantaBuilder[T], java.lang.Iterable[T]] {
 
@@ -1103,11 +1106,11 @@ class GlobalGroupDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])(
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param udf             UDF for the [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]
+ */
 class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
                                        udf: SerializableBinaryOperator[T])
                                       (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -1129,11 +1132,11 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   }
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
@@ -1144,11 +1147,11 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.UnionAllOperator]]s.
-  *
-  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.UnionAllOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ */
 class UnionDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
                                 inputDataQuanta1: DataQuantaBuilder[_, T])
                                (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -1161,11 +1164,11 @@ class UnionDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.IntersectOperator]]s.
-  *
-  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.IntersectOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ */
 class IntersectDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
                                     inputDataQuanta1: DataQuantaBuilder[_, T])
                                    (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -1178,13 +1181,13 @@ class IntersectDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.JoinOperator]]s.
-  *
-  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param keyUdf0          first key extraction UDF for the [[org.qcri.rheem.basic.operators.JoinOperator]]
-  * @param keyUdf1          first key extraction UDF for the [[org.qcri.rheem.basic.operators.JoinOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.JoinOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param keyUdf0          first key extraction UDF for the [[org.qcri.rheem.basic.operators.JoinOperator]]
+ * @param keyUdf1          first key extraction UDF for the [[org.qcri.rheem.basic.operators.JoinOperator]]
+ */
 class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_, In0],
                                            inputDataQuanta1: DataQuantaBuilder[_, In1],
                                            keyUdf0: SerializableFunction[In0, Key],
@@ -1242,78 +1245,86 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
+   *
+   * @param udfCpuEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThisKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
     this.keyUdf0CpuEstimator = udfCpuEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
+   *
+   * @param udfRamEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThisKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
     this.keyUdf0RamEstimator = udfRamEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the second key extraction UDF. Currently effectless.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the CPU load of the second key extraction UDF. Currently effectless.
+   *
+   * @param udfCpuEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThatKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
     this.keyUdf1CpuEstimator = udfCpuEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the RAM load of the second key extraction UDF. Currently effectless.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the RAM load of the second key extraction UDF. Currently effectless.
+   *
+   * @param udfRamEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThatKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
     this.keyUdf1RamEstimator = udfRamEstimator
     this
   }
 
   /**
-    * Assemble the joined elements to new elements.
-    *
-    * @param udf produces a joined element from two joinable elements
-    * @return a new [[DataQuantaBuilder]] representing the assembled join product
-    */
+   * Assemble the joined elements to new elements.
+   *
+   * @param udf produces a joined element from two joinable elements
+   * @return a new [[DataQuantaBuilder]] representing the assembled join product
+   */
   def assemble[NewOut](udf: SerializableBiFunction[In0, In1, NewOut]) =
     this.map(new SerializableFunction[RT2[In0, In1], NewOut] {
       override def apply(joinTuple: RT2[In0, In1]): NewOut = udf.apply(joinTuple.field0, joinTuple.field1)
     })
 
-  override protected def build =
-    inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
-
+  override protected def build = {
+    // Hacky way to check if inputDataQuanta1 is Record or not
+    // TODO: fix the reflection issue
+    val inputDataQuanta1TypeClass = inputDataQuanta1.dataQuanta().output.getType.getDataUnitType.getTypeClass
+    val isRecord = inputDataQuanta1TypeClass.getName == classOf[Record].getName
+    if (isRecord) {
+      inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.recordClassTag, this.keyTag)
+    } else {
+      inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
+    }
+  }
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CoGroupOperator]]s.
-  *
-  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param keyUdf0          first key extraction UDF for the [[org.qcri.rheem.basic.operators.CoGroupOperator]]
-  * @param keyUdf1          first key extraction UDF for the [[org.qcri.rheem.basic.operators.CoGroupOperator]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CoGroupOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param keyUdf0          first key extraction UDF for the [[org.qcri.rheem.basic.operators.CoGroupOperator]]
+ * @param keyUdf1          first key extraction UDF for the [[org.qcri.rheem.basic.operators.CoGroupOperator]]
+ */
 class CoGroupDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_, In0],
-                                           inputDataQuanta1: DataQuantaBuilder[_, In1],
-                                           keyUdf0: SerializableFunction[In0, Key],
-                                           keyUdf1: SerializableFunction[In1, Key])
-                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+                                              inputDataQuanta1: DataQuantaBuilder[_, In1],
+                                              keyUdf0: SerializableFunction[In0, Key],
+                                              keyUdf1: SerializableFunction[In1, Key])
+                                             (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[CoGroupDataQuantaBuilder[In0, In1, Key], RT2[java.lang.Iterable[In0], java.lang.Iterable[In1]]] {
 
   /** [[ClassTag]] or surrogate of [[Key]] */
@@ -1366,44 +1377,44 @@ class CoGroupDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilde
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
+   *
+   * @param udfCpuEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThisKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
     this.keyUdf0CpuEstimator = udfCpuEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
+   *
+   * @param udfRamEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThisKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
     this.keyUdf0RamEstimator = udfRamEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the second key extraction UDF. Currently effectless.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the CPU load of the second key extraction UDF. Currently effectless.
+   *
+   * @param udfCpuEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThatKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
     this.keyUdf1CpuEstimator = udfCpuEstimator
     this
   }
 
   /**
-    * Set a [[LoadEstimator]] for the RAM load of the second key extraction UDF. Currently effectless.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadEstimator]] for the RAM load of the second key extraction UDF. Currently effectless.
+   *
+   * @param udfRamEstimator the [[LoadEstimator]]
+   * @return this instance
+   */
   def withThatKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
     this.keyUdf1RamEstimator = udfRamEstimator
     this
@@ -1416,11 +1427,11 @@ class CoGroupDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilde
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CartesianOperator]]s.
-  *
-  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CartesianOperator]]s.
+ *
+ * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+ */
 class CartesianDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_, In0],
                                            inputDataQuanta1: DataQuantaBuilder[_, In1])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -1437,10 +1448,10 @@ class CartesianDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ZipWithIdOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ZipWithIdOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ */
 class ZipWithIdDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
                                    (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[ZipWithIdDataQuantaBuilder[T], RT2[java.lang.Long, T]] {
@@ -1455,10 +1466,10 @@ class ZipWithIdDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DistinctOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DistinctOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ */
 class DistinctDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
                                   (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[DistinctDataQuantaBuilder[T], T] {
@@ -1471,10 +1482,10 @@ class DistinctDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CountOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CountOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ */
 class CountDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
                                (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[CountDataQuantaBuilder[T], java.lang.Long] {
@@ -1490,15 +1501,15 @@ class CountDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for any [[org.qcri.rheem.core.plan.rheemplan.Operator]]s. Does not offer
-  * any convenience methods, though.
-  *
-  * @param operator        the custom [[org.qcri.rheem.core.plan.rheemplan.Operator]]
-  * @param outputIndex     index of the [[OutputSlot]] addressed by the new instance
-  * @param buildCache      a [[DataQuantaBuilderCache]] that must be shared across instances addressing the same [[Operator]]
-  * @param inputDataQuanta [[DataQuantaBuilder]]s for the input [[DataQuanta]]
-  * @param javaPlanBuilder the [[JavaPlanBuilder]] used to construct the current [[RheemPlan]]
-  */
+ * [[DataQuantaBuilder]] implementation for any [[org.qcri.rheem.core.plan.rheemplan.Operator]]s. Does not offer
+ * any convenience methods, though.
+ *
+ * @param operator        the custom [[org.qcri.rheem.core.plan.rheemplan.Operator]]
+ * @param outputIndex     index of the [[OutputSlot]] addressed by the new instance
+ * @param buildCache      a [[DataQuantaBuilderCache]] that must be shared across instances addressing the same [[Operator]]
+ * @param inputDataQuanta [[DataQuantaBuilder]]s for the input [[DataQuanta]]
+ * @param javaPlanBuilder the [[JavaPlanBuilder]] used to construct the current [[RheemPlan]]
+ */
 class CustomOperatorDataQuantaBuilder[T](operator: Operator,
                                          outputIndex: Int,
                                          buildCache: DataQuantaBuilderCache,
@@ -1518,12 +1529,12 @@ class CustomOperatorDataQuantaBuilder[T](operator: Operator,
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DoWhileOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param conditionUdf    UDF for the looping condition
-  * @param bodyBuilder     builds the loop body
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DoWhileOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param conditionUdf    UDF for the looping condition
+ * @param bodyBuilder     builds the loop body
+ */
 class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_, T],
                                            conditionUdf: SerializablePredicate[JavaCollection[ConvOut]],
                                            bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], RheemTuple[DataQuantaBuilder[_, T], DataQuantaBuilder[_, ConvOut]]])
@@ -1545,46 +1556,46 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
   private var numExpectedIterations = 20
 
   /**
-    * Set a [[LoadProfileEstimator]] for the load of the UDF.
-    *
-    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
-    * @return this instance
-    */
+   * Set a [[LoadProfileEstimator]] for the load of the UDF.
+   *
+   * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
+   * @return this instance
+   */
   def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
     this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
   /**
-    * Explicitly set the [[DataSetType]] for the condition [[DataQuanta]]. Note that it is not
-    * always necessary to set it and that it can be inferred in some situations.
-    *
-    * @param outputType the output [[DataSetType]]
-    * @return this instance
-    */
+   * Explicitly set the [[DataSetType]] for the condition [[DataQuanta]]. Note that it is not
+   * always necessary to set it and that it can be inferred in some situations.
+   *
+   * @param outputType the output [[DataSetType]]
+   * @return this instance
+   */
   def withConditionType(outputType: DataSetType[ConvOut]) = {
     this.convOutClassTag = ClassTag(outputType.getDataUnitType.getTypeClass)
     this
   }
 
   /**
-    * Explicitly set the [[Class]] for the condition [[DataQuanta]]. Note that it is not
-    * always necessary to set it and that it can be inferred in some situations.
-    *
-    * @param cls the output [[Class]]
-    * @return this instance
-    */
+   * Explicitly set the [[Class]] for the condition [[DataQuanta]]. Note that it is not
+   * always necessary to set it and that it can be inferred in some situations.
+   *
+   * @param cls the output [[Class]]
+   * @return this instance
+   */
   def withConditionClass(cls: Class[ConvOut]) = {
     this.convOutClassTag = ClassTag(cls)
     this
   }
 
   /**
-    * Set the number of expected iterations for the built [[org.qcri.rheem.basic.operators.DoWhileOperator]].
-    *
-    * @param numExpectedIterations the expected number of iterations
-    * @return this instance
-    */
+   * Set the number of expected iterations for the built [[org.qcri.rheem.basic.operators.DoWhileOperator]].
+   *
+   * @param numExpectedIterations the expected number of iterations
+   * @return this instance
+   */
   def withExpectedNumberOfIterations(numExpectedIterations: Int) = {
     this.numExpectedIterations = numExpectedIterations
     this
@@ -1597,10 +1608,10 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
 
 
   /**
-    * Create a loop body builder that is based on [[DataQuanta]].
-    *
-    * @return the loop body builder
-    */
+   * Create a loop body builder that is based on [[DataQuanta]].
+   *
+   * @return the loop body builder
+   */
   private def dataQuantaBodyBuilder =
     new JavaFunction[DataQuanta[T], RheemTuple[DataQuanta[T], DataQuanta[ConvOut]]] {
       override def apply(loopStart: DataQuanta[T]) = {
@@ -1613,12 +1624,12 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DoWhileOperator]]s.
-  *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param numRepetitions  number of repetitions of the loop
-  * @param bodyBuilder     builds the loop body
-  */
+ * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DoWhileOperator]]s.
+ *
+ * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+ * @param numRepetitions  number of repetitions of the loop
+ * @param bodyBuilder     builds the loop body
+ */
 class RepeatDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
                                  numRepetitions: Int,
                                  bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], DataQuantaBuilder[_, T]])
@@ -1639,10 +1650,10 @@ class RepeatDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
 }
 
 /**
-  * Wraps [[DataQuanta]] and exposes them as [[DataQuantaBuilder]], i.e., this is an adapter.
-  *
-  * @param _dataQuanta the wrapped [[DataQuanta]]
-  */
+ * Wraps [[DataQuanta]] and exposes them as [[DataQuantaBuilder]], i.e., this is an adapter.
+ *
+ * @param _dataQuanta the wrapped [[DataQuanta]]
+ */
 class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[FakeDataQuantaBuilder[T], T] {
 
@@ -1651,35 +1662,35 @@ class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuil
   override def dataQuanta() = _dataQuanta
 
   /**
-    * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
-    *
-    * @return the created and partially configured [[DataQuanta]]
-    */
+   * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
+   *
+   * @return the created and partially configured [[DataQuanta]]
+   */
   override protected def build: DataQuanta[T] = _dataQuanta
 }
 
 /**
-  * This is not an actual [[DataQuantaBuilder]] but rather decorates such a [[DataQuantaBuilder]] with a key.
-  */
+ * This is not an actual [[DataQuantaBuilder]] but rather decorates such a [[DataQuantaBuilder]] with a key.
+ */
 class KeyedDataQuantaBuilder[Out, Key](private val dataQuantaBuilder: DataQuantaBuilder[_, Out],
                                        private val keyExtractor: SerializableFunction[Out, Key])
                                       (implicit javaPlanBuilder: JavaPlanBuilder) {
 
   /**
-    * Joins this instance with the given one via their keys.
-    *
-    * @param that the instance to join with
-    * @return a [[DataQuantaBuilder]] representing the join product
-    */
+   * Joins this instance with the given one via their keys.
+   *
+   * @param that the instance to join with
+   * @return a [[DataQuantaBuilder]] representing the join product
+   */
   def join[ThatOut](that: KeyedDataQuantaBuilder[ThatOut, Key]) =
     dataQuantaBuilder.join(this.keyExtractor, that.dataQuantaBuilder, that.keyExtractor)
 
   /**
-    * Co-groups this instance with the given one via their keys.
-    *
-    * @param that the instance to join with
-    * @return a [[DataQuantaBuilder]] representing the co-group product
-    */
+   * Co-groups this instance with the given one via their keys.
+   *
+   * @param that the instance to join with
+   * @return a [[DataQuantaBuilder]] representing the co-group product
+   */
   def coGroup[ThatOut](that: KeyedDataQuantaBuilder[ThatOut, Key]) =
     dataQuantaBuilder.coGroup(this.keyExtractor, that.dataQuantaBuilder, that.keyExtractor)
 
