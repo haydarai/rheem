@@ -53,6 +53,9 @@
                 <transformer>
                   <addHeader>false</addHeader>
                 </transformer>
+                <transformer>
+                  <resource>reference.conf</resource>
+                </transformer>
               </transformers>
               <filters>
                 <filter>
