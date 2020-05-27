@@ -31,8 +31,8 @@ object Query1Graph {
     val rheemContext = new RheemContext(new Configuration)
       .withPlugin(RheemBasics.graphPlugin)
       .withPlugin(Jena.plugin)
-      .withPlugin(Java.basicPlugin)
       .withPlugin(Java.channelConversionPlugin)
+      .withPlugin(Spark.basicPlugin)
       .withPlugin(Spark.graphPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
