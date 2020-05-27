@@ -2,11 +2,13 @@ package com.haydarai.examples.lubm.graph
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
-import org.qcri.rheem.api.graph.{Edge, Vertex}
+import org.qcri.rheem.basic.RheemBasics
+import org.qcri.rheem.basic.data.Tuple2
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.jena.Jena
 import org.qcri.rheem.jena.operators.JenaModelSource
+import org.qcri.rheem.spark.Spark
 
 import scala.collection.JavaConverters._
 
@@ -25,9 +27,11 @@ object Query3Graph {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
+      .withPlugin(RheemBasics.graphPlugin)
       .withPlugin(Jena.plugin)
-      .withPlugin(Java.basicPlugin)
       .withPlugin(Java.channelConversionPlugin)
+      .withPlugin(Spark.basicPlugin)
+      .withPlugin(Spark.graphPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
       .withJobName("LUBM: Query 3")
@@ -43,12 +47,35 @@ object Query3Graph {
       Array("X", ub + "publicationAuthor", "Y")
     )
 
-    val records = planBuilder
+    val projectedRecords = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
       .projectRecords(List("X", "Y")).withName("Project variables")
+
+    val edges = projectedRecords
+      .flatMap(record => Seq((record.getField(0).toString, record.getField(1).toString)))
+
+    val vertexIds = edges
+        .flatMap(edge => Seq(edge._1, edge._2))
+        .distinct
+        .zipWithId
+
+    type VertexId = Tuple2[Vertex, String]
+    val idEdges = edges
+      .join[VertexId, String](_._1, vertexIds, _.field1)
+      .map { linkAndVertexId => (linkAndVertexId.field1.field0, linkAndVertexId.field0._2) }
+      .join[VertexId, String](_._2, vertexIds, _.field1)
+      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
+
+    val degreeCentrality = idEdges.degreeCentrality()
+
+    val results = degreeCentrality
+      .join[VertexId, Long](_.field0, vertexIds, _.field0)
+      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1.toInt))
+      .filter(record => !record._1.contains("Publication"))
+      .sort(record => record._2)
       .collect()
 
     // Print query result
-    records.foreach(println)
+    results.foreach(println)
   }
 }

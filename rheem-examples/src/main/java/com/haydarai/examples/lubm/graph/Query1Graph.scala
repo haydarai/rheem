@@ -70,12 +70,12 @@ object Query1Graph {
 
     val pageRanks = idEdges.pageRank(10)
 
-    val result = pageRanks
+    val results = pageRanks
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
       .collect()
 
     // Print query result
-    result.foreach(println)
+    results.foreach(println)
   }
 }
