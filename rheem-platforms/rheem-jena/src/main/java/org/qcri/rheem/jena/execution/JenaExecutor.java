@@ -44,6 +44,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class JenaExecutor extends ExecutorTemplate {
@@ -182,7 +183,14 @@ public class JenaExecutor extends ExecutorTemplate {
             List<Var> projectionFields = fieldNames.stream().map(Var::alloc).collect(Collectors.toList());
             op = new OpProject(op, projectionFields);
         } else {
-            fieldNames = modelOp.getVariables();
+            fieldNames = modelOp.getVariables().stream().filter(fieldName -> {
+                try {
+                    new URL(fieldName).toURI();
+                    return false;
+                } catch (Exception e) {
+                    return true;
+                }
+            }).collect(Collectors.toList());
         }
 
         tipChannelInstance.setModelUrl(modelOp.getInputUrl());

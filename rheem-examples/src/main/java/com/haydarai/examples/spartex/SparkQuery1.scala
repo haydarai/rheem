@@ -38,7 +38,7 @@ object SparkQuery1 {
     // Read RDF file and project selected variables
     val projectedRecords = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .map(record => (record.getField(3), record.getField(0), record.getField(2)))
+      .map(record => (record.getField(2), record.getField(0), record.getField(1)))
       .withName("Project variables defined in triple definitions")
 
     // Create list of edges that will be passed to PageRank algorithm (?s ?p and ?p ?c)
