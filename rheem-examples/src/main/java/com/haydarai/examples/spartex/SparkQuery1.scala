@@ -3,7 +3,7 @@ package com.haydarai.examples.spartex
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
 import org.qcri.rheem.basic.RheemBasics
-import org.qcri.rheem.basic.data.{Tuple2, Tuple3}
+import org.qcri.rheem.basic.data.{Tuple2, Tuple3, Tuple4}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.jena.Jena
@@ -29,33 +29,48 @@ object SparkQuery1 {
       .withUdfJarsOf(this.getClass)
 
     // Define triples definition
-    val triples = List[Array[String]](
-      Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c"),
-      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c"),
-      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p")
-    )
+    val triplePC = List[Array[String]](Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c"))
+    val tripleSC = List[Array[String]](Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c"))
+    val tripleSP = List[Array[String]](Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p"))
 
     // Read RDF file and project selected variables
-    val projectedRecords = planBuilder
-      .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .map(record => (record.getField(2), record.getField(0), record.getField(1)))
+    val projectedRecordsPC = planBuilder
+      .readModel(new JenaModelSource(args(0), triplePC.asJava)).withName("Read RDF file")
       .withName("Project variables defined in triple definitions")
+      .map(record => new Tuple2(record.getString(0), record.getString(1)))
+
+    val projectedRecordsSC = planBuilder
+      .readModel(new JenaModelSource(args(0), tripleSC.asJava)).withName("Read RDF file")
+      .withName("Project variables defined in triple definitions")
+      .map(record => new Tuple2(record.getString(0), record.getString(1)))
+
+    val projectedRecordsSP = planBuilder
+      .readModel(new JenaModelSource(args(0), tripleSP.asJava)).withName("Read RDF file")
+      .withName("Project variables defined in triple definitions")
+      .map(record => new Tuple4(record.getString(0), record.getString(1), "",
+        record.getString(0) + record.getString(1)))
+
+    val joinedSCPC = projectedRecordsSC
+      .join[Tuple2[String, String], String](_.getField1, projectedRecordsPC, _.getField1)
+      .map(tuple => new Tuple4(tuple.field0.field0, tuple.field0.field1, tuple.field1.field1,
+        tuple.field0.field0 + tuple.field1.field0))
+
+    val records = joinedSCPC
+      .join[Tuple4[String, String, String, String], String](_.getField3, projectedRecordsSP, _.getField3)
+      .map(tuple => new Tuple3(tuple.field0.field0, tuple.field0.field1, tuple.field0.field2))
 
     // Create list of edges that will be passed to PageRank algorithm (?s ?p and ?p ?c)
-    val edgesPageRank = projectedRecords
-      .flatMap(record => Seq((record._1.toString, record._2.toString),
-        (record._2.toString, record._3.toString)))
+    val edgesPageRank = records
+      .flatMap(record => Seq((record.field0, record.field1), (record.field1, record.field2)))
       .withName("Generate edges for PageRank algorithm")
 
     // Create list of edges that will be passed to DegreeCentrality algorithm (?s ?c and ?p ?c)
-    val edgesCentrality = projectedRecords
-      .flatMap(record => Seq((record._1.toString, record._3.toString),
-        (record._2.toString, record._3.toString)))
+    val edgesCentrality = records
+      .flatMap(record => Seq((record.field0, record.field2), (record.field2, record.field2)))
       .withName("Generate edges for DegreeCentrality algorithm")
 
-    val vertexIds = projectedRecords
-      .flatMap(record => Seq(record._1.toString, record._2.toString,
-        record._3.toString))
+    val vertexIds = records
+      .flatMap(record => Seq(record.field0, record.field1, record.field2))
       .withName("List all vertices")
 
       .distinct
@@ -101,8 +116,8 @@ object SparkQuery1 {
       .withName("Get the actual string representation and discard the vertex ID")
 
     // Join algorithm results to records, then apply filter based on the algorithm results
-    val results = projectedRecords
-      .map(record => new Tuple3(record._1.toString, record._2.toString, record._3.toString))
+    val results = records
+      .map(record => new Tuple3(record.field0, record.field1, record.field2))
       .withName("Get all relevant variables ?s ?p ?c")
 
       .join[(String, java.lang.Float), String](_.field1, pageRankResults, _._1)
