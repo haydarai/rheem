@@ -6,11 +6,7 @@ import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.basic.data.{Tuple2, Tuple3, Tuple4}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
-import org.qcri.rheem.jena.Jena
-import org.qcri.rheem.jena.operators.JenaModelSource
 import org.qcri.rheem.spark.Spark
-
-import scala.collection.JavaConverters._
 
 object SparkQuery1 {
   def main(args: Array[String]) {
@@ -18,7 +14,6 @@ object SparkQuery1 {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
       .withPlugin(RheemBasics.graphPlugin)
-      .withPlugin(Jena.plugin)
       .withPlugin(Java.basicPlugin)
       .withPlugin(Java.channelConversionPlugin)
       .withPlugin(Spark.basicPlugin)
@@ -28,27 +23,24 @@ object SparkQuery1 {
       .withJobName("Spartex: Query 1")
       .withUdfJarsOf(this.getClass)
 
-    // Define triples definition
-    val triplePC = List[Array[String]](Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c"))
-    val tripleSC = List[Array[String]](Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c"))
-    val tripleSP = List[Array[String]](Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p"))
-
     // Read RDF file and project selected variables
     val projectedRecordsPC = planBuilder
-      .readModel(new JenaModelSource(args(0), triplePC.asJava)).withName("Read RDF file")
-      .withName("Project variables defined in triple definitions")
-      .map(record => new Tuple2(record.getString(0), record.getString(1)))
+      .readTextFile("file:" + args(0))
+      .map(parseTriple)
+      .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf"))
+      .map(record => new Tuple2(record.field0, record.field2))
 
     val projectedRecordsSC = planBuilder
-      .readModel(new JenaModelSource(args(0), tripleSC.asJava)).withName("Read RDF file")
-      .withName("Project variables defined in triple definitions")
-      .map(record => new Tuple2(record.getString(0), record.getString(1)))
+      .readTextFile("file:" + args(0))
+      .map(parseTriple)
+      .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse"))
+      .map(record => new Tuple2(record.field0, record.field2))
 
     val projectedRecordsSP = planBuilder
-      .readModel(new JenaModelSource(args(0), tripleSP.asJava)).withName("Read RDF file")
-      .withName("Project variables defined in triple definitions")
-      .map(record => new Tuple4(record.getString(0), record.getString(1), "",
-        record.getString(0) + record.getString(1)))
+      .readTextFile("file:" + args(0))
+      .map(parseTriple)
+      .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor"))
+      .map(record => new Tuple4(record.field0, record.field2, "", record.field0 + record.field2))
 
     val joinedSCPC = projectedRecordsSC
       .join[Tuple2[String, String], String](_.getField1, projectedRecordsPC, _.getField1)
@@ -141,5 +133,18 @@ object SparkQuery1 {
 
     // Print query result
     results.foreach(println)
+  }
+
+  def parseTriple(raw: String): Tuple3[String, String, String] = {
+    // Find the first two spaces: Odds are that these are separate subject, predicated and object.
+    val firstSpacePos = raw.indexOf(' ')
+    val secondSpacePos = raw.indexOf(' ', firstSpacePos + 1)
+
+    // Find the end position.
+    var stopPos = raw.lastIndexOf('.')
+    while (raw.charAt(stopPos - 1) == ' ') stopPos -= 1
+
+    new Tuple3(raw.substring(1, firstSpacePos - 1), raw.substring(firstSpacePos + 2, secondSpacePos - 1),
+      raw.substring(secondSpacePos + 2, stopPos - 1))
   }
 }
