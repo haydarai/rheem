@@ -1,11 +1,9 @@
-package org.qcri.rheem.giraph.Algorithm;
+package org.qcri.rheem.giraph.algorithms;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
-import java.util.Stack;
 
 /**
  * Parameters for Basic PageRank implementation.

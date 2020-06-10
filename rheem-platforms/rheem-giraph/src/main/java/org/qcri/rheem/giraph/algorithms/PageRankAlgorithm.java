@@ -1,4 +1,4 @@
-package org.qcri.rheem.giraph.Algorithm;
+package org.qcri.rheem.giraph.algorithms;
 
 import com.google.common.collect.Lists;
 import org.apache.giraph.aggregators.DoubleMaxAggregator;
