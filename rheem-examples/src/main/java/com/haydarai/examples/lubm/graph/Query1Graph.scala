@@ -32,6 +32,7 @@ object Query1Graph {
       .withPlugin(RheemBasics.graphPlugin)
       .withPlugin(Jena.plugin)
       .withPlugin(Java.channelConversionPlugin)
+      .withPlugin(Java.graphPlugin)
       .withPlugin(Spark.basicPlugin)
       .withPlugin(Spark.graphPlugin)
 
