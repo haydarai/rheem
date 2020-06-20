@@ -142,7 +142,14 @@ object SparkQuery1 {
     var stopPos = raw.lastIndexOf('.')
     while (raw.charAt(stopPos - 1) == ' ') stopPos -= 1
 
-    new Tuple3(raw.substring(1, firstSpacePos - 1), raw.substring(firstSpacePos + 2, secondSpacePos - 1),
-      raw.substring(secondSpacePos + 2, stopPos - 1))
+    try {
+      val s = raw.substring(1, firstSpacePos - 1)
+      val p = raw.substring(firstSpacePos + 2, secondSpacePos - 1)
+      val o = raw.substring(secondSpacePos + 2, stopPos - 1)
+
+      new Tuple3(s, p, o)
+    } catch {
+      case _: StringIndexOutOfBoundsException => new Tuple3("", "", "")
+    }
   }
 }
