@@ -23,22 +23,20 @@ object SparkQuery1 {
       .withJobName("Spartex: Query 1")
       .withUdfJarsOf(this.getClass)
 
-    // Read RDF file and project selected variables
-    val projectedRecordsPC = planBuilder
+    val triples = planBuilder
       .readTextFile("file:" + args(0))
       .map(parseTriple)
+
+    // Read RDF file and project selected variables
+    val projectedRecordsPC = triples
       .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf"))
       .map(record => new Tuple2(record.field0, record.field2))
 
-    val projectedRecordsSC = planBuilder
-      .readTextFile("file:" + args(0))
-      .map(parseTriple)
+    val projectedRecordsSC = triples
       .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse"))
       .map(record => new Tuple2(record.field0, record.field2))
 
-    val projectedRecordsSP = planBuilder
-      .readTextFile("file:" + args(0))
-      .map(parseTriple)
+    val projectedRecordsSP = triples
       .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor"))
       .map(record => new Tuple4(record.field0, record.field2, "", record.field0 + record.field2))
 
@@ -133,7 +131,7 @@ object SparkQuery1 {
 
     // Print query result
     results.foreach(println)
-  }
+   }
 
   def parseTriple(raw: String): Tuple3[String, String, String] = {
     // Find the first two spaces: Odds are that these are separate subject, predicated and object.
