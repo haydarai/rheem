@@ -9,22 +9,17 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query12
- * # The benchmark data do not produce any instances of class Chair. Instead, each
- * # Department individual is linked to the chair professor of that department by
- * # property headOf. Hence this query requires realization, i.e., inference that
- * # that professor is an instance of class Chair because he or she is the head of a
- * # department. Input of this query is small as well.
+ * # Query3
+ * # This query is similar to Query 1 but class Publication has a wide hierarchy.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
- * SELECT ?X, ?Y
+ * SELECT ?X
  * WHERE
- * {?X rdf:type ub:Chair .
- * ?Y rdf:type ub:Department .
- * ?X ub:worksFor ?Y .
- * ?Y ub:subOrganizationOf <http://www.University0.edu>}
+ * {?X rdf:type ub:Publication .
+ * ?X ub:publicationAuthor
+ * http://www.Department0.University0.edu/AssistantProfessor0}
  */
-object Query12 {
+object JenaQuery3 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -33,7 +28,7 @@ object Query12 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 12")
+      .withJobName("LUBM: Query 3")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -42,15 +37,13 @@ object Query12 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "FullProfessor"),
-      Array("Y", rdf + "type", ub + "Department"),
-      Array("X", ub + "worksFor", "Y"),
-      Array("Y", ub + "subOrganizationOf", "http://www.University0.edu")
+      Array("X", rdf + "type", ub + "Publication"),
+      Array("X", ub + "publicationAuthor", "http://www.Department0.University0.edu/AssistantProfessor0")
     )
 
     val records = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .projectRecords(List("X", "Y")).withName("Project variables")
+      .projectRecords(List("X")).withName("Project variable X")
       .collect()
 
     // Print query result

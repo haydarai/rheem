@@ -9,22 +9,16 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query11
- * # Query 11, 12 and 13 are intended to verify the presence of certain OWL reasoning
- * # capabilities in the system. In this query, property subOrganizationOf is defined
- * # as transitive. Since in the benchmark data, instances of ResearchGroup are stated
- * # as a sub-organization of a Department individual and the later suborganization of
- * # a University individual, inference about the subOrgnizationOf relationship between
- * # instances of ResearchGroup and University is required to answer this query.
- * # Additionally, its input is small.
+ * # Query6
+ * # This query queries about only one class. But it assumes both the explicit
+ * # subClassOf relationship between UndergraduateStudent and Student and the
+ * # implicit one between GraduateStudent and Student. In addition, it has large
+ * # input and low selectivity.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
- * SELECT ?X
- * WHERE
- * {?X rdf:type ub:ResearchGroup .
- * ?X ub:subOrganizationOf <http://www.University0.edu>}
+ * SELECT ?X WHERE {?X rdf:type ub:Student}
  */
-object Query11 {
+object JenaQuery6 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -33,7 +27,7 @@ object Query11 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 11")
+      .withJobName("LUBM: Query 6")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -42,8 +36,7 @@ object Query11 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "Department"),
-      Array("X", ub + "subOrganizationOf", "http://www.University0.edu")
+      Array("X", rdf + "type", ub + "UndergraduateStudent")
     )
 
     val records = planBuilder

@@ -20,7 +20,7 @@ import scala.collection.JavaConverters._
  * {?X rdf:type ub:Person .
  * ?X ub:memberOf <http://www.Department0.University0.edu>}
  */
-object Query5 {
+object JenaQuery5 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)

@@ -9,14 +9,21 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query14
- * # This query is the simplest in the test set. This query represents those with large input and low selectivity and does not assume any hierarchy information or inference.
+ * # Query4
+ * # This query has small input and high selectivity. It assumes subClassOf relationship
+ * # between Professor and its subclasses. Class Professor has a wide hierarchy. Another
+ * # feature is that it queries about multiple properties of a single class.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
- * SELECT ?X
- * WHERE {?X rdf:type ub:UndergraduateStudent}
+ * SELECT ?X, ?Y1, ?Y2, ?Y3
+ * WHERE
+ * {?X rdf:type ub:Professor .
+ * ?X ub:worksFor <http://www.Department0.University0.edu> .
+ * ?X ub:name ?Y1 .
+ * ?X ub:emailAddress ?Y2 .
+ * ?X ub:telephone ?Y3}
  */
-object Query14 {
+object JenaQuery4 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -25,7 +32,7 @@ object Query14 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 13")
+      .withJobName("LUBM: Query 4")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -34,12 +41,16 @@ object Query14 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "UndergraduateStudent")
+      Array("X", rdf + "type", ub + "FullProfessor"),
+      Array("X", ub + "worksFor", "http://www.Department0.University0.edu"),
+      Array("X", ub + "name", "Y1"),
+      Array("X", ub + "emailAddress", "Y2"),
+      Array("X", ub + "telephone", "Y3")
     )
 
     val records = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .projectRecords(List("X")).withName("Project variable ?X")
+      .projectRecords(List("X", "Y1", "Y2", "Y3")).withName("Project variables")
       .collect()
 
     // Print query result

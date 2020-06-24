@@ -9,17 +9,18 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query3
- * # This query is similar to Query 1 but class Publication has a wide hierarchy.
+ * # Query1
+ * # This query bears large input and high selectivity. It queries about just one class and
+ * # one property and does not assume any hierarchy information or inference.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
  * SELECT ?X
  * WHERE
- * {?X rdf:type ub:Publication .
- * ?X ub:publicationAuthor
- * http://www.Department0.University0.edu/AssistantProfessor0}
+ * {?X rdf:type ub:GraduateStudent .
+ * ?X ub:takesCourse
+ * http://www.Department0.University0.edu/GraduateCourse0}
  */
-object Query3 {
+object JenaQuery1 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -28,7 +29,7 @@ object Query3 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 3")
+      .withJobName("LUBM: Query 1")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -37,8 +38,8 @@ object Query3 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "Publication"),
-      Array("X", ub + "publicationAuthor", "http://www.Department0.University0.edu/AssistantProfessor0")
+      Array("X", rdf + "type", ub + "GraduateStudent"),
+      Array("X", ub + "takesCourse", "http://www.Department0.University0.edu/GraduateCourse0")
     )
 
     val records = planBuilder

@@ -9,21 +9,20 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query13
- * # Property hasAlumnus is defined in the benchmark ontology as the inverse of
- * # property degreeFrom, which has three subproperties: undergraduateDegreeFrom,
- * # mastersDegreeFrom, and doctoralDegreeFrom. The benchmark data state a person as
- * # an alumnus of a university using one of these three subproperties instead of
- * # hasAlumnus. Therefore, this query assumes subPropertyOf relationships between
- * # degreeFrom and its subproperties, and also requires inference about inverseOf.
+ * # Query10
+ * # This query differs from Query 6, 7, 8 and 9 in that it only requires the
+ * # (implicit) subClassOf relationship between GraduateStudent and Student, i.e.,
+ * #subClassOf rela-tionship between UndergraduateStudent and Student does not add
+ * # to the results.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
  * SELECT ?X
  * WHERE
- * {?X rdf:type ub:Person .
- * <http://www.University0.edu> ub:hasAlumnus ?X}
+ * {?X rdf:type ub:Student .
+ * ?X ub:takesCourse
+ * <http://www.Department0.University0.edu/GraduateCourse0>}
  */
-object Query13 {
+object JenaQuery10 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -32,7 +31,7 @@ object Query13 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 13")
+      .withJobName("LUBM: Query 10")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -41,7 +40,8 @@ object Query13 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "GraduateStudent")
+      Array("X", rdf + "type", ub + "UndergraduateStudent"),
+      Array("X", ub + "takesCourse", "http://www.Department0.University0.edu/Course0")
     )
 
     val records = planBuilder

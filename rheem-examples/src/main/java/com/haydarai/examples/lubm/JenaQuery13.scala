@@ -9,21 +9,21 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query4
- * # This query has small input and high selectivity. It assumes subClassOf relationship
- * # between Professor and its subclasses. Class Professor has a wide hierarchy. Another
- * # feature is that it queries about multiple properties of a single class.
+ * # Query13
+ * # Property hasAlumnus is defined in the benchmark ontology as the inverse of
+ * # property degreeFrom, which has three subproperties: undergraduateDegreeFrom,
+ * # mastersDegreeFrom, and doctoralDegreeFrom. The benchmark data state a person as
+ * # an alumnus of a university using one of these three subproperties instead of
+ * # hasAlumnus. Therefore, this query assumes subPropertyOf relationships between
+ * # degreeFrom and its subproperties, and also requires inference about inverseOf.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
- * SELECT ?X, ?Y1, ?Y2, ?Y3
+ * SELECT ?X
  * WHERE
- * {?X rdf:type ub:Professor .
- * ?X ub:worksFor <http://www.Department0.University0.edu> .
- * ?X ub:name ?Y1 .
- * ?X ub:emailAddress ?Y2 .
- * ?X ub:telephone ?Y3}
+ * {?X rdf:type ub:Person .
+ * <http://www.University0.edu> ub:hasAlumnus ?X}
  */
-object Query4 {
+object JenaQuery13 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -32,7 +32,7 @@ object Query4 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 4")
+      .withJobName("LUBM: Query 13")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -41,16 +41,12 @@ object Query4 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "FullProfessor"),
-      Array("X", ub + "worksFor", "http://www.Department0.University0.edu"),
-      Array("X", ub + "name", "Y1"),
-      Array("X", ub + "emailAddress", "Y2"),
-      Array("X", ub + "telephone", "Y3")
+      Array("X", rdf + "type", ub + "GraduateStudent")
     )
 
     val records = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .projectRecords(List("X", "Y1", "Y2", "Y3")).withName("Project variables")
+      .projectRecords(List("X")).withName("Project variable ?X")
       .collect()
 
     // Print query result

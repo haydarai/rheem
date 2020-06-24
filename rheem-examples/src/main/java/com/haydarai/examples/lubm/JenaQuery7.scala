@@ -9,16 +9,20 @@ import org.qcri.rheem.jena.operators.JenaModelSource
 import scala.collection.JavaConverters._
 
 /**
- * # Query6
- * # This query queries about only one class. But it assumes both the explicit
- * # subClassOf relationship between UndergraduateStudent and Student and the
- * # implicit one between GraduateStudent and Student. In addition, it has large
- * # input and low selectivity.
+ * # Query7
+ * # This query is similar to Query 6 in terms of class Student but it increases in the
+ * # number of classes and properties and its selectivity is high.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
- * SELECT ?X WHERE {?X rdf:type ub:Student}
+ * SELECT ?X, ?Y
+ * WHERE
+ * {?X rdf:type ub:Student .
+ * ?Y rdf:type ub:Course .
+ * ?X ub:takesCourse ?Y .
+ * <http://www.Department0.University0.edu/AssociateProfessor0>,
+ * ub:teacherOf, ?Y}
  */
-object Query6 {
+object JenaQuery7 {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -27,7 +31,7 @@ object Query6 {
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
-      .withJobName("LUBM: Query 6")
+      .withJobName("LUBM: Query 7")
       .withUdfJarsOf(this.getClass)
 
     // Prefix definition
@@ -36,12 +40,14 @@ object Query6 {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "UndergraduateStudent")
+      Array("X", rdf + "type", ub + "UndergraduateStudent"),
+      Array("Y", rdf + "type", ub + "Course"),
+      Array("X", ub + "takesCourse", "Y")
     )
 
     val records = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .projectRecords(List("X")).withName("Project variable ?X")
+      .projectRecords(List("X", "Y")).withName("Project variables")
       .collect()
 
     // Print query result
