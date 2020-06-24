@@ -1,13 +1,8 @@
 package org.qcri.rheem.jena.operators;
 
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.sparql.algebra.Algebra;
-import org.apache.jena.sparql.engine.QueryIterator;
-import org.apache.jena.sparql.engine.ResultSetStream;
+import org.apache.jena.query.*;
+import org.apache.jena.sparql.algebra.OpAsQuery;
+import org.apache.jena.tdb2.TDB2Factory;
 import org.json.JSONObject;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -57,15 +52,17 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
         final SparqlQueryChannel.Instance input = (SparqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
-        Model model = RDFDataMgr.loadModel(input.getModelUrl()) ;
+        Dataset ds = TDB2Factory.connectDataset(input.getModelUrl());
+        ds.begin(ReadWrite.READ);
+        QueryExecution qe = QueryExecutionFactory.create(OpAsQuery.asQuery(input.getOp()), ds);
 
-        QueryIterator queryIterator = Algebra.exec(input.getOp(), model.getGraph());
         List<String> resultVars = input.getProjectedFields();
-        ResultSet resultSet = new ResultSetStream(resultVars, model, queryIterator);
+        ResultSet resultSet = qe.execSelect();
 
         List<QuerySolution> result = ResultSetFormatter.toList(resultSet);
 
-        queryIterator.close();
+        qe.close();
+        ds.close();
 
         Stream<Record> resultSetStream = result.stream().map(qs -> {
             final int recordWidth = resultVars.size();
