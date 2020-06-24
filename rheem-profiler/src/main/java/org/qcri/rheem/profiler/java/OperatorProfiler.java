@@ -9,6 +9,8 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
@@ -96,17 +98,34 @@ public abstract class OperatorProfiler {
      */
     protected abstract long executeOperator();
 
-    protected static CollectionChannel.Instance createChannelInstance(final Collection<?> collection) {
-        final CollectionChannel.Instance channelInstance = createChannelInstance();
-        channelInstance.accept(collection);
+//    protected static CollectionChannel.Instance createChannelInstance(final Collection<?> collection) {
+//        final CollectionChannel.Instance channelInstance = createChannelInstance();
+//        channelInstance.accept(collection);
+//        return channelInstance;
+//    }
+
+    protected JavaChannelInstance createChannelInstance(final Collection<?> collection) {
+        final JavaChannelInstance channelInstance = createChannelInstance();
+        if (channelInstance instanceof CollectionChannel.Instance) {
+            ((CollectionChannel.Instance)channelInstance).accept(collection);
+        } else {
+            ((StreamChannel.Instance)channelInstance).accept(collection);
+        }
         return channelInstance;
     }
 
-    protected static CollectionChannel.Instance createChannelInstance() {
-        final ChannelDescriptor channelDescriptor = CollectionChannel.DESCRIPTOR;
-        final Channel channel = channelDescriptor.createChannel(null, new Configuration());
-        return (CollectionChannel.Instance) channel.createInstance(null, null, -1);
+    protected JavaChannelInstance createChannelInstance() {
+        ChannelDescriptor tmp = this.operator.getSupportedOutputChannels(0).get(0);
+
+        final Channel channel = tmp.createChannel(null, new Configuration());
+        return (JavaChannelInstance) channel.createInstance(null, null, -1);
     }
+
+//    protected static CollectionChannel.Instance createChannelInstance() {
+//        final ChannelDescriptor channelDescriptor = CollectionChannel.DESCRIPTOR;
+//        final Channel channel = channelDescriptor.createChannel(null, new Configuration());
+//        return (CollectionChannel.Instance) channel.createInstance(null, null, -1);
+//    }
 
     public JavaExecutionOperator getOperator() {
         return this.operator;
