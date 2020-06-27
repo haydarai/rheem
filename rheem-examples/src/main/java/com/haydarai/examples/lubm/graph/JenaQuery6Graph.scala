@@ -13,17 +13,16 @@ import org.qcri.rheem.spark.Spark
 import scala.collection.JavaConverters._
 
 /**
- * # Query3
- * # This query is similar to Query 1 but class Publication has a wide hierarchy.
+ * # Query6
+ * # This query queries about only one class. But it assumes both the explicit
+ * # subClassOf relationship between UndergraduateStudent and Student and the
+ * # implicit one between GraduateStudent and Student. In addition, it has large
+ * # input and low selectivity.
  * PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
  * PREFIX ub: <http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#>
- * SELECT ?X
- * WHERE
- * {?X rdf:type ub:Publication .
- * ?X ub:publicationAuthor
- * http://www.Department0.University0.edu/AssistantProfessor0}
+ * SELECT ?X WHERE {?X rdf:type ub:Student}
  */
-object Query3Graph {
+object JenaQuery6Graph {
   def main(args: Array[String]) {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -43,21 +42,23 @@ object Query3Graph {
 
     // Define triples definition
     val triples = List[Array[String]](
-      Array("X", rdf + "type", ub + "Publication"),
-      Array("X", ub + "publicationAuthor", "Y")
+      Array("X1", rdf + "type", ub + "UndergraduateStudent"),
+      Array("X2", rdf + "type", ub + "UndergraduateStudent"),
+      Array("X1", ub + "memberOf", "Y"),
+      Array("X2", ub + "memberOf", "Y")
     )
 
     val projectedRecords = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
-      .projectRecords(List("X", "Y")).withName("Project variables")
+      .projectRecords(List("X1", "X2")).withName("Project variables")
 
     val edges = projectedRecords
       .flatMap(record => Seq((record.getField(0).toString, record.getField(1).toString)))
 
     val vertexIds = edges
-        .flatMap(edge => Seq(edge._1, edge._2))
-        .distinct
-        .zipWithId
+      .flatMap(edge => Seq(edge._1, edge._2))
+      .distinct
+      .zipWithId
 
     type VertexId = Tuple2[Vertex, String]
     val idEdges = edges
@@ -66,13 +67,12 @@ object Query3Graph {
       .join[VertexId, String](_._2, vertexIds, _.field1)
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
 
-    val degreeCentrality = idEdges.degreeCentrality()
+    val degreeCentrality = idEdges.singleSourceShortestPath(0);
 
     val results = degreeCentrality
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1.toInt))
-      .filter(record => !record._1.contains("Publication"))
-      .sort(record => record._2)
+      .filter(record => record._2 < 2)
       .collect()
 
     // Print query result
