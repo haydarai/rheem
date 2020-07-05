@@ -20,6 +20,7 @@ object SpartexQuery1 {
       .withPlugin(RheemBasics.graphPlugin)
       .withPlugin(Jena.plugin)
       .withPlugin(Java.basicPlugin)
+      .withPlugin(Java.graphPlugin)
       .withPlugin(Java.channelConversionPlugin)
       .withPlugin(Spark.basicPlugin)
       .withPlugin(Spark.graphPlugin)
@@ -59,12 +60,14 @@ object SpartexQuery1 {
         projectedRecordsPC,
         (r: Record) => r.getString(1)
       )
+      .withTargetPlatforms(Java.platform())
       .withName("Join 1")
 
     val allJoined = joinedSCPC
       .join((t: Tuple2[Record, Record]) => t.getField0.getString(0) + t.getField1.getString(0),
         projectedRecordsSP,
         (r: Record) => r.getString(0) + r.getString(1))
+      .withTargetPlatforms(Java.platform())
       .withName("Join 2")
 
     val records = allJoined.map(record => new Tuple3(record.getField0.getField0.getString(0),
@@ -112,8 +115,8 @@ object SpartexQuery1 {
       .withName("Remove unnecessary fields from join results")
 
     // Run graph algorithms
-    val pageRanks = idEdgesPageRank.pageRank(10)
-    val degreeCentrality = idEdgesDegreeCentrality.degreeCentrality()
+    val pageRanks = idEdgesPageRank.pageRank(10).withTargetPlatforms(Java.platform())
+    val degreeCentrality = idEdgesDegreeCentrality.degreeCentrality().withTargetPlatforms(Java.platform())
 
     // Convert algorithm results with vertex ID to the actual string
     val pageRankResults = pageRanks
@@ -143,7 +146,7 @@ object SpartexQuery1 {
       .map(tuple2 => new Tuple3(tuple2.field0.field0, tuple2.field0.field1, tuple2.field1._2))
       .withName("Discard the variable string and keeping the DegreeCentrality value")
 
-      .filter(tuple3 => tuple3.field1 > 0.3 && tuple3.field2 > 1)
+      .filter(tuple3 => tuple3.field1 > 0 && tuple3.field2 > 1)
       .withName("Filter based on PageRank and DegreeCentrality value")
 
       .map(tuple3 => (tuple3.field0)).withName("Get only projected variable ?s")
