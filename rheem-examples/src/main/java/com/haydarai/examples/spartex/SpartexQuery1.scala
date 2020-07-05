@@ -14,6 +14,7 @@ import scala.collection.JavaConverters._
 
 object SpartexQuery1 {
   def main(args: Array[String]) {
+    val startTime = System.currentTimeMillis()
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -115,8 +116,10 @@ object SpartexQuery1 {
       .withName("Remove unnecessary fields from join results")
 
     // Run graph algorithms
-    val pageRanks = idEdgesPageRank.pageRank(10).withTargetPlatforms(Java.platform())
-    val degreeCentrality = idEdgesDegreeCentrality.degreeCentrality().withTargetPlatforms(Java.platform())
+    val pageRanks = idEdgesPageRank.pageRank(10)
+      .withTargetPlatforms(Java.platform())
+    val degreeCentrality = idEdgesDegreeCentrality.degreeCentrality()
+      .withTargetPlatforms(Java.platform())
 
     // Convert algorithm results with vertex ID to the actual string
     val pageRankResults = pageRanks
@@ -155,5 +158,8 @@ object SpartexQuery1 {
 
     // Print query result
     results.foreach(println)
+
+    val endTime = System.currentTimeMillis()
+    println(endTime - startTime)
   }
 }
