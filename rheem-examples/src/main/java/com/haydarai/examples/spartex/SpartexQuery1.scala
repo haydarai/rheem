@@ -3,17 +3,22 @@ package com.haydarai.examples.spartex
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
 import org.qcri.rheem.basic.RheemBasics
-import org.qcri.rheem.basic.data.{Tuple2, Tuple3, Tuple4}
+import org.qcri.rheem.basic.data.{Record, Tuple2, Tuple3}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
+import org.qcri.rheem.jena.Jena
+import org.qcri.rheem.jena.operators.JenaModelSource
 import org.qcri.rheem.spark.Spark
 
-object SparkQuery1 {
+import scala.collection.JavaConverters._
+
+object SpartexQuery1 {
   def main(args: Array[String]) {
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
       .withPlugin(RheemBasics.graphPlugin)
+      .withPlugin(Jena.plugin)
       .withPlugin(Java.basicPlugin)
       .withPlugin(Java.channelConversionPlugin)
       .withPlugin(Spark.basicPlugin)
@@ -23,31 +28,47 @@ object SparkQuery1 {
       .withJobName("Spartex: Query 1")
       .withUdfJarsOf(this.getClass)
 
-    val triples = planBuilder
-      .readTextFile("file:" + args(0))
-      .map(parseTriple)
+    val triplesA = List[Array[String]](
+      Array("p", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf", "c")
+    )
+
+    val triplesB = List[Array[String]](
+      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse", "c")
+    )
+
+    val triplesC = List[Array[String]](
+      Array("s", "http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor", "p")
+    )
+
 
     // Read RDF file and project selected variables
-    val projectedRecordsPC = triples
-      .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#teacherOf"))
-      .map(record => new Tuple2(record.field0, record.field2))
+    val projectedRecordsPC = planBuilder
+      .readModel(new JenaModelSource(args(0), triplesA.asJava)).withName("Read RDF file A")
+      .projectRecords(List("p", "c")).withName("Project triple A")
 
-    val projectedRecordsSC = triples
-      .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#takesCourse"))
-      .map(record => new Tuple2(record.field0, record.field2))
+    val projectedRecordsSC = planBuilder
+      .readModel(new JenaModelSource(args(0), triplesB.asJava)).withName("Read RDF file B")
+      .projectRecords(List("s", "c")).withName("Project triple B")
 
-    val projectedRecordsSP = triples
-      .filter(_.field1.equals("http://swat.cse.lehigh.edu/onto/univ-bench.owl#advisor"))
-      .map(record => new Tuple4(record.field0, record.field2, "", record.field0 + record.field2))
+    val projectedRecordsSP = planBuilder
+      .readModel(new JenaModelSource(args(0), triplesC.asJava)).withName("Read RDF file C")
+      .projectRecords(List("s", "p")).withName("Project triple C")
 
     val joinedSCPC = projectedRecordsSC
-      .join[Tuple2[String, String], String](_.getField1, projectedRecordsPC, _.getField1)
-      .map(tuple => new Tuple4(tuple.field0.field0, tuple.field0.field1, tuple.field1.field1,
-        tuple.field0.field0 + tuple.field1.field0))
+      .join((r: Record) => r.getString(1),
+        projectedRecordsPC,
+        (r: Record) => r.getString(1)
+      )
+      .withName("Join 1")
 
-    val records = joinedSCPC
-      .join[Tuple4[String, String, String, String], String](_.getField3, projectedRecordsSP, _.getField3)
-      .map(tuple => new Tuple3(tuple.field0.field0, tuple.field0.field1, tuple.field0.field2))
+    val allJoined = joinedSCPC
+      .join((t: Tuple2[Record, Record]) => t.getField0.getString(0) + t.getField1.getString(0),
+        projectedRecordsSP,
+        (r: Record) => r.getString(0) + r.getString(1))
+      .withName("Join 2")
+
+    val records = allJoined.map(record => new Tuple3(record.getField0.getField0.getString(0),
+      record.getField0.getField1.getString(0), record.getField0.getField0.getString(0)))
 
     // Create list of edges that will be passed to PageRank algorithm (?s ?p and ?p ?c)
     val edgesPageRank = records
@@ -56,7 +77,7 @@ object SparkQuery1 {
 
     // Create list of edges that will be passed to DegreeCentrality algorithm (?s ?c and ?p ?c)
     val edgesCentrality = records
-      .flatMap(record => Seq((record.field0, record.field2), (record.field2, record.field2)))
+      .flatMap(record => Seq((record.field0, record.field2), (record.field1, record.field2)))
       .withName("Generate edges for DegreeCentrality algorithm")
 
     val vertexIds = records
@@ -131,25 +152,5 @@ object SparkQuery1 {
 
     // Print query result
     results.foreach(println)
-   }
-
-  def parseTriple(raw: String): Tuple3[String, String, String] = {
-    // Find the first two spaces: Odds are that these are separate subject, predicated and object.
-    val firstSpacePos = raw.indexOf(' ')
-    val secondSpacePos = raw.indexOf(' ', firstSpacePos + 1)
-
-    // Find the end position.
-    var stopPos = raw.lastIndexOf('.')
-    while (raw.charAt(stopPos - 1) == ' ') stopPos -= 1
-
-    try {
-      val s = raw.substring(1, firstSpacePos - 1)
-      val p = raw.substring(firstSpacePos + 2, secondSpacePos - 1)
-      val o = raw.substring(secondSpacePos + 2, stopPos - 1)
-
-      new Tuple3(s, p, o)
-    } catch {
-      case _: StringIndexOutOfBoundsException => new Tuple3("", "", "")
-    }
   }
 }

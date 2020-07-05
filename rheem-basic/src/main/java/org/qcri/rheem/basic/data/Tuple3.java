@@ -37,7 +37,7 @@ public class Tuple3<T0, T1, T2> implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.field0, this.field1);
+        return Objects.hash(this.field0, this.field1, this.field2);
     }
 
     @Override

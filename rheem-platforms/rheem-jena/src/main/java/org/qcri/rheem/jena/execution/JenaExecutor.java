@@ -13,6 +13,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpFilter;
+import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
@@ -41,10 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JenaExecutor extends ExecutorTemplate {
@@ -60,63 +59,68 @@ public class JenaExecutor extends ExecutorTemplate {
 
     @Override
     public void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
-        Collection<?> startTasks = stage.getStartTasks();
-        Collection<?> termTasks = stage.getTerminalTasks();
-
+        Collection<ExecutionTask> startTasks = stage.getStartTasks();
+        Collection<ExecutionTask> allTasks = stage.getAllTasks();
         ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
-        ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
 
         assert startTask.getOperator() instanceof ModelSource : "Invalid Jena stage: Start task has to be a ModelSource";
 
         ModelSource modelOp = (ModelSource) startTask.getOperator();
         SparqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, optimizationContext);
 
-        ExecutionTask projectionTask = null;
+        List<Op> ops = new ArrayList<>();
+        Collection<ExecutionTask> projectionTasks = new ArrayList<>();
         Collection<ExecutionTask> filterTasks = new ArrayList<>();
-        ExecutionTask joinTask = null;
+        Collection<ExecutionTask> joinTasks = new HashSet<>();
 
-        ExecutionTask nextTask = this.findJenaExecutionOperatorTaskInStage(startTask, stage);
-        while (nextTask != null) {
-            if (nextTask.getOperator() instanceof JenaProjectionOperator) {
-                assert projectionTask == null;
-                projectionTask = nextTask;
-            } else if (nextTask.getOperator() instanceof JenaFilterOperator) {
-                filterTasks.add(nextTask);
-            } else if (nextTask.getOperator() instanceof JenaJoinOperator) {
-                assert joinTask == null;
-                joinTask = nextTask;
-            } else {
-                throw new RheemException(String.format("Unsupported Jena execution task %s", nextTask.toString()));
-            }
-
-            // Move the tipChannelInstance.
-            tipChannelInstance = this.instantiateOutboundChannel(nextTask, optimizationContext, tipChannelInstance);
-
-            // Go to the next nextTask.
-            nextTask = this.findJenaExecutionOperatorTaskInStage(nextTask, stage);
-        }
-
-        BasicPattern bp = new BasicPattern();
-        List<Tuple3<String, String, String>> variablesTriples = modelOp.getTriples();
-        for (Tuple3<String, String, String> variables : variablesTriples) {
-            Node[] fields = new Node[3];
-            List<String> variableNames = variables.asList();
-            for (int i = 0; i < variableNames.size(); i++) {
-                String variable = variableNames.get(i);
-                try {
-                    new URL(variable).toURI();
-                    fields[i] = NodeFactory.createURI(variable);
-                } catch (Exception e) {
-                    fields[i] = Var.alloc(variable);
+        for (ExecutionTask task : startTasks) {
+            ExecutionTask nextTask = this.findJenaExecutionOperatorTaskInStage(task, stage);
+            ModelSource model = (ModelSource) task.getOperator();
+            while (nextTask != null) {
+                if (nextTask.getOperator() instanceof JenaProjectionOperator) {
+                    projectionTasks.add(nextTask);
+                } else if (nextTask.getOperator() instanceof JenaFilterOperator) {
+                    filterTasks.add(nextTask);
+                } else if (nextTask.getOperator() instanceof JenaJoinOperator) {
+                    joinTasks.add(nextTask);
+                } else {
+                    throw new RheemException(String.format("Unsupported Jena execution task %s", nextTask.toString()));
                 }
+
+                // Move the tipChannelInstance.
+                tipChannelInstance = this.instantiateOutboundChannel(nextTask, optimizationContext, tipChannelInstance);
+
+                // Go to the next nextTask.
+                nextTask = this.findJenaExecutionOperatorTaskInStage(nextTask, stage);
             }
-            Triple triple = new Triple(fields[0], fields[1], fields[2]);
-            bp.add(triple);
+
+            BasicPattern bp = new BasicPattern();
+            List<Tuple3<String, String, String>> variablesTriples = model.getTriples();
+            for (Tuple3<String, String, String> variables : variablesTriples) {
+                Node[] fields = new Node[3];
+                List<String> variableNames = variables.asList();
+                for (int i = 0; i < variableNames.size(); i++) {
+                    String variable = variableNames.get(i);
+                    try {
+                        new URL(variable).toURI();
+                        fields[i] = NodeFactory.createURI(variable);
+                    } catch (Exception e) {
+                        fields[i] = Var.alloc(variable);
+                    }
+                }
+                Triple triple = new Triple(fields[0], fields[1], fields[2]);
+                bp.add(triple);
+            }
+
+            Op op = new OpBGP(bp);
+            ops.add(op);
         }
 
-        Op op = new OpBGP(bp);
+        Op finalOp = new OpBGP();
 
-        List<String> fieldNames;
+        for (Op op : ops) {
+            finalOp = OpJoin.create(finalOp, op);
+        }
 
         for (ExecutionTask executionTask : filterTasks) {
             JenaFilterOperator operator = (JenaFilterOperator) executionTask.getOperator();
@@ -172,30 +176,39 @@ public class JenaExecutor extends ExecutorTemplate {
             }
 
             if (expr != null) {
-                op = OpFilter.filter(expr, op);
+                finalOp = OpFilter.filter(expr, finalOp);
             }
         }
 
-        if (projectionTask != null) {
-            JenaProjectionOperator operator = (JenaProjectionOperator) projectionTask.getOperator();
-            ProjectionDescriptor projectionDescriptor = (ProjectionDescriptor) operator.getFunctionDescriptor();
-            fieldNames = projectionDescriptor.getFieldNames();
-            List<Var> projectionFields = fieldNames.stream().map(Var::alloc).collect(Collectors.toList());
-            op = new OpProject(op, projectionFields);
-        } else {
-            fieldNames = modelOp.getVariables().stream().filter(fieldName -> {
-                try {
-                    new URL(fieldName).toURI();
-                    return false;
-                } catch (Exception e) {
-                    return true;
-                }
+        List<String> fieldNames = new ArrayList<>();
+        List<List<String>> joinOrders = new ArrayList<>();
+
+        for (ExecutionTask projectionTask : projectionTasks) {
+            JenaProjectionOperator projectionOperator = (JenaProjectionOperator) projectionTask.getOperator();
+            ProjectionDescriptor projectionDescriptor = (ProjectionDescriptor) projectionOperator.getFunctionDescriptor();
+            fieldNames.addAll(projectionDescriptor.getFieldNames());
+        }
+
+        fieldNames = fieldNames.stream().distinct().collect(Collectors.toList());
+
+        if (!joinTasks.isEmpty()) {
+            joinOrders = allTasks.stream().filter(t -> t.getOperator() instanceof JenaProjectionOperator)
+                    .map((Function<ExecutionTask, List<String>>) executionTask -> {
+                JenaProjectionOperator operator = (JenaProjectionOperator) executionTask.getOperator();
+                ProjectionDescriptor projectionDescriptor = (ProjectionDescriptor) operator.getFunctionDescriptor();
+                return projectionDescriptor.getFieldNames();
             }).collect(Collectors.toList());
         }
 
+        if (!fieldNames.isEmpty()) {
+            List<Var> projectionFields = fieldNames.stream().map(Var::alloc).collect(Collectors.toList());
+            finalOp = new OpProject(finalOp, projectionFields);
+        }
+
         tipChannelInstance.setModelUrl(modelOp.getInputUrl());
-        tipChannelInstance.setProjectedFields(fieldNames);
-        tipChannelInstance.setOp(op);
+        tipChannelInstance.setProjectedFields(new ArrayList<>(fieldNames));
+        tipChannelInstance.setJoinOrders(joinOrders);
+        tipChannelInstance.setOp(finalOp);
 
         executionState.register(tipChannelInstance);
     }

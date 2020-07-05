@@ -5,6 +5,7 @@ import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.tdb2.TDB2Factory;
 import org.json.JSONObject;
 import org.qcri.rheem.basic.data.Record;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -19,6 +20,7 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.platform.JenaPlatform;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -52,27 +54,74 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
         final SparqlQueryChannel.Instance input = (SparqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
-        Dataset ds = TDB2Factory.connectDataset(input.getModelUrl());
-        ds.begin(ReadWrite.READ);
-        QueryExecution qe = QueryExecutionFactory.create(OpAsQuery.asQuery(input.getOp()), ds);
-
         List<String> resultVars = input.getProjectedFields();
-        ResultSet resultSet = qe.execSelect();
 
-        List<QuerySolution> result = ResultSetFormatter.toList(resultSet);
+        Dataset ds = TDB2Factory.connectDataset(input.getModelUrl());
+        final List<QuerySolution>[] result = new List[]{new ArrayList<>()};
 
-        qe.close();
-        ds.close();
-
-        Stream<Record> resultSetStream = result.stream().map(qs -> {
-            final int recordWidth = resultVars.size();
-            Object[] values = new Object[recordWidth];
-            for (int i = 0; i < recordWidth; i++) {
-                values[i] = qs.get(resultVars.get(i)).toString();
+        Runnable runnable = () -> {
+            ds.begin(ReadWrite.READ);
+            try (QueryExecution qe = QueryExecutionFactory.create(OpAsQuery.asQuery(input.getOp()), ds)) {
+                ResultSet resultSet = qe.execSelect();
+                result[0] = ResultSetFormatter.toList(resultSet);
+            } finally {
+                ds.end();
             }
-            return new Record(values);
-        });
-        output.accept(resultSetStream);
+        };
+
+        Thread thread = new Thread(runnable);
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        List<List<String>> joinOrders = input.getJoinOrders();
+
+        if (joinOrders.isEmpty()) {
+            Stream<Record> resultSetStream = result[0].stream().map(qs -> {
+                final int recordWidth = resultVars.size();
+                Object[] values = new Object[recordWidth];
+                for (int i = 0; i < recordWidth; i++) {
+                    values[i] = qs.get(resultVars.get(i)).toString();
+                }
+                return new Record(values);
+            });
+
+            output.accept(resultSetStream);
+        } else {
+            Stream<Tuple2> finalResult = result[0].stream().map(qs -> {
+                int recordWidth = joinOrders.get(0).size();
+                Object[] values = new Object[recordWidth];
+                for (int i = 0; i < joinOrders.get(0).size(); i++) {
+                    String currentVar = joinOrders.get(0).get(i);
+                    int projectedField = resultVars.indexOf(currentVar);
+                    values[i] = qs.get(resultVars.get(projectedField)).toString();
+                }
+                Object prevRecord = new Record(values);
+
+                Tuple2 tuple2 = new Tuple2();
+
+                for (int i = 1; i < joinOrders.size(); i++) {
+                    int recWidth = joinOrders.get(i).size();
+                    Object[] vals = new Object[recWidth];
+                    for (int j = 0; j < joinOrders.get(i).size(); j++) {
+                        String currentVar = joinOrders.get(i).get(j);
+                        int projectedField = resultVars.indexOf(currentVar);
+                        vals[j] = qs.get(resultVars.get(projectedField)).toString();
+                    }
+                    Record newRecord = new Record(vals);
+
+                    tuple2 = new Tuple2(prevRecord, newRecord);
+                    prevRecord = tuple2;
+                }
+
+                return tuple2;
+            });
+
+            output.accept(finalResult);
+        }
 
         ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
         queryLineageNode.addPredecessor(input.getLineage());

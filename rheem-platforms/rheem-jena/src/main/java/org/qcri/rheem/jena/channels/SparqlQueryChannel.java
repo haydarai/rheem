@@ -1,7 +1,6 @@
 package org.qcri.rheem.jena.channels;
 
 import org.apache.jena.sparql.algebra.Op;
-import org.qcri.rheem.basic.data.Tuple3;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -38,11 +37,11 @@ public class SparqlQueryChannel extends Channel {
 
         private String modelUrl = null;
 
-        private Tuple3<String, String, String> triple = null;
-
         private Op op = null;
 
         private List<String> projectedFields = new ArrayList<>();
+
+        private List<List<String>> joinOrders = new ArrayList<>();
 
         /**
          * Creates a new instance and registers it with its {@link Executor}.
@@ -88,6 +87,14 @@ public class SparqlQueryChannel extends Channel {
 
         public void setProjectedFields(List<String> projectedFields) {
             this.projectedFields = projectedFields;
+        }
+
+        public List<List<String>> getJoinOrders() {
+            return joinOrders;
+        }
+
+        public void setJoinOrders(List<List<String>> joinOrders) {
+            this.joinOrders = joinOrders;
         }
     }
 
