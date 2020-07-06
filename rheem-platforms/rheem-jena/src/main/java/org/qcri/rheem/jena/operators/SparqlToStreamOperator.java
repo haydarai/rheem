@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
@@ -87,6 +88,13 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
                     values[i] = qs.get(resultVars.get(i));
                 }
                 return new Record(values);
+            }).filter(record -> {
+                for (int i = 0; i < resultVars.size(); i++) {
+                    if (record.getString(i) == null) {
+                        return false;
+                    }
+                }
+                return true;
             });
 
             output.accept(resultSetStream);
