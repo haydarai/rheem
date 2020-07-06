@@ -84,7 +84,7 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
                 final int recordWidth = resultVars.size();
                 Object[] values = new Object[recordWidth];
                 for (int i = 0; i < recordWidth; i++) {
-                    values[i] = qs.get(resultVars.get(i)).toString();
+                    values[i] = qs.get(resultVars.get(i));
                 }
                 return new Record(values);
             });
