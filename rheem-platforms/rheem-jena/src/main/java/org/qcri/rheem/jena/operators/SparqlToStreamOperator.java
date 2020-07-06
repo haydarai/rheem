@@ -21,7 +21,6 @@ import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.platform.JenaPlatform;
 
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
@@ -78,14 +77,25 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
         List<List<String>> joinOrders = input.getJoinOrders();
 
         if (joinOrders.isEmpty()) {
-            Stream<Record> resultSetStream = result[0].stream().map(qs -> {
-                final int recordWidth = resultVars.size();
-                Object[] values = new Object[recordWidth];
-                for (int i = 0; i < recordWidth; i++) {
-                    values[i] = qs.get(resultVars.get(i));
-                }
-                return new Record(values);
-            });
+            Stream<Record> resultSetStream = result[0].stream()
+                    .filter(querySolution -> {
+                        Iterator<String> varNames = querySolution.varNames();
+                        while (varNames.hasNext()) {
+                            String varName = varNames.next();
+                            if (querySolution.get(varName) == null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    })
+                    .map(qs -> {
+                        final int recordWidth = resultVars.size();
+                        Object[] values = new Object[recordWidth];
+                        for (int i = 0; i < recordWidth; i++) {
+                            values[i] = qs.get(resultVars.get(i));
+                        }
+                        return new Record(values);
+                    });
 
             output.accept(resultSetStream);
         } else {
