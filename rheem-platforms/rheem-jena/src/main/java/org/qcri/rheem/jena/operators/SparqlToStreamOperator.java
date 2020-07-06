@@ -20,10 +20,8 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.platform.JenaPlatform;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
@@ -90,7 +88,7 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
                     values[i] = qs.get(resultVars.get(i));
                 }
                 return new Record(values);
-            });
+            }).filter(Objects::nonNull);
 
             output.accept(resultSetStream);
         } else {
