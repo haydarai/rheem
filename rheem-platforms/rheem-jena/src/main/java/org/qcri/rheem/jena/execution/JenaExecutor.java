@@ -68,7 +68,7 @@ public class JenaExecutor extends ExecutorTemplate {
         ModelSource modelOp = (ModelSource) startTask.getOperator();
         SparqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, optimizationContext);
 
-        List<Op> ops = new ArrayList<>();
+        List<Triple> triples = new ArrayList<>();
         Collection<ExecutionTask> projectionTasks = new ArrayList<>();
         Collection<ExecutionTask> filterTasks = new ArrayList<>();
         Collection<ExecutionTask> joinTasks = new HashSet<>();
@@ -94,7 +94,6 @@ public class JenaExecutor extends ExecutorTemplate {
                 nextTask = this.findJenaExecutionOperatorTaskInStage(nextTask, stage);
             }
 
-            BasicPattern bp = new BasicPattern();
             List<Tuple3<String, String, String>> variablesTriples = model.getTriples();
             for (Tuple3<String, String, String> variables : variablesTriples) {
                 Node[] fields = new Node[3];
@@ -109,18 +108,18 @@ public class JenaExecutor extends ExecutorTemplate {
                     }
                 }
                 Triple triple = new Triple(fields[0], fields[1], fields[2]);
-                bp.add(triple);
+                triples.add(triple);
             }
 
-            Op op = new OpBGP(bp);
-            ops.add(op);
         }
 
-        Op finalOp = new OpBGP();
+        BasicPattern finalBasicPattern = new BasicPattern();
 
-        for (Op op : ops) {
-            finalOp = OpJoin.create(finalOp, op);
+        for (Triple triple : triples) {
+            finalBasicPattern.add(triple);
         }
+
+        Op finalOp = new OpBGP(finalBasicPattern);
 
         for (ExecutionTask executionTask : filterTasks) {
             JenaFilterOperator operator = (JenaFilterOperator) executionTask.getOperator();
@@ -204,6 +203,8 @@ public class JenaExecutor extends ExecutorTemplate {
             List<Var> projectionFields = fieldNames.stream().map(Var::alloc).collect(Collectors.toList());
             finalOp = new OpProject(finalOp, projectionFields);
         }
+
+
 
         tipChannelInstance.setModelUrl(modelOp.getInputUrl());
         tipChannelInstance.setProjectedFields(new ArrayList<>(fieldNames));

@@ -5,13 +5,13 @@ import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
-public class JenaFilterOperator extends FilterOperator<Record> implements JenaExecutionOperator {
+public class JenaFilterOperator<InputType> extends FilterOperator<InputType> implements JenaExecutionOperator {
 
-    public JenaFilterOperator(PredicateDescriptor<Record> predicateDescriptor) {
+    public JenaFilterOperator(PredicateDescriptor<InputType> predicateDescriptor) {
         super(predicateDescriptor);
     }
 
-    public JenaFilterOperator(FilterOperator<Record> that) {
+    public JenaFilterOperator(FilterOperator<InputType> that) {
         super(that);
     }
 
