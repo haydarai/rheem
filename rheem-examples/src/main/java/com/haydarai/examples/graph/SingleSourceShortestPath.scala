@@ -18,7 +18,7 @@ object SingleSourceShortestPath {
       .withPlugin(Java.basicPlugin)
       .withPlugin(Java.channelConversionPlugin)
       .withPlugin(Spark.basicPlugin)
-      .withPlugin(Spark.graphPlugin)
+      .withPlugin(Java.graphPlugin)
     val planBuilder = new PlanBuilder(rheemContext)
       .withJobName("PageRank")
       .withUdfJarsOf(this.getClass)

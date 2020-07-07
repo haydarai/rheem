@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.java.mapping.graph.DegreeCentralityMapping;
 import org.qcri.rheem.java.mapping.graph.PageRankMapping;
+import org.qcri.rheem.java.mapping.graph.SingleSourceShortestPathMapping;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,7 +43,8 @@ public class Mappings {
 
     public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
             new PageRankMapping(),
-            new DegreeCentralityMapping()
+            new DegreeCentralityMapping(),
+            new SingleSourceShortestPathMapping()
     );
 
 }
