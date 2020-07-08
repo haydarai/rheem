@@ -204,8 +204,6 @@ public class JenaExecutor extends ExecutorTemplate {
             finalOp = new OpProject(finalOp, projectionFields);
         }
 
-
-
         tipChannelInstance.setModelUrl(modelOp.getInputUrl());
         tipChannelInstance.setProjectedFields(new ArrayList<>(fieldNames));
         tipChannelInstance.setJoinOrders(joinOrders);
