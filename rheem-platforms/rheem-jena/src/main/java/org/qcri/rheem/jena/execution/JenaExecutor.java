@@ -13,7 +13,6 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpBGP;
 import org.apache.jena.sparql.algebra.op.OpFilter;
-import org.apache.jena.sparql.algebra.op.OpJoin;
 import org.apache.jena.sparql.algebra.op.OpProject;
 import org.apache.jena.sparql.core.BasicPattern;
 import org.apache.jena.sparql.core.Var;
@@ -42,7 +41,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -120,6 +122,8 @@ public class JenaExecutor extends ExecutorTemplate {
         }
 
         Op finalOp = new OpBGP(finalBasicPattern);
+
+        filterTasks = filterTasks.stream().distinct().collect(Collectors.toCollection(ArrayList::new));
 
         for (ExecutionTask executionTask : filterTasks) {
             JenaFilterOperator operator = (JenaFilterOperator) executionTask.getOperator();
