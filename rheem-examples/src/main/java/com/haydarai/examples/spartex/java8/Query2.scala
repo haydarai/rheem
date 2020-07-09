@@ -1,4 +1,4 @@
-package com.haydarai.examples.spartex.java
+package com.haydarai.examples.spartex.java8
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
