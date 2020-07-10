@@ -10,6 +10,8 @@ import scala.collection.JavaConverters._
 
 object JenaQuery1 {
   def main(args: Array[String]) {
+    val startTime = System.currentTimeMillis()
+
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
       .withPlugin(Jena.plugin)
@@ -33,9 +35,13 @@ object JenaQuery1 {
     val records = planBuilder
       .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
       .projectRecords(List("p", "a", "c")).withName("Project variable ?p ?a ?c")
+      .filter(r => r.getString(0).contains("Melbourne"), "c != 'http://yago-knowledge.org/resource/Melbourne'")
       .collect()
 
     // Print query result
     records.foreach(println)
+
+    val endTime = System.currentTimeMillis()
+    println(endTime - startTime)
   }
 }
