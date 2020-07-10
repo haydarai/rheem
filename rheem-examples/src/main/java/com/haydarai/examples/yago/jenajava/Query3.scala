@@ -101,7 +101,6 @@ object Query3 {
     val results = records
       .join[(String, java.lang.Float), String](_.field2, pageRankResults, _._1)
       .map(t2 => new Tuple3(t2.field0.field0, t2.field0.field1, t2.field1._2))
-      .filter(t => t.field2 > 4)
       .collect()
 
     results.foreach(t => println(t.toString))
