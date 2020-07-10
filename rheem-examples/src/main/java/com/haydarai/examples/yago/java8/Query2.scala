@@ -60,10 +60,6 @@ object Query2 {
       .flatMap(t => Seq((t.field0, t.field2), (t.field2, t.field0)))
       .withName("Generate edges for Single Source Shortest Path algorithm")
 
-    val edgesCentrality = records
-      .flatMap(t => Seq((t.field0, t.field2), (t.field2, t.field0)))
-      .withName("Generate edges for Degree Centrality algorithm")
-
     val vertexIds = records
       .flatMap(t => Seq(t.field0, t.field1, t.field2))
       .distinct
@@ -81,33 +77,16 @@ object Query2 {
       .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
       .withName("Remove unnecessary fields from join results")
 
-    val idEdgesCentrality = edgesCentrality
-      .join[VertexId, String](_._1, vertexIds, _.field1).withName("Assign ID to vertices (left) on edges")
-      .map { linkAndVertexId => (linkAndVertexId.field1.field0, linkAndVertexId.field0._2) }
-      .withName("Remove unnecessary fields from join results")
-
-      .join[VertexId, String](_._2, vertexIds, _.field1).withName("Assign ID to vertices (right) on edges")
-      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0))
-      .withName("Remove unnecessary fields from join results")
-
     val singleSourceShortestPath = idEdgesSingleSource.singleSourceShortestPath(0)
-      .withTargetPlatforms(Java.platform())
-    val degreeCentrality = idEdgesCentrality.degreeCentrality()
       .withTargetPlatforms(Java.platform())
 
     val singleSourceShortestPathResults = singleSourceShortestPath
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
 
-    val degreeCentralityResults = degreeCentrality
-      .join[VertexId, Long](_.field0, vertexIds, _.field0)
-      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1))
-
     val results = records
       .join[(String, java.lang.Float), String](_.field0, singleSourceShortestPathResults, _._1)
       .map(t2 => new Tuple4(t2.field0.field0, t2.field0.field1, t2.field1._2, t2.field0.field2))
-      .join[(String, java.lang.Integer), String](_.field3, degreeCentralityResults, _._1)
-      .map(t2 => new Tuple4(t2.field0.field0, t2.field0.field1, t2.field0.field2, t2.field1._2))
       .collect()
 
     results.foreach(t => println(t.toString))
