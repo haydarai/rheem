@@ -1,4 +1,4 @@
-package com.haydarai.examples.yago.java8
+package com.haydarai.examples.yago.jenajava
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
@@ -50,7 +50,7 @@ object Query2 {
       .join(r => r.getString(1),
         projectedA2,
         (r: Record) => r.getString(1))
-      .withTargetPlatforms(Java.platform)
+      .withTargetPlatforms(Jena.platform)
 
     val records = allJoined
       .map(t => new Tuple3(t.field0.getString(0), t.getField1.getString(0),

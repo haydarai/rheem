@@ -1,4 +1,4 @@
-package com.haydarai.examples.yago.java8
+package com.haydarai.examples.yago.jenaspark
 
 import org.qcri.rheem.api.PlanBuilder
 import org.qcri.rheem.api.graph._
@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.jena.Jena
 import org.qcri.rheem.jena.operators.JenaModelSource
+import org.qcri.rheem.spark.Spark
 
 import scala.collection.JavaConverters._
 
@@ -17,8 +18,8 @@ object Query2 {
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
       .withPlugin(Jena.plugin)
-      .withPlugin(Java.basicPlugin)
-      .withPlugin(Java.graphPlugin)
+      .withPlugin(Spark.basicPlugin)
+      .withPlugin(Spark.graphPlugin)
       .withPlugin(Java.channelConversionPlugin)
 
     val planBuilder = new PlanBuilder(rheemContext)
@@ -50,7 +51,7 @@ object Query2 {
       .join(r => r.getString(1),
         projectedA2,
         (r: Record) => r.getString(1))
-      .withTargetPlatforms(Java.platform)
+      .withTargetPlatforms(Jena.platform)
 
     val records = allJoined
       .map(t => new Tuple3(t.field0.getString(0), t.getField1.getString(0),
@@ -91,9 +92,9 @@ object Query2 {
       .withName("Remove unnecessary fields from join results")
 
     val singleSourceShortestPath = idEdgesSingleSource.singleSourceShortestPath(0)
-      .withTargetPlatforms(Java.platform())
+      .withTargetPlatforms(Spark.platform())
     val degreeCentrality = idEdgesCentrality.degreeCentrality()
-      .withTargetPlatforms(Java.platform())
+      .withTargetPlatforms(Spark.platform())
 
     val singleSourceShortestPathResults = singleSourceShortestPath
       .join[VertexId, Long](_.field0, vertexIds, _.field0)
