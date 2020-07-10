@@ -30,22 +30,30 @@ object Query1 {
     val y = "http://yago-knowledge.org/resource/"
 
     // Define triples definition
-    val triples = List[Array[String]](
-      Array("p", y + "wasBornIn", "c"),
-      Array("p", y + "hasAcademicAdvisor", "a"),
+    val triplesA = List[Array[String]](
+      Array("p", y + "wasBornIn", "c")
+    )
+
+    // Define triples definition
+    val triplesB = List[Array[String]](
+      Array("p", y + "hasAcademicAdvisor", "a")
+    )
+
+    // Define triples definition
+    val triplesC = List[Array[String]](
       Array("a", y + "wasBornIn", "c")
     )
 
     val projectedPC = planBuilder
-      .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
+      .readModel(new JenaModelSource(args(0), triplesA.asJava)).withName("Read RDF file")
       .projectRecords(List("p", "c")).withName("Project variable ?p ?c")
 
     val projectedPA = planBuilder
-      .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
+      .readModel(new JenaModelSource(args(0), triplesB.asJava)).withName("Read RDF file")
       .projectRecords(List("p", "a")).withName("Project variable ?p ?a")
 
     val projectedAC = planBuilder
-      .readModel(new JenaModelSource(args(0), triples.asJava)).withName("Read RDF file")
+      .readModel(new JenaModelSource(args(0), triplesC.asJava)).withName("Read RDF file")
       .projectRecords(List("a", "c")).withName("Project variable ?a ?c")
 
     val PPCA = projectedPC
