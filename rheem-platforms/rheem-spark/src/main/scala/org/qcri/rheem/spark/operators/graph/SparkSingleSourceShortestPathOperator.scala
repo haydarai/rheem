@@ -62,13 +62,13 @@ class SparkSingleSourceShortestPathOperator(_sourceId: Long)
 
     val mainExecutionLineageNode = new ExecutionLineageNode(operatorContext)
     mainExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-      "rheem.spark.pagerank.load.main", sparkExecutor.getConfiguration
+      "rheem.spark.singlesourceshortestpath.load.main", sparkExecutor.getConfiguration
     ))
     mainExecutionLineageNode.addPredecessor(input.getLineage)
 
     val outputExecutionLineageNode = new ExecutionLineageNode(operatorContext)
     outputExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-      "rheem.spark.pagerank.load.output", sparkExecutor.getConfiguration
+      "rheem.spark.singlesourceshortestpath.load.output", sparkExecutor.getConfiguration
     ))
     output.getLineage.addPredecessor(outputExecutionLineageNode)
 
@@ -76,7 +76,7 @@ class SparkSingleSourceShortestPathOperator(_sourceId: Long)
   }
 
   override def getLoadProfileEstimatorConfigurationKeys: java.util.Collection[String] =
-    java.util.Arrays.asList("rheem.spark.pagerank.load.main", "rheem.spark.pagerank.load.output")
+    java.util.Arrays.asList("rheem.spark.singlesourceshortestpath.load.main", "rheem.spark.singlesourceshortestpath.load.output")
 
   override def getSupportedInputChannels(index: Int): util.List[ChannelDescriptor] = {
     assert(index == 0)

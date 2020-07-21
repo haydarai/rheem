@@ -17,6 +17,7 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.graphchi.GraphChi;
 import org.qcri.rheem.java.Java;
+import org.qcri.rheem.jena.Jena;
 import org.qcri.rheem.postgres.Postgres;
 import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.sqlite3.Sqlite3;
@@ -92,7 +93,8 @@ public class GeneticOptimizerApp {
         Spark.platform();
         Sqlite3.platform();
         Postgres.platform();
-        GraphChi.platform();
+        Jena.platform();
+//        GraphChi.platform();
 
         // Load the ExecutionLog.
         double samplingFactor = this.configuration.getDoubleProperty("rheem.profiler.ga.sampling", 1d);

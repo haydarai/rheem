@@ -73,7 +73,7 @@ public class JavaDegreeCentralityOperator extends DegreeCentralityOperator imple
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.pagerank.load";
+        return "rheem.java.degreecentrality.load";
     }
 
     @Override

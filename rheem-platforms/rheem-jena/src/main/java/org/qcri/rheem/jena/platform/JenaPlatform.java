@@ -2,6 +2,7 @@ package org.qcri.rheem.jena.platform;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -42,12 +43,25 @@ public class JenaPlatform extends Platform {
 
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
-        return null;
+        int cpuMhz = (int) configuration.getLongProperty("rheem.jena.cpu.mhz");
+        int numCores = (int) configuration.getLongProperty("rheem.jena.cores");
+        double hdfsMsPerMb = configuration.getDoubleProperty("rheem.jena.hdfs.ms-per-mb");
+        double stretch = configuration.getDoubleProperty("rheem.jena.stretch");
+        return LoadProfileToTimeConverter.createTopLevelStretching(
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
+                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
+                LoadToTimeConverter.createLinearCoverter(0),
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
+                stretch
+        );
     }
 
     @Override
     public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
-        return null;
+        return new TimeToCostConverter(
+                configuration.getDoubleProperty("rheem.jena.costs.fix"),
+                configuration.getDoubleProperty("rheem.jena.costs.per-ms")
+        );
     }
 
     private final SparqlQueryChannel.Descriptor sparqlQueryChannelDescriptor = new SparqlQueryChannel.Descriptor(this);

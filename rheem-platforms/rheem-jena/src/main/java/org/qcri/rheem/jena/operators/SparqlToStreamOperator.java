@@ -7,6 +7,7 @@ import org.json.JSONObject;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -98,6 +99,17 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
                     });
 
             output.accept(resultSetStream);
+
+            ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
+            queryLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                    "rheem.jena.sparqltostream.load.query", javaExecutor.getConfiguration()
+            ));
+            queryLineageNode.addPredecessor(input.getLineage());
+            ExecutionLineageNode outputLineageNode = new ExecutionLineageNode(operatorContext);
+            outputLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                    "rheem.jena.sparqltostream.load.output", javaExecutor.getConfiguration()
+            ));
+            output.getLineage().addPredecessor(outputLineageNode);
         } else {
             Stream<Tuple2> finalResult = result[0].stream().map(qs -> {
                 int recordWidth = joinOrders.get(0).size();
@@ -129,6 +141,20 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
             });
 
             output.accept(finalResult);
+
+            ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
+            queryLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                    "rheem.jena.join.load.query", javaExecutor.getConfiguration()
+            ));
+            queryLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                    "rheem.jena.filter.load.query", javaExecutor.getConfiguration()
+            ));
+            queryLineageNode.addPredecessor(input.getLineage());
+            ExecutionLineageNode outputLineageNode = new ExecutionLineageNode(operatorContext);
+            outputLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                    "rheem.jena.join.load.output", javaExecutor.getConfiguration()
+            ));
+            output.getLineage().addPredecessor(outputLineageNode);
         }
 
         ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);

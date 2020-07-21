@@ -52,13 +52,13 @@ class SparkDegreeCentralityOperator extends DegreeCentralityOperator() with Spar
 
     val mainExecutionLineageNode = new ExecutionLineageNode(operatorContext)
     mainExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-      "rheem.spark.pagerank.load.main", sparkExecutor.getConfiguration
+      "rheem.spark.degreecentrality.load.main", sparkExecutor.getConfiguration
     ))
     mainExecutionLineageNode.addPredecessor(input.getLineage)
 
     val outputExecutionLineageNode = new ExecutionLineageNode(operatorContext)
     outputExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-      "rheem.spark.pagerank.load.output", sparkExecutor.getConfiguration
+      "rheem.spark.degreecentrality.load.output", sparkExecutor.getConfiguration
     ))
     output.getLineage.addPredecessor(outputExecutionLineageNode)
 

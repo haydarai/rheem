@@ -157,7 +157,7 @@ public class JavaSingleSourceShortestPathOperator extends SingleSourceShortestPa
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.sssp.load";
+        return "rheem.java.singlesourceshortestpath.load";
     }
 
     @Override
