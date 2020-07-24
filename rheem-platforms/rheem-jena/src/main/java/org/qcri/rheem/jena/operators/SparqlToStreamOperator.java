@@ -1,6 +1,7 @@
 package org.qcri.rheem.jena.operators;
 
 import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.sparql.algebra.OpAsQuery;
 import org.apache.jena.tdb2.TDB2Factory;
 import org.json.JSONObject;
@@ -21,7 +22,10 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.jena.channels.SparqlQueryChannel;
 import org.qcri.rheem.jena.platform.JenaPlatform;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 
 public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
@@ -55,13 +59,21 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
         List<String> resultVars = input.getProjectedFields();
 
         Dataset ds = TDB2Factory.connectDataset(input.getModelUrl());
-        final List<QuerySolution>[] result = new List[]{new ArrayList<>()};
+        final Stream<QuerySolution>[] resultStream = new Stream[]{Stream.empty()};
 
         Runnable runnable = () -> {
             ds.begin(ReadWrite.READ);
             try (QueryExecution qe = QueryExecutionFactory.create(OpAsQuery.asQuery(input.getOp()), ds)) {
                 ResultSet resultSet = qe.execSelect();
-                result[0] = ResultSetFormatter.toList(resultSet);
+
+                Stream.Builder<QuerySolution> builder = Stream.builder();
+                while (resultSet.hasNext()) {
+                    QuerySolution querySolution = resultSet.nextSolution();
+                    materialize(querySolution);
+                    builder.add(querySolution);
+                }
+
+                resultStream[0] = builder.build();
             } finally {
                 ds.end();
             }
@@ -78,7 +90,7 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
         List<List<String>> joinOrders = input.getJoinOrders();
 
         if (joinOrders.isEmpty()) {
-            Stream<Record> resultSetStream = result[0].stream()
+            Stream<Record> resultSetStream = resultStream[0]
                     .filter(querySolution -> {
                         Iterator<String> varNames = querySolution.varNames();
                         while (varNames.hasNext()) {
@@ -111,7 +123,7 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
             ));
             output.getLineage().addPredecessor(outputLineageNode);
         } else {
-            Stream<Tuple2> finalResult = result[0].stream().map(qs -> {
+            Stream<Tuple2> finalResult = resultStream[0].map(qs -> {
                 int recordWidth = joinOrders.get(0).size();
                 Object[] values = new Object[recordWidth];
                 for (int i = 0; i < joinOrders.get(0).size(); i++) {
@@ -178,5 +190,12 @@ public class SparqlToStreamOperator extends UnaryToUnaryOperator<Record, Record>
     @Override
     public JSONObject toJson() {
         return new JSONObject().put("platform", this.jenaPlatform.getClass().getCanonicalName());
+    }
+
+    private void materialize(QuerySolution qs) {
+        for (Iterator<String> iter = qs.varNames(); iter.hasNext(); ) {
+            String vn = iter.next();
+            RDFNode n = qs.get(vn);
+        }
     }
 }
